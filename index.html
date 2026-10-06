@@ -1110,7 +1110,7 @@ button:active, .btn-touch:active {
     <!-- ==========================================
          TAB 3: DAILY ORDERS & DELIVERY DISPATCH (දෛනික ඇණවුම් & බෙදාහැරීම්)
          ========================================== -->
-    <section id="tab-production" class="app-tab-page hidden space-y-4 delivery-or-admin">
+    <section id="tab-production" class="app-tab-page hidden space-y-4">
       <!-- Daily Orders Hero Header -->
       <div class="hero-orders rounded-3xl p-4 text-white shadow-xl flex items-center justify-between">
         <div>
@@ -1134,7 +1134,7 @@ button:active, .btn-touch:active {
             <p class="text-xs text-slate-500">Pack for today or tomorrow's routes & print manifest</p>
           </div>
           <!-- Quick Preset Buttons -->
-          <div class="flex items-center gap-1">
+          <div id="prod-preset-btns" class="flex items-center gap-1">
             <button onclick="Production.setPresetDate('today')" class="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-xl border border-emerald-200 active:scale-95">
               📅 Today (අද)
             </button>
@@ -1882,7 +1882,7 @@ button:active, .btn-touch:active {
             <h3 class="font-black text-sm text-slate-900">📦 Rep Orders Packing Requirement (ඇණවුම් ලැයිස්තුව)</h3>
             <p class="text-[10px] text-slate-500">Spice cards and packets ordered by Sales Reps for dispatch</p>
           </div>
-          <div class="flex items-center gap-1">
+          <div id="stores-preset-btns" class="flex items-center gap-1">
             <button onclick="Stores.setPresetDate('today')" class="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-xl border border-emerald-200 active:scale-95">
               📅 Today
             </button>
@@ -15316,7 +15316,37 @@ const Auth = {
       else el.classList.add('hidden');
     });
 
-    // 7. Rep or Admin (with permission check)
+    // 6b. Stores Keeper: hide "Delivery Route Orders" subtab only
+    const dispatchBtn = document.getElementById('prod-subtab-dispatch');
+    const packingBtn = document.getElementById('prod-subtab-packing');
+    if (isStores) {
+      if (dispatchBtn) {
+        dispatchBtn.style.display = 'none';
+        dispatchBtn.classList.remove('bg-emerald-600', 'text-white');
+        dispatchBtn.classList.add('bg-slate-100', 'text-slate-700');
+      }
+      const subtabGrid = dispatchBtn?.parentElement;
+      if (subtabGrid) {
+        subtabGrid.classList.remove('grid-cols-2');
+        subtabGrid.classList.add('grid-cols-1');
+      }
+      if (packingBtn) {
+        packingBtn.style.display = '';
+        packingBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-xs');
+        packingBtn.classList.remove('bg-slate-100', 'text-slate-700');
+      }
+    } else {
+      if (dispatchBtn) {
+        dispatchBtn.style.display = '';
+      }
+      const subtabGrid = dispatchBtn?.parentElement;
+      if (subtabGrid) {
+        subtabGrid.classList.add('grid-cols-2');
+        subtabGrid.classList.remove('grid-cols-1');
+      }
+    }
+
+
     document.querySelectorAll('.rep-or-admin').forEach(el => {
       if (isManagement) el.classList.remove('hidden');
       else if (isRep && this.can('rep_can_add_shops')) el.classList.remove('hidden');
@@ -16398,6 +16428,10 @@ const UI = {
     if (tabId === 'reports' && typeof Reports !== 'undefined') Reports.loadReports();
     if (tabId === 'settings' && typeof Settings !== 'undefined') Settings.loadSettings();
     if (tabId === 'users' && typeof Users !== 'undefined') Users.loadUsers();
+
+    if (typeof Auth !== 'undefined' && Auth.applyRoleRestrictions) {
+      Auth.applyRoleRestrictions();
+    }
 
     // Scroll back to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -19930,6 +19964,20 @@ const Production = {
     try {
       await this.populateRouteFilter();
       
+      const isStores = Auth.currentUser?.role === 'stores';
+      if (isStores) {
+        this.activeViewSubtab = 'packing';
+        const btnPacking = document.getElementById('prod-subtab-packing');
+        const btnDispatch = document.getElementById('prod-subtab-dispatch');
+        if (btnPacking) {
+          btnPacking.classList.add('bg-emerald-600', 'text-white');
+          btnPacking.classList.remove('bg-slate-100', 'text-slate-700');
+        }
+        if (btnDispatch) {
+          btnDispatch.style.display = 'none';
+        }
+      }
+
       const dateInput = document.getElementById('prod-date-filter');
       if (dateInput) {
         if (this.selectedDate === 'all') {
@@ -19944,10 +19992,12 @@ const Production = {
       // Fetch all orders matching deliveryDate and route filtered by tenant
       let rawOrders = await db.sales
         .filter(s => {
+          if (s.status === 'Cancelled') return false;
+
           const isAllPending = this.selectedDate === 'all';
           const matchDate = isAllPending
             ? (s.status === 'Pending' || !s.status)
-            : ((s.deliveryDate === this.selectedDate) || (!s.deliveryDate && s.date.startsWith(this.selectedDate)));
+            : ((s.deliveryDate === this.selectedDate) || (!s.deliveryDate && s.date && s.date.startsWith(this.selectedDate)));
           const matchRoute = this.selectedRouteId === 'all' || s.routeId === Number(this.selectedRouteId);
           return matchDate && matchRoute;
         })
@@ -19996,7 +20046,7 @@ const Production = {
       if (totalPacketsEl) totalPacketsEl.textContent = totalPacketUnits;
 
       // Render Packing Checklist or Dispatch Run
-      if (this.activeViewSubtab === 'packing') {
+      if (this.activeViewSubtab === 'packing' || isStores) {
         this.renderPackingMatrix(Object.values(matrix), pendingOrders.length);
       } else {
         await this.renderDeliveryDispatchList(orders);
@@ -20007,6 +20057,11 @@ const Production = {
   },
 
   switchSubtab(subtab) {
+    const isStores = Auth.currentUser?.role === 'stores';
+    if (isStores) {
+      subtab = 'packing';
+    }
+
     this.activeViewSubtab = subtab;
     const btnPacking = document.getElementById('prod-subtab-packing');
     const btnDispatch = document.getElementById('prod-subtab-dispatch');
@@ -20637,8 +20692,17 @@ const Production = {
   },
 
   async printProductionChecklist() {
+    const isStores = Auth.currentUser?.role === 'stores';
+    const todayStr = new Date().toISOString().split('T')[0];
+
     let rawOrders = await db.sales
       .filter(s => {
+        if (s.status === 'Cancelled') return false;
+        if (isStores) {
+          const isToday = (s.date && s.date.startsWith(todayStr)) || (s.deliveryDate === todayStr);
+          const matchRoute = this.selectedRouteId === 'all' || s.routeId === Number(this.selectedRouteId);
+          return isToday && matchRoute;
+        }
         const isAllPending = this.selectedDate === 'all';
         const matchDate = isAllPending
           ? true
@@ -20672,13 +20736,22 @@ const Production = {
       if (r) routeName = r.name;
     }
 
-    const displayDate = this.selectedDate === 'all' ? 'All Pending Orders' : this.selectedDate;
+    const displayDate = isStores ? todayStr : (this.selectedDate === 'all' ? 'All Pending Orders' : this.selectedDate);
     await Print.printPackingManifest(displayDate, routeName, Object.values(matrix), orders);
   },
 
   async copyChecklistToClipboard() {
+    const isStores = Auth.currentUser?.role === 'stores';
+    const todayStr = new Date().toISOString().split('T')[0];
+
     let rawOrders = await db.sales
       .filter(s => {
+        if (s.status === 'Cancelled') return false;
+        if (isStores) {
+          const isToday = (s.date && s.date.startsWith(todayStr)) || (s.deliveryDate === todayStr);
+          const matchRoute = this.selectedRouteId === 'all' || s.routeId === Number(this.selectedRouteId);
+          return isToday && matchRoute;
+        }
         const isAllPending = this.selectedDate === 'all';
         const matchDate = isAllPending
           ? true
@@ -20738,11 +20811,8 @@ const Stores = {
   activeSearch: '',
 
   init() {
-    if (!this.activeDate) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      this.activeDate = tomorrow.toISOString().split('T')[0];
-    }
+    const todayStr = new Date().toISOString().split('T')[0];
+    this.activeDate = todayStr;
 
     const dateInput = document.getElementById('stores-target-date');
     if (dateInput) {
@@ -20818,7 +20888,7 @@ const Stores = {
 
       // Apply date and route filters
       if (this.activeDate !== 'all') {
-        allSales = allSales.filter(s => (s.deliveryDate || s.date) === this.activeDate);
+        allSales = allSales.filter(s => (s.deliveryDate === this.activeDate) || (!s.deliveryDate && s.date && s.date.startsWith(this.activeDate)));
       }
       if (this.activeRouteId !== 'all') {
         allSales = allSales.filter(s => String(s.routeId) === String(this.activeRouteId));
