@@ -1740,12 +1740,12 @@ button:active, .btn-touch:active {
       <!-- Security PIN Change -->
       <div class="card-3d-white p-5 rounded-3xl space-y-3">
         <h3 class="font-black text-sm text-slate-800">App Security PIN Lock</h3>
-        <p class="text-xs text-slate-500">Change master numeric 4-6 digit PIN</p>
+        <p class="text-xs text-slate-500">Change master numeric 4-8 digit PIN</p>
         
         <div class="grid grid-cols-3 gap-2">
-          <input type="password" maxlength="6" id="sett-old-pin" placeholder="Current PIN" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
-          <input type="password" maxlength="6" id="sett-new-pin" placeholder="New PIN" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
-          <input type="password" maxlength="6" id="sett-confirm-pin" placeholder="Confirm" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <input type="password" maxlength="12" id="sett-old-pin" placeholder="Current PIN" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <input type="password" maxlength="12" id="sett-new-pin" placeholder="New PIN" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <input type="password" maxlength="12" id="sett-confirm-pin" placeholder="Confirm" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
         </div>
 
         <button onclick="Settings.handleChangePin()" class="w-full bg-slate-900 text-white text-xs font-bold py-2.5 rounded-2xl hover:bg-slate-800 active:scale-95">
@@ -2141,7 +2141,12 @@ button:active, .btn-touch:active {
     <h2 class="text-xl font-black tracking-tight">Spice Wholesale POS</h2>
     <p class="text-xs text-slate-400 mt-1">Enter Master PIN to Unlock</p>
 
-    <div id="pin-dots-container" class="flex items-center gap-3 my-6">
+    <div id="pin-dots-container" class="flex items-center justify-center gap-2 my-6">
+      <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
+      <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
+      <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
+      <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
+      <span class="w-1.5 h-0.5 bg-gray-600 rounded mx-0.5"></span>
       <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
       <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
       <span class="pin-dot w-3.5 h-3.5 rounded-full border border-gray-500 bg-gray-700 transition-all"></span>
@@ -2163,7 +2168,7 @@ button:active, .btn-touch:active {
       <button onclick="Auth.handleKeypadDelete()" class="keypad-btn text-base font-bold">⌫</button>
     </div>
     
-    <p class="text-[10px] text-slate-500 mt-6 font-medium">Enter your 4-digit PIN to unlock</p>
+    <p class="text-[11px] text-slate-400 mt-6 font-medium">Enter your 4 or 8-digit PIN to unlock</p>
   </div>
 
 
@@ -2584,8 +2589,8 @@ button:active, .btn-touch:active {
           <input type="text" id="user-form-username" placeholder="e.g. rep1" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800 lowercase" required />
         </div>
         <div>
-          <label class="text-[11px] font-bold text-slate-500 block mb-1">4-Digit PIN *</label>
-          <input type="password" maxlength="6" id="user-form-pin" placeholder="5555" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-mono font-black text-slate-800 tracking-widest text-center" required />
+          <label class="text-[11px] font-bold text-slate-500 block mb-1">Security PIN (4-8 Digits) *</label>
+          <input type="password" maxlength="12" id="user-form-pin" placeholder="5555" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-mono font-black text-slate-800 tracking-widest text-center" required />
         </div>
       </div>
 
@@ -3158,8 +3163,8 @@ button:active, .btn-touch:active {
           <input type="text" id="tenant-form-username" placeholder="e.g. sunil_admin" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-bold lowercase text-indigo-950" required />
         </div>
         <div>
-          <label class="text-[11px] font-black text-indigo-900 block mb-1">Admin PIN (4+ Digits) *</label>
-          <input type="text" id="tenant-form-pin" placeholder="1234" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center tracking-widest text-indigo-950" required />
+          <label class="text-[11px] font-black text-indigo-900 block mb-1">Admin PIN (4-8 Digits) *</label>
+          <input type="text" maxlength="12" id="tenant-form-pin" placeholder="1234" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center tracking-widest text-indigo-950" required />
         </div>
       </div>
 
@@ -14715,12 +14720,15 @@ const Auth = {
   currentPinInput: '',
   currentUser: null, // { id, username, fullName, role: 'admin' | 'rep', assignedRouteId }
 
+  _keyboardBound: false,
   async init() {
     this.bindKeyboardEvents();
     await this.checkInitialLock();
   },
 
   bindKeyboardEvents() {
+    if (this._keyboardBound) return;
+    this._keyboardBound = true;
     window.addEventListener('keydown', (e) => {
       if (!this.isLocked) return;
       
@@ -14865,8 +14873,8 @@ const Auth = {
       let matchedUser = null;
       let targetTenant = null;
 
-      // 1. Instant Dynamic Super Admin Master Controller (Supports Custom Long PIN)
-      const masterPin = this.getSuperAdminPin();
+      // 1. Instant Dynamic Super Admin Master Controller (Supports Custom 4-12 PIN)
+      const masterPin = String(this.getSuperAdminPin()).trim();
       if (pinEntered === masterPin) {
         matchedUser = {
           id: 'super_0',
@@ -14878,91 +14886,80 @@ const Auth = {
         };
       }
 
-      // 2. Lookup in db.tenants by Admin PIN (Client Company Admins)
-      if (!matchedUser && typeof db !== 'undefined' && db.tenants) {
+      // Collect local database records
+      let allTenants = [];
+      let allUsers = [];
+      let company = null;
+
+      if (typeof db !== 'undefined') {
         try {
-          const allTenants = await db.tenants.toArray();
-          const matchedTenant = allTenants.find(t => String(t.adminPin).trim() === pinEntered);
-          if (matchedTenant) {
-            targetTenant = matchedTenant;
-            matchedUser = {
-              id: matchedTenant.id,
-              username: matchedTenant.adminUsername,
-              fullName: `${matchedTenant.ownerName || 'Admin'} (${matchedTenant.companyName})`,
-              role: 'admin',
-              pin: matchedTenant.adminPin,
-              isActive: matchedTenant.isActive !== false,
-              tenantId: matchedTenant.id
-            };
-          }
-        } catch (tErr) {
-          console.warn('Tenant PIN lookup error:', tErr);
+          if (db.tenants) allTenants = await db.tenants.toArray();
+        } catch (e) { console.warn('Tenant read error:', e); }
+        try {
+          if (db.users) allUsers = await db.users.toArray();
+        } catch (e) { console.warn('Users read error:', e); }
+        try {
+          if (db.company) company = await db.company.toCollection().first();
+        } catch (e) { console.warn('Company read error:', e); }
+      }
+
+      // 2. Lookup in db.tenants by Admin PIN (Client Company Admins)
+      if (!matchedUser && allTenants.length > 0) {
+        const matchedTenant = allTenants.find(t => String(t.adminPin).trim() === pinEntered);
+        if (matchedTenant) {
+          targetTenant = matchedTenant;
+          matchedUser = {
+            id: matchedTenant.id,
+            username: matchedTenant.adminUsername,
+            fullName: `${matchedTenant.ownerName || 'Admin'} (${matchedTenant.companyName})`,
+            role: 'admin',
+            pin: matchedTenant.adminPin,
+            isActive: matchedTenant.isActive !== false,
+            tenantId: matchedTenant.id
+          };
         }
       }
 
       // 3. Lookup in db.users for staff & custom accounts (Match PIN even if inactive)
-      if (!matchedUser && typeof db !== 'undefined' && db.users) {
-        try {
-          const allUsers = await db.users.toArray();
-          const foundUser = allUsers.find(u => String(u.pin).trim() === pinEntered);
-          if (foundUser) {
-            matchedUser = foundUser;
-            if (typeof db.tenants !== 'undefined') {
-              if (foundUser.tenantId) {
-                targetTenant = await db.tenants.get(foundUser.tenantId);
-              } else if (foundUser.role === 'admin') {
-                targetTenant = await db.tenants.where('adminUsername').equals(foundUser.username).first();
-              }
+      if (!matchedUser && allUsers.length > 0) {
+        const foundUser = allUsers.find(u => String(u.pin).trim() === pinEntered);
+        if (foundUser) {
+          matchedUser = foundUser;
+          if (typeof db !== 'undefined' && db.tenants) {
+            if (foundUser.tenantId) {
+              targetTenant = await db.tenants.get(foundUser.tenantId);
+            } else if (foundUser.role === 'admin') {
+              targetTenant = await db.tenants.where('adminUsername').equals(foundUser.username).first();
             }
           }
-        } catch (dbErr) {
-          console.warn('Local DB user lookup error:', dbErr);
         }
       }
 
-      // 4. Built-in Default PINs (Zero-Latency Default Fallbacks)
-      if (!matchedUser) {
+      // 4. Fallback check for Master Company Record PIN (if not in tenants)
+      if (!matchedUser && company && String(company.pin).trim() === pinEntered) {
+        matchedUser = { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: company.pin, isActive: true };
+        if (typeof db !== 'undefined' && db.tenants) {
+          targetTenant = await db.tenants.where('adminPin').equals(String(company.pin).trim()).first() ||
+                         await db.tenants.toCollection().first();
+        }
+      }
+
+      // 5. Built-in Default PINs (Zero-Latency Fallbacks ONLY if DB is fresh and unseeded)
+      if (!matchedUser && allUsers.length === 0 && allTenants.length === 0) {
         if (pinEntered === '1234') {
           matchedUser = { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: '1234', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) {
-            targetTenant = await db.tenants.where('adminPin').equals('1234').first() ||
-                           await db.tenants.where('adminUsername').equals('admin').first() ||
-                           await db.tenants.toCollection().first();
-          }
         } else if (pinEntered === '2222') {
           matchedUser = { id: 2, username: 'sm1', fullName: 'Sales Manager (SM)', role: 'sm', pin: '2222', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) targetTenant = await db.tenants.toCollection().first();
         } else if (pinEntered === '3333') {
           matchedUser = { id: 3, username: 'asm1', fullName: 'Area Sales Manager (ASM)', role: 'asm', pin: '3333', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) targetTenant = await db.tenants.toCollection().first();
         } else if (pinEntered === '4444') {
           matchedUser = { id: 4, username: 'sup1', fullName: 'Field Supervisor (සුපවයිසර්)', role: 'supervisor', pin: '4444', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) targetTenant = await db.tenants.toCollection().first();
         } else if (pinEntered === '5555') {
           matchedUser = { id: 5, username: 'rep1', fullName: 'Sales Rep (Order Booker)', role: 'rep', pin: '5555', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) targetTenant = await db.tenants.toCollection().first();
         } else if (pinEntered === '7777') {
           matchedUser = { id: 6, username: 'delivery1', fullName: 'Delivery Driver (බෙදාහැරීම්)', role: 'delivery', pin: '7777', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) targetTenant = await db.tenants.toCollection().first();
         } else if (pinEntered === '8888') {
           matchedUser = { id: 7, username: 'stores1', fullName: 'Production Stores Keeper (ස්ටෝර්ස්)', role: 'stores', pin: '8888', isActive: true };
-          if (typeof db !== 'undefined' && db.tenants) targetTenant = await db.tenants.toCollection().first();
-        }
-      }
-
-      // 5. Fallback check for Master Company Record PIN
-      if (!matchedUser && typeof db !== 'undefined' && db.company) {
-        try {
-          const company = await db.company.toCollection().first();
-          if (company && String(company.pin).trim() === pinEntered) {
-            matchedUser = { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: company.pin, isActive: true };
-            if (typeof db.tenants !== 'undefined') {
-              targetTenant = await db.tenants.where('adminPin').equals(String(company.pin).trim()).first() ||
-                             await db.tenants.toCollection().first();
-            }
-          }
-        } catch (compErr) {
-          console.warn('Company PIN lookup error:', compErr);
         }
       }
 
@@ -15048,16 +15045,36 @@ const Auth = {
         };
         const roleLabel = roleLabels[matchedUser.role] || 'User';
         UI.showToast(`Welcome, ${matchedUser.fullName || matchedUser.username}! (${roleLabel})`, 'success');
+        this.currentPinInput = '';
+        this.updatePinDots();
         return;
       }
 
-      // If PIN is wrong and length >= 4, shake and reset
-      if (this.currentPinInput.length >= 4) {
-        this.shakeKeypad();
-        UI.showToast('Invalid PIN. Please try again.', 'error');
-        this.currentPinInput = '';
-        this.updatePinDots();
+      // 8. If No Match Yet: Determine if user is in progress of typing a longer valid PIN (e.g. 8-digit PIN)
+      const allKnownPins = [
+        masterPin,
+        ...allTenants.map(t => String(t.adminPin || '').trim()),
+        ...allUsers.map(u => String(u.pin || '').trim()),
+        company?.pin ? String(company.pin).trim() : null
+      ].filter(p => Boolean(p) && p.length >= 4);
+
+      if (allUsers.length === 0 && allTenants.length === 0) {
+        allKnownPins.push('1234', '2222', '3333', '4444', '5555', '7777', '8888');
       }
+
+      const hasPrefixMatch = allKnownPins.some(p => p.startsWith(pinEntered) && p.length > pinEntered.length);
+      const maxRegisteredPinLength = allKnownPins.length > 0 ? Math.max(...allKnownPins.map(p => p.length)) : 8;
+
+      // If this prefix matches a longer registered PIN and user hasn't reached max length, let them keep typing!
+      if (hasPrefixMatch && pinEntered.length < maxRegisteredPinLength && pinEntered.length < 12) {
+        return;
+      }
+
+      // If no valid PIN prefix matches or max digits reached with no match, shake and reset
+      this.shakeKeypad();
+      UI.showToast('Invalid PIN. Please try again.', 'error');
+      this.currentPinInput = '';
+      this.updatePinDots();
     }
   },
 
