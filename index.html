@@ -2496,9 +2496,14 @@ button:active, .btn-touch:active {
             <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span> 🔴 Pending Shop</span>
             <span class="management-or-admin flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> 🚚 Live Rep Location</span>
           </div>
-          <button onclick="MapView.centerToRep()" class="management-or-admin text-xs text-blue-600 hover:text-blue-800 font-black underline cursor-pointer">
-            🎯 Recenter on Rep
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="MapView.fitCurrentRouteBounds()" class="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black shadow-xs flex items-center gap-1 active:scale-95 cursor-pointer" title="Fit entire route on screen">
+              🎯 Recenter Route (මධ්‍යගත කරන්න)
+            </button>
+            <button onclick="MapView.centerToMe()" class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold border border-slate-200 active:scale-95 cursor-pointer" title="Center on my GPS position">
+              📍 My Location
+            </button>
+          </div>
         </div>
 
         <div class="w-full h-[480px] sm:h-[550px] rounded-2xl overflow-hidden border border-slate-200 relative">
@@ -15319,7 +15324,7 @@ function notifyFirestoreChange(collectionName) {
       } else if (tabId === 'tab-users' && typeof Users !== 'undefined' && Users.loadUsers) {
         Users.loadUsers();
       } else if (tabId === 'tab-map' && typeof MapView !== 'undefined' && MapView.refreshMap) {
-        MapView.refreshMap();
+        MapView.refreshMap(false); // Gentle update: do not reset user camera/zoom
       }
     } catch (e) {
       console.warn('Real-time UI refresh notice:', e);
@@ -15863,40 +15868,11 @@ window.filterByTenant = filterByTenant;
 
 // 7. Initialize Default Settings & Default Users if Firestore is empty
 
-// 7.5 Ensure all shops have valid GPS coordinates along Galnewa-Hadungama corridor
-async function ensureShopGpsCoordinates() {
-  try {
-    const rawShops = await db.shops.toArray();
-    const sampleCoords = [
-      { lat: 8.0886000, lng: 80.4578000, desc: 'Galnewa Town Junction' },
-      { lat: 8.0950000, lng: 80.4720000, desc: 'Hadungama D/1' },
-      { lat: 8.1030000, lng: 80.4850000, desc: 'Bulnewa Post Office Rd' },
-      { lat: 8.1180000, lng: 80.5050000, desc: 'Negampaha Main Rd' },
-      { lat: 8.1320000, lng: 80.5200000, desc: 'Meegalewa Junction' },
-      { lat: 8.1450000, lng: 80.4120000, desc: 'Eppawala Town' },
-      { lat: 8.3114000, lng: 80.4037000, desc: 'Anuradhapura City' }
-    ];
-
-    for (let i = 0; i < rawShops.length; i++) {
-      const s = rawShops[i];
-      if (!s.lat || !s.lng || isNaN(s.lat) || isNaN(s.lng) || Number(s.lat) === 0) {
-        const coord = sampleCoords[i % sampleCoords.length];
-        await db.shops.update(s.id, {
-          lat: coord.lat,
-          lng: coord.lng,
-          gpsTaggedAt: new Date().toISOString(),
-          gpsTaggedBy: 'System Auto-Pin'
-        });
-      }
-    }
-  } catch (e) {
-    console.warn('GPS coord ensure notice:', e);
-  }
-}
+// Clean production DB defaults - no hardcoded demo coordinates injected
 
 async function initDatabaseDefaults() {
   try {
-    await ensureShopGpsCoordinates();
+    // Clean production init
     const companyCount = await db.company.count();
     if (companyCount === 0) {
       await db.company.add({
@@ -21478,8 +21454,9 @@ const GPS = {
       const cached = localStorage.getItem('mob_pos_last_gps_pos');
       if (cached) {
         const parsed = JSON.parse(cached);
-        // Purge legacy hardcoded Colombo coordinates
-        if (parsed && Math.abs(parsed.lat - 6.9271) < 0.01 && Math.abs(parsed.lng - 79.8612) < 0.01) {
+        // Purge any Colombo ISP gateway coordinates (6.8 to 7.1 lat, 79.7 to 80.0 lng)
+        const isColomboArea = parsed && (parsed.lat >= 6.8 && parsed.lat <= 7.15 && parsed.lng >= 79.75 && parsed.lng <= 80.05);
+        if (isColomboArea) {
           localStorage.removeItem('mob_pos_last_gps_pos');
           this.currentPos = null;
         } else if (parsed && parsed.lat && parsed.lng) {
@@ -21490,11 +21467,11 @@ const GPS = {
       }
     } catch (e) {}
 
-    // Default to Galnewa / Anuradhapura North-Central area coordinates
+    // Default to Galnewa / North-Central operating base
     this.currentPos = {
-      lat: 8.0886,
-      lng: 80.4578,
-      accuracy: 10,
+      lat: 8.0886000,
+      lng: 80.4578000,
+      accuracy: 5,
       speed: 0,
       heading: 0,
       isManual: false,
@@ -21528,11 +21505,22 @@ const GPS = {
 
   onPositionUpdate(pos) {
     const coords = pos.coords;
+    const lat = Number(coords.latitude.toFixed(7));
+    const lng = Number(coords.longitude.toFixed(7));
+    const accuracy = Math.round(coords.accuracy || 5);
+
+    // If accuracy is very low (>1000m) and in Colombo ISP zone, ignore desktop IP fallback if user is in Galnewa area
+    const isColomboIpFallback = (lat >= 6.8 && lat <= 7.15 && lng >= 79.75 && lng <= 80.05 && accuracy > 500);
+    if (isColomboIpFallback && this.currentPos && this.currentPos.lat && (this.currentPos.lat > 7.5 || this.currentPos.isManual)) {
+      // Keep user's active North-Central coordinates
+      return;
+    }
+
     this.isGpsAvailable = true;
     this.currentPos = {
-      lat: Number(coords.latitude.toFixed(7)),
-      lng: Number(coords.longitude.toFixed(7)),
-      accuracy: Math.round(coords.accuracy || 5),
+      lat: lat,
+      lng: lng,
+      accuracy: accuracy,
       speed: coords.speed ? Math.round(coords.speed * 3.6) : 0, // km/h
       heading: coords.heading || 0,
       isManual: false,
@@ -21543,7 +21531,6 @@ const GPS = {
       localStorage.setItem('mob_pos_last_gps_pos', JSON.stringify(this.currentPos));
     } catch (e) {}
 
-    // Instantly glide user marker on map smoothly!
     if (typeof MapView !== 'undefined' && MapView.updateLiveUserMarker) {
       MapView.updateLiveUserMarker(this.currentPos);
     }
@@ -21554,7 +21541,6 @@ const GPS = {
       this.currentPos.lat, this.currentPos.lng
     ) : 999;
 
-    // If moved even 2 meters (a step or two) OR 3.5s elapsed, sync to cloud & broadcast!
     if (distMoved >= 2 || (now - this.lastRecordedTime > 3500)) {
       this.lastRecordedTime = now;
       this.lastSyncedPos = { lat: this.currentPos.lat, lng: this.currentPos.lng };
@@ -21568,6 +21554,49 @@ const GPS = {
           }
         }
       }
+    }
+  },
+
+  /** Calculate total KM traveled and speed stats for a Rep today */
+  async calculateRepTripStats(repId, dateStr = null) {
+    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    try {
+      if (typeof db === 'undefined' || !db.gpsVisits) return { totalKm: 0, currentSpeed: 0, maxSpeed: 0, count: 0 };
+      const rawVisits = await db.gpsVisits.toArray();
+      const allVisits = filterByTenant(rawVisits);
+      
+      const trail = allVisits
+        .filter(v => String(v.repId) === String(repId) && v.date === targetDate && v.lat && v.lng)
+        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+      let totalMeters = 0;
+      let maxSpeed = 0;
+      let lastSpeed = 0;
+
+      for (let i = 0; i < trail.length; i++) {
+        const p = trail[i];
+        const spd = Number(p.speed) || 0;
+        if (spd > maxSpeed) maxSpeed = spd;
+        lastSpeed = spd;
+
+        if (i > 0) {
+          const prev = trail[i - 1];
+          const dist = this.getDistanceMeters(prev.lat, prev.lng, p.lat, p.lng);
+          // Only add realistic bike movement (ignore satellite teleport jumps > 50km)
+          if (dist < 50000) {
+            totalMeters += dist;
+          }
+        }
+      }
+
+      return {
+        totalKm: Number((totalMeters / 1000).toFixed(1)),
+        currentSpeed: lastSpeed,
+        maxSpeed: maxSpeed,
+        count: trail.length
+      };
+    } catch (e) {
+      return { totalKm: 0, currentSpeed: 0, maxSpeed: 0, count: 0 };
     }
   },
 
@@ -21755,14 +21784,13 @@ window.GPS = GPS;
 // --- BEGIN: map.js ---
 /**
  * Live GPS Route Map & Fleet Tracking Module for MOB POS
- * 1. High-speed Google Maps roadmap & satellite tile engine (0% 403 errors, Max Zoom 22)
- * 2. Visual 'You are Here' marker with real-time gliding motion
- * 3. Delivery Driver Mode: Today / Tomorrow / All Pending Bookings Sequence (#1, #2, #3...)
- * 4. Connected Delivery Route Polyline Path along road sequence
- * 5. Rep Mode: Isolated Route Shops (🟢 Visited & Billed | 🟡 Visited & Closed | 🔴 Pending)
- * 6. Quick Delivery/Shop Dropdown Jump & 1-Click Google Maps Turn-by-Turn Navigation
- * 7. 1-Click Delivery Settlement Modal & Mark Closed actions from Map
- * 8. 100% Immutable Shop Coordinates (Pinned shops stay precisely pinned)
+ * 1. High-speed Google Maps roadmap & satellite tile engine (Max Zoom 22, 0% 403 errors)
+ * 2. Stable Viewport: NO aggressive auto-zoom or camera jumping on background updates
+ * 3. Delivery Driver Mode: Today / Tomorrow / All Scheduled Drops (#1, #2, #3...) with Blue Route Line
+ * 4. Sales Rep Mode: Clean Shop Pins + Real Phone GPS Trail + Chronological Visited Sequence Path (No random lines)
+ * 5. Instant 1-Click Action Buttons: POS Bill, 🔒 Shop Closed, 🤝 Next Time / No Order
+ * 6. Quick Delivery/Shop Search, Town Jump & 1-Click Google Maps Turn-by-Turn Navigation
+ * 7. 100% Immutable Shop Coordinates (Never disappears, never displaced)
  */
 
 const MapView = {
@@ -21777,13 +21805,15 @@ const MapView = {
   shopsCache: [],
   salesTodayCache: [],
   deliveryStopsCache: [],
-  shopMarkersMap: {}, // shopId -> Leaflet marker mapping
+  shopMarkersMap: {},
   currentUserMarker: null,
   currentUserCircle: null,
   repMarkersMap: {},
   pickerMap: null,
   pickerMarker: null,
   pickerSelectedShopId: null,
+  initialFitDone: false, // Prevents aggressive auto zoom/pan reset!
+  currentBounds: [],
 
   isDeliveryUser() {
     if (typeof Auth === 'undefined' || !Auth.currentUser) return false;
@@ -21827,7 +21857,7 @@ const MapView = {
 
     await this.populateFilters();
     this.initMapCanvas();
-    await this.refreshMap();
+    await this.refreshMap(true); // Initial fit on first load
 
     // Listen for realtime location broadcasts
     if (typeof BroadcastChannel !== 'undefined') {
@@ -21841,13 +21871,13 @@ const MapView = {
       } catch (err) {}
     }
 
-    // Auto-refresh Rep location every 15s if tab is open (for Admin)
+    // Gentle background poll every 20s for Admin fleet without resetting user camera/zoom
     setInterval(() => {
       const mapTab = document.getElementById('tab-map');
       if (mapTab && !mapTab.classList.contains('hidden') && this.isManagementUser()) {
-        this.fetchRepLocationsAndRedraw();
+        this.refreshMap(false); // DO NOT force fit bounds on background poll!
       }
-    }, 15000);
+    }, 20000);
   },
 
   async populateFilters() {
@@ -21900,7 +21930,7 @@ const MapView = {
         zoomControl: true
       });
 
-      // Ultra-fast Google Maps Tile Layer with subdomains 0,1,2,3 (Max Zoom 22 for close shops)
+      // Ultra-fast Google Maps Tile Layer (Max Zoom 22 for close shops)
       const streetLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 22,
         maxNativeZoom: 20,
@@ -21936,7 +21966,7 @@ const MapView = {
     }
   },
 
-  /** Smoothly glide user marker on map when moving */
+  /** Smoothly update live user marker position without moving camera */
   updateLiveUserMarker(pos) {
     if (!pos || !pos.lat || !pos.lng) return;
     if (this.currentUserMarker) {
@@ -21958,7 +21988,6 @@ const MapView = {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-    // Update active button styling
     const btnToday = document.getElementById('map-date-btn-today');
     const btnTomorrow = document.getElementById('map-date-btn-tomorrow');
     const btnAll = document.getElementById('map-date-btn-all');
@@ -21987,10 +22016,11 @@ const MapView = {
     const dateInput = document.getElementById('map-target-date');
     if (dateInput && mode !== 'all') dateInput.value = this.activeDate;
 
-    this.refreshMap();
+    this.refreshMap(true); // User clicked a filter -> force fit bounds
   },
 
-  async refreshMap() {
+  /** Master Map Refresh (Preserves zoom/pan unless forceFit = true) */
+  async refreshMap(forceFit = false) {
     if (!this.map) this.initMapCanvas();
     if (!this.map) return;
 
@@ -22008,18 +22038,31 @@ const MapView = {
 
     // 2. Route & Delivery Flow Router
     if (isDelivery) {
-      await this.renderDeliveryDriverMap();
+      await this.renderDeliveryDriverMap(forceFit);
     } else if (isRep) {
-      await this.renderRepRouteMap();
+      await this.renderRepRouteMap(forceFit);
     } else {
-      await this.renderManagementFleetMap();
+      await this.renderManagementFleetMap(forceFit);
+    }
+  },
+
+  /** Explicitly recenter map to current bounds when user clicks Recenter button */
+  fitCurrentRouteBounds() {
+    if (this.currentBounds && this.currentBounds.length > 0 && this.map) {
+      try {
+        this.map.fitBounds(this.currentBounds, { padding: [50, 50], maxZoom: 17 });
+        UI.showToast('🎯 Map centered on current route drops!', 'info');
+      } catch (e) {}
+    } else if (GPS.currentPos && this.map) {
+      this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 16);
+      UI.showToast('📍 Centered on your current location', 'info');
     }
   },
 
   // ═════════════════════════════════════════════════════════════════════════
   // 🚚 DELIVERY DRIVER MAP VIEW (Sequence Drops #1, #2, #3 & Connected Blue Line)
   // ═════════════════════════════════════════════════════════════════════════
-  async renderDeliveryDriverMap() {
+  async renderDeliveryDriverMap(forceFit = false) {
     const todayStr = new Date().toISOString().split('T')[0];
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -22043,7 +22086,7 @@ const MapView = {
       if (!matchRoute) return false;
 
       if (targetDate === 'all') {
-        return s.status === 'Pending' || s.orderType === 'BookTomorrow';
+        return s.status === 'Pending' || s.orderType === 'BookTomorrow' || s.status === 'Delivered';
       } else {
         return (s.deliveryDate === targetDate) || 
                (!s.deliveryDate && s.date && s.date.startsWith(targetDate)) || 
@@ -22080,9 +22123,7 @@ const MapView = {
       }
       shopOrdersMap[sid].orders.push(order);
       shopOrdersMap[sid].totalAmount += (Number(order.totalAmount) || 0);
-      if (order.status === 'Delivered') {
-        // delivered
-      } else {
+      if (order.status !== 'Delivered') {
         shopOrdersMap[sid].allDelivered = false;
         shopOrdersMap[sid].hasPending = true;
       }
@@ -22092,7 +22133,7 @@ const MapView = {
     let deliveryStops = [];
     let seq = 1;
 
-    // If orders exist, show ordered drops; otherwise show all route shops in sequence!
+    // Build delivery drops
     if (deliveryOrders.length > 0) {
       Object.values(shopOrdersMap).forEach(group => {
         const shop = shopDetailsMap[group.shopId];
@@ -22116,7 +22157,7 @@ const MapView = {
         }
       });
     } else {
-      // Fallback: Show all shops in active route (or all shops) so route line is ALWAYS drawn!
+      // If NO delivery orders booked, show shops cleanly WITHOUT drawing random lines
       let targetShops = allShops;
       if (this.activeRouteId !== 'all') {
         targetShops = allShops.filter(s => String(s.routeId) === String(this.activeRouteId));
@@ -22132,7 +22173,7 @@ const MapView = {
           orders: [],
           totalAmount: 0,
           isDelivered: false,
-          isPending: true,
+          isPending: false,
           firstOrderId: null,
           firstInvoiceNo: null,
           lat: hasValidCoords ? lat : null,
@@ -22152,7 +22193,7 @@ const MapView = {
     // Render each delivery stop marker
     deliveryStops.forEach(stop => {
       if (stop.isDelivered) deliveredCount++;
-      else pendingCount++;
+      else if (stop.isPending) pendingCount++;
 
       if (!stop.lat || !stop.lng) {
         noGpsCount++;
@@ -22161,12 +22202,17 @@ const MapView = {
 
       const latLng = [stop.lat, stop.lng];
       bounds.push(latLng);
-      routeCoords.push(latLng);
+
+      // Only add to route polyline if there are active delivery orders
+      if (deliveryOrders.length > 0) {
+        routeCoords.push(latLng);
+      }
 
       const isDone = stop.isDelivered;
-      const pinBg = isDone ? '#059669' : '#2563eb'; // Green or Bright Blue
-      const iconText = isDone ? `✓ #${stop.seq}` : `#${stop.seq}`;
-      const statusTag = isDone ? '✅ Delivered' : `📦 Drop #${stop.seq}`;
+      const hasOrder = stop.orders && stop.orders.length > 0;
+      const pinBg = isDone ? '#059669' : (hasOrder ? '#2563eb' : '#64748b');
+      const iconText = isDone ? `✓ #${stop.seq}` : (hasOrder ? `#${stop.seq}` : '🏪');
+      const statusTag = isDone ? '✅ Delivered' : (hasOrder ? `📦 Drop #${stop.seq}` : '🏪 Route Shop');
 
       const iconHtml = `
         <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -22213,7 +22259,7 @@ const MapView = {
             </div>
           ` : `
             <div style="background: #f1f5f9; border-radius: 8px; padding: 5px 8px; margin-bottom: 8px; font-size: 10.5px; color: #475569; font-weight: bold;">
-              📍 Scheduled Route Drop #${stop.seq}
+              📍 Route Shop (No delivery booked for this date)
             </div>
           `}
           <div style="display: flex; gap: 6px;">
@@ -22238,9 +22284,9 @@ const MapView = {
       this.shopMarkersMap[stop.shop.id] = marker;
     });
 
-    // ── 🌟 DRAW CONNECTED BLUE DELIVERY ROUTE PATH (පැහැදිලි නිල් මාර්ගය) ──
-    if (routeCoords.length >= 2) {
-      // 1. Glowing cyan shadow line
+    // ── 🌟 DRAW CONNECTED BLUE DELIVERY ROUTE PATH ONLY FOR SCHEDULED DROPS ──
+    if (deliveryOrders.length > 0 && routeCoords.length >= 2) {
+      // 1. Cyan Glow Line
       const glowLine = L.polyline(routeCoords, {
         color: '#38bdf8',
         weight: 10,
@@ -22250,7 +22296,7 @@ const MapView = {
       });
       this.trailLayer.addLayer(glowLine);
 
-      // 2. Bold royal blue connected route line
+      // 2. Bold Royal Blue Sequential Line
       const routeLine = L.polyline(routeCoords, {
         color: '#1d4ed8',
         weight: 5,
@@ -22262,11 +22308,17 @@ const MapView = {
       this.trailLayer.addLayer(routeLine);
     }
 
+    this.currentBounds = bounds;
+
     // Update Hero & Dropdown
     const heroRouteText = document.getElementById('map-hero-route-text');
     if (heroRouteText) {
       const dateLabel = isShowingTomorrowFallback ? `හෙට (${tomorrowStr}) සඳහා ඇණවුම්` : (targetDate === 'all' ? 'සියලුම ඇණවුම්' : `${targetDate} ඇණවුම්`);
-      heroRouteText.textContent = `🚚 බෙදාහැරීමේ මාර්ගය (${dateLabel}): කඩ ${deliveryStops.length}ක් පිළිවෙලින් සම්බන්ධ කර ඇත (තව ${pendingCount}ක් ඉතිරියි)`;
+      if (deliveryOrders.length > 0) {
+        heroRouteText.textContent = `🚚 බෙදාහැරීමේ මාර්ගය (${dateLabel}): Drops ${deliveryStops.length}ක් පිළිවෙලින් සම්බන්ධ කර ඇත (තව ${pendingCount}ක් ඉතිරියි)`;
+      } else {
+        heroRouteText.textContent = `🚚 බෙදාහැරීමේ මාර්ගය (${dateLabel}): මෙම දිනයට බෙදාහැරීම් ඇණවුම් නොමැත (No Drops)`;
+      }
     }
 
     const pendingPill = document.getElementById('map-rep-pending-pill');
@@ -22278,12 +22330,17 @@ const MapView = {
     this.populateDeliveryDropsSelect(deliveryStops);
     this.updateKpiCounters(deliveredCount, pendingCount, deliveryStops.length, noGpsCount);
 
-    if (bounds.length > 0 && this.map) {
-      try {
-        this.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-      } catch (e) {}
-    } else if (GPS.currentPos && this.map) {
-      this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 14);
+    // Camera positioning: ONLY fit bounds if explicitly requested or first time!
+    if (forceFit || !this.initialFitDone) {
+      if (bounds.length > 0 && this.map) {
+        try {
+          this.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+          this.initialFitDone = true;
+        } catch (e) {}
+      } else if (GPS.currentPos && this.map) {
+        this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 14);
+        this.initialFitDone = true;
+      }
     }
   },
 
@@ -22294,18 +22351,19 @@ const MapView = {
 
     let html = '<option value="">🎯 Quick Jump to Delivery Drop (බෙදාහැරීම් කඩය)...</option>';
     stops.forEach(stop => {
-      const statusIcon = stop.isDelivered ? '✅ [Delivered]' : '📦 [Pending]';
+      const statusIcon = stop.isDelivered ? '✅ [Delivered]' : (stop.orders && stop.orders.length > 0 ? '📦 [Pending]' : '🏪');
       const gpsStatus = (!stop.lat || !stop.lng) ? ' (⚠️ No GPS)' : '';
-      html += `<option value="${stop.shop.id}">${stop.seq}. ${statusIcon} ${stop.shop.name} • Rs. ${stop.totalAmount.toLocaleString()}${gpsStatus}</option>`;
+      html += `<option value="${stop.shop.id}">${stop.seq}. ${statusIcon} ${stop.shop.name} ${stop.totalAmount > 0 ? `• Rs. ${stop.totalAmount.toLocaleString()}` : ''}${gpsStatus}</option>`;
     });
 
     selectEl.innerHTML = html;
   },
 
   // ═════════════════════════════════════════════════════════════════════════
-  // 🛍️ SALES REP ROUTE MAP VIEW (🟢 Billed | 🟡 Closed | 🔴 Pending)
+  // 🛍️ SALES REP ROUTE MAP VIEW (🟢 Billed | 🟡 Closed | 🔵 No Order | 🔴 Pending)
+  // Clean Pins + Real GPS Trail + Chronological Visited Sequence (No random lines)
   // ═════════════════════════════════════════════════════════════════════════
-  async renderRepRouteMap() {
+  async renderRepRouteMap(forceFit = false) {
     const repRouteInfo = this.getRepActiveRoute();
     if (repRouteInfo && repRouteInfo.id) {
       this.activeRouteId = String(repRouteInfo.id);
@@ -22342,13 +22400,13 @@ const MapView = {
     const billedShopIds = new Set(this.salesTodayCache.map(s => Number(s.shopId)));
 
     const bounds = [];
-    const routeCoords = [];
     let billedCount = 0;
     let closedCount = 0;
     let noOrderCount = 0;
     let pendingCount = 0;
     let noGpsCount = 0;
 
+    // Render shop markers
     filteredShops.forEach(shop => {
       const isBilled = billedShopIds.has(Number(shop.id));
       const isClosed = closedShopIds.has(Number(shop.id));
@@ -22370,25 +22428,20 @@ const MapView = {
 
       const latLng = [lat, lng];
       bounds.push(latLng);
-      routeCoords.push(latLng);
 
       // Distinct marker styling for Billed vs Closed vs No Order vs Pending
       let pinColor = '#ef4444'; // Red Pending
       let iconSymbol = '🏪';
-      let statusTag = '⏳ Pending (නොගිය කඩ)';
 
       if (isBilled) {
         pinColor = '#10b981'; // Green Billed
         iconSymbol = '✓';
-        statusTag = '✅ Billed & Visited Today';
       } else if (isClosed) {
         pinColor = '#f59e0b'; // Amber Closed
         iconSymbol = '🔒';
-        statusTag = '🔒 Visited • Shop Closed (වසා ඇත)';
       } else if (isNoOrder) {
         pinColor = '#0284c7'; // Sky Blue No Order / Next Time
         iconSymbol = '🤝';
-        statusTag = '🤝 Visited • සල්ලි නෑ (ඊළඟ පාර)';
       }
 
       const iconHtml = `
@@ -22415,7 +22468,7 @@ const MapView = {
       const popupContent = `
         <div style="font-family: system-ui, sans-serif; min-width: 210px; padding: 3px;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-            <span style="font-size: 18px;">${iconSymbol === '✓' ? '🟢' : (iconSymbol === '🔒' ? '🟡' : '🏪')}</span>
+            <span style="font-size: 18px;">${iconSymbol === '✓' ? '🟢' : (iconSymbol === '🔒' ? '🟡' : (iconSymbol === '🤝' ? '🔵' : '🏪'))}</span>
             <strong style="font-size: 13.5px; color: #0f172a; line-height: 1.2;">${shop.name}</strong>
           </div>
           <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
@@ -22446,17 +22499,13 @@ const MapView = {
       this.shopMarkersMap[shop.id] = marker;
     });
 
-    // Draw route guide path for Rep
-    if (routeCoords.length >= 2) {
-      const routeLine = L.polyline(routeCoords, {
-        color: '#6366f1',
-        weight: 3.5,
-        opacity: 0.75,
-        dashArray: '8, 6',
-        lineCap: 'round'
-      });
-      this.trailLayer.addLayer(routeLine);
-    }
+    // ── 🌟 1. DRAW ACTUAL PHONE GPS TRAIL (WHERE THE REP ACTUALLY TRAVELLED) ──
+    await this.drawRepTrail(this.activeRepId, '#3b82f6');
+
+    // ── 🌟 2. DRAW CHRONOLOGICAL VISITED & BILLED SHOPS SEQUENCE (Shop 1 ➔ Shop 2...) ──
+    await this.drawChronologicalVisitedPath(this.salesTodayCache, todayVisits, filteredShops);
+
+    this.currentBounds = bounds;
 
     const heroRouteText = document.getElementById('map-hero-route-text');
     if (heroRouteText) {
@@ -22474,13 +22523,78 @@ const MapView = {
 
     this.updateKpiCounters(billedCount + closedCount + noOrderCount, pendingCount, filteredShops.length, noGpsCount);
 
-    if (bounds.length > 0 && this.map) {
-      try {
-        this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-      } catch (e) {}
-    } else if (GPS.currentPos && this.map) {
-      this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 14);
+    // Camera positioning: ONLY fit bounds if explicitly requested or first time!
+    if (forceFit || !this.initialFitDone) {
+      if (bounds.length > 0 && this.map) {
+        try {
+          this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+          this.initialFitDone = true;
+        } catch (e) {}
+      } else if (GPS.currentPos && this.map) {
+        this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 14);
+        this.initialFitDone = true;
+      }
     }
+  },
+
+  /** Draw chronological visited sequence line between visited shops today */
+  async drawChronologicalVisitedPath(salesToday, visitsToday, shops) {
+    if (!this.trailLayer) return;
+
+    try {
+      const shopMap = Object.fromEntries(shops.map(s => [Number(s.id), s]));
+      const events = [];
+
+      // Add sales
+      salesToday.forEach(s => {
+        if (s.shopId && shopMap[Number(s.shopId)]) {
+          events.push({
+            shopId: Number(s.shopId),
+            timestamp: s.timestamp || (s.createdAt ? new Date(s.createdAt).getTime() : 0),
+            type: 'sale'
+          });
+        }
+      });
+
+      // Add visits
+      visitsToday.forEach(v => {
+        if (v.shopId && shopMap[Number(v.shopId)]) {
+          events.push({
+            shopId: Number(v.shopId),
+            timestamp: v.timestamp || 0,
+            type: 'visit'
+          });
+        }
+      });
+
+      events.sort((a, b) => a.timestamp - b.timestamp);
+
+      const visitedCoords = [];
+      const seenShops = new Set();
+
+      events.forEach(e => {
+        if (!seenShops.has(e.shopId)) {
+          seenShops.add(e.shopId);
+          const shop = shopMap[e.shopId];
+          if (shop && shop.lat && shop.lng) {
+            visitedCoords.push([Number(shop.lat), Number(shop.lng)]);
+          }
+        }
+      });
+
+      // Connect visited shops in actual order of visits
+      if (visitedCoords.length >= 2) {
+        const visitedLine = L.polyline(visitedCoords, {
+          color: '#10b981',
+          weight: 4,
+          opacity: 0.85,
+          dashArray: '8, 6',
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+        this.trailLayer.addLayer(visitedLine);
+      }
+    } catch (e) {}
   },
 
   /** Populate Quick Jump dropdown for Reps */
@@ -22504,7 +22618,23 @@ const MapView = {
   },
 
   /** Mark shop closed from Map Popup */
-  
+  async markShopClosed(shopId) {
+    const shop = await db.shops.get(Number(shopId));
+    if (!shop) return;
+    if (!confirm(`Mark "${shop.name}" as CLOSED today? (අද දින මෙම කඩය වසා ඇති බව සටහන් කරන්නද?)`)) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const pos = (typeof GPS !== 'undefined' && GPS.currentPos) ? GPS.currentPos : { lat: shop.lat || 8.0886, lng: shop.lng || 80.4578 };
+
+    if (typeof GPS !== 'undefined' && GPS.recordBreadcrumb) {
+      await GPS.recordBreadcrumb(pos, 'shop_closed', shop.id, shop.name);
+    }
+
+    UI.showToast(`🔒 "${shop.name}" marked as CLOSED today!`, 'info');
+    if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
+    this.refreshMap(false);
+  },
+
   /** Mark shop as visited with No Order / Next Time */
   async markNoOrder(shopId) {
     const shop = await db.shops.get(Number(shopId));
@@ -22520,30 +22650,13 @@ const MapView = {
 
     UI.showToast(`🤝 "${shop.name}" marked as Visited (No Order)!`, 'info');
     if (typeof SoundFX !== 'undefined') SoundFX.play('collect');
-    this.refreshMap();
-  },
-
-  async markShopClosed(shopId) {
-    const shop = await db.shops.get(Number(shopId));
-    if (!shop) return;
-    if (!confirm(`Mark "${shop.name}" as CLOSED today? (අද දින මෙම කඩය වසා ඇති බව සටහන් කරන්නද?)`)) return;
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const pos = (typeof GPS !== 'undefined' && GPS.currentPos) ? GPS.currentPos : { lat: shop.lat || 8.0886, lng: shop.lng || 80.4578 };
-
-    if (typeof GPS !== 'undefined' && GPS.recordBreadcrumb) {
-      await GPS.recordBreadcrumb(pos, 'shop_closed', shop.id, shop.name);
-    }
-
-    UI.showToast(`🔒 "${shop.name}" marked as CLOSED today!`, 'info');
-    if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
-    this.refreshMap();
+    this.refreshMap(false);
   },
 
   // ═════════════════════════════════════════════════════════════════════════
   // 👑 ADMIN & MANAGEMENT FULL FLEET MAP VIEW
   // ═════════════════════════════════════════════════════════════════════════
-  async renderManagementFleetMap() {
+  async renderManagementFleetMap(forceFit = false) {
     const heroRouteText = document.getElementById('map-hero-route-text');
     if (heroRouteText) {
       if (this.activeRouteId === 'all') {
@@ -22622,7 +22735,7 @@ const MapView = {
 
       const popupContent = `
         <div style="font-family: system-ui, sans-serif; min-width: 200px; padding: 3px;">
-          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <div style="display: flex; align-items: gap: 6px; margin-bottom: 4px;">
             <span style="font-size: 18px;">🏪</span>
             <strong style="font-size: 13.5px; color: #0f172a; line-height: 1.2;">${shop.name}</strong>
           </div>
@@ -22650,14 +22763,20 @@ const MapView = {
 
     await this.drawRepLocationsAndTrails(bounds);
 
+    this.currentBounds = bounds;
     this.updateKpiCounters(visitedCount, pendingCount, filteredShops.length, noGpsCount);
 
-    if (bounds.length > 0 && this.map) {
-      try {
-        this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-      } catch (e) {}
-    } else if (GPS.currentPos && this.map) {
-      this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 14);
+    // Camera positioning: ONLY fit bounds if explicitly requested or first time!
+    if (forceFit || !this.initialFitDone) {
+      if (bounds.length > 0 && this.map) {
+        try {
+          this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+          this.initialFitDone = true;
+        } catch (e) {}
+      } else if (GPS.currentPos && this.map) {
+        this.map.setView([GPS.currentPos.lat, GPS.currentPos.lng], 14);
+        this.initialFitDone = true;
+      }
     }
   },
 
@@ -22786,6 +22905,7 @@ const MapView = {
         const repSales = this.salesTodayCache.filter(s => String(s.repId) === String(repUser.id));
         const totalBilled = repSales.reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
         const visitedShopsCount = new Set(repSales.map(s => Number(s.shopId))).size;
+        const repStats = (typeof GPS !== 'undefined' && GPS.calculateRepTripStats) ? await GPS.calculateRepTripStats(repUser.id, this.activeDate) : { totalKm: 0, maxSpeed: 0 };
 
         const repIconHtml = `
           <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
@@ -22819,8 +22939,10 @@ const MapView = {
               ${statusText} ${repLoc.speed ? `• ${repLoc.speed} km/h` : ''}
             </div>
             <div style="font-size: 11px; color: #334155; margin-bottom: 6px;">
+              🏍️ Distance Traveled (ගමන් කළ දුර): <b style="color: #2563eb;">${repStats.totalKm} KM</b><br>
+              ⚡ Speed (වේගය): <b>${repLoc.speed || 0} km/h</b> (Max: ${repStats.maxSpeed} km/h)<br>
               🏪 Shops Visited: <b>${visitedShopsCount} shops</b><br>
-              💰 Sales Today: <b>Rs. ${totalBilled.toLocaleString()}</b><br>
+              💰 Sales Today: <b style="color: #16a34a;">Rs. ${totalBilled.toLocaleString()}</b><br>
               📍 GPS Lat: ${repLoc.lat.toFixed(5)}, Lng: ${repLoc.lng.toFixed(5)}
             </div>
             ${repUser.phone ? `
@@ -22894,6 +23016,7 @@ const MapView = {
       const repSales = this.salesTodayCache.filter(s => String(s.repId) === String(rep.id));
       const totalBilled = repSales.reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
       const visitedCount = new Set(repSales.map(s => Number(s.shopId))).size;
+      const repStats = (typeof GPS !== 'undefined' && GPS.calculateRepTripStats) ? await GPS.calculateRepTripStats(rep.id, this.activeDate) : { totalKm: 0, maxSpeed: 0 };
 
       let statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-600">⚫ Offline</span>`;
       if (isLive) {
@@ -22918,14 +23041,22 @@ const MapView = {
               <div>${statusBadge}</div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-slate-100 text-center">
-              <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
-                <span class="text-[9px] uppercase font-bold text-slate-400 block">Shops Visited</span>
-                <div class="text-xs font-black text-slate-800 mt-0.5">${visitedCount} Shops</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3 pt-2.5 border-t border-slate-100 text-center">
+              <div class="bg-blue-50/70 p-2 rounded-xl border border-blue-100">
+                <span class="text-[9px] uppercase font-bold text-blue-600 block">🏍️ Bike Distance</span>
+                <div class="text-xs sm:text-sm font-black text-blue-950 mt-0.5">${repStats.totalKm} KM</div>
+              </div>
+              <div class="bg-amber-50/70 p-2 rounded-xl border border-amber-100">
+                <span class="text-[9px] uppercase font-bold text-amber-700 block">⚡ Live Speed</span>
+                <div class="text-xs sm:text-sm font-black text-amber-950 mt-0.5">${loc?.speed || 0} km/h</div>
               </div>
               <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
-                <span class="text-[9px] uppercase font-bold text-slate-400 block">Today's Sales</span>
-                <div class="text-xs font-black text-emerald-700 mt-0.5">${UI.formatCurrency(totalBilled)}</div>
+                <span class="text-[9px] uppercase font-bold text-slate-500 block">🏪 Shops Visited</span>
+                <div class="text-xs sm:text-sm font-black text-slate-800 mt-0.5">${visitedCount} Shops</div>
+              </div>
+              <div class="bg-emerald-50/70 p-2 rounded-xl border border-emerald-100">
+                <span class="text-[9px] uppercase font-bold text-emerald-700 block">💰 Sales Today</span>
+                <div class="text-xs sm:text-sm font-black text-emerald-800 mt-0.5">${UI.formatCurrency(totalBilled)}</div>
               </div>
             </div>
           </div>
@@ -22966,18 +23097,11 @@ const MapView = {
     } catch (e) {}
   },
 
-  async fetchRepLocationsAndRedraw() {
-    if (!this.map) return;
-    this.refreshMap();
-  },
-
   updateRepLivePosition(repData) {
     if (!this.map || !repData) return;
     const marker = this.repMarkersMap[repData.repId];
     if (marker && repData.lat && repData.lng) {
       marker.setLatLng([repData.lat, repData.lng]);
-    } else {
-      this.refreshMap();
     }
   },
 
@@ -22999,17 +23123,17 @@ const MapView = {
 
   onRepFilterChange(repVal) {
     this.activeRepId = repVal;
-    this.refreshMap();
+    this.refreshMap(true);
   },
 
   onRouteFilterChange(routeVal) {
     this.activeRouteId = routeVal;
-    this.refreshMap();
+    this.refreshMap(true);
   },
 
   onDateFilterChange(dateVal) {
     this.activeDate = dateVal;
-    this.refreshMap();
+    this.refreshMap(true);
   },
 
   async calibrateHere(lat, lng) {
@@ -23087,7 +23211,7 @@ const MapView = {
       const allReps = filterByTenant(rawReps);
       const rep = allReps[0];
       if (rep && rep.lat && rep.lng && this.map) {
-        this.map.flyTo([Number(rep.lat), Number(rep.lng)], 15, { animate: true });
+        this.map.flyTo([Number(rep.lat), Number(rep.lng)], 16, { animate: true });
       } else {
         UI.showToast('No active Rep GPS signals found', 'warning');
       }
@@ -23190,7 +23314,7 @@ const MapView = {
       if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
 
       if (typeof Shops !== 'undefined' && Shops.loadShops) Shops.loadShops();
-      this.refreshMap();
+      this.refreshMap(false);
     } catch (e) {
       UI.showToast('Error saving location: ' + e.message, 'error');
     }
