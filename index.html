@@ -380,47 +380,196 @@ button:active, .btn-touch:active {
   50% { border-color: #4ade80; box-shadow: 0 0 0 9999px rgba(0,0,0,0.4), 0 0 16px 4px #4ade80; }
 }
 
-/* ── Thermal Receipt & Document Printing ───────────────── */
+/* ── Thermal Receipt & Document Printing (Optimized for Epson TM-T82 80mm & 58mm) ── */
 #thermal-receipt-container { display: none; }
 
+.thermal-receipt {
+  width: 70mm !important;
+  max-width: 70mm !important;
+  margin: 0 !important;
+  padding: 1.5mm 2mm 2.5mm 2.5mm !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Noto Sans Sinhala", "Iskoola Pota" !important;
+  font-size: 11.5px !important;
+  line-height: 1.3 !important;
+  color: #000000 !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+  -webkit-text-size-adjust: 100% !important;
+}
+
+.thermal-receipt.width-58mm {
+  width: 52mm !important;
+  max-width: 52mm !important;
+  padding: 1mm 1.5mm 2mm 1.5mm !important;
+  font-size: 10px !important;
+}
+
+.thermal-receipt.width-80mm {
+  width: 70mm !important;
+  max-width: 70mm !important;
+  padding: 1.5mm 2mm 2.5mm 2.5mm !important;
+  font-size: 11.5px !important;
+}
+
+.thermal-receipt .receipt-logo {
+  max-height: 42px;
+  max-width: 155px;
+  margin: 0 auto 2px auto;
+  display: block;
+  object-fit: contain;
+  filter: grayscale(100%) contrast(160%);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.thermal-receipt .receipt-header-title {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+  margin-bottom: 2px;
+}
+
+.thermal-receipt .receipt-header-sub {
+  font-size: 9.5px !important;
+  text-align: center;
+  line-height: 1.25;
+  color: #000000;
+}
+
+.thermal-receipt .receipt-badge {
+  display: inline-block;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.4px;
+  text-align: center;
+  padding: 1px 6px;
+  border: 1.5px solid #000000;
+  border-radius: 3px;
+  margin: 1.5px auto;
+}
+
+.thermal-receipt .receipt-divider {
+  border-bottom: 1px dashed #000000;
+  margin: 2.5px 0;
+  width: 100%;
+}
+
+.thermal-receipt .receipt-divider-double {
+  border-bottom: 2px solid #000000;
+  margin: 2.5px 0;
+  width: 100%;
+}
+
+.thermal-receipt table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+.thermal-receipt table th {
+  padding: 1.5px 0;
+  font-weight: 900;
+  font-size: 10.5px !important;
+  border-bottom: 1.5px solid #000000;
+  text-transform: uppercase;
+}
+
+.thermal-receipt table td {
+  padding: 1.2px 0;
+  vertical-align: top;
+}
+
+.thermal-receipt .item-row {
+  border-bottom: 1px dotted #888888;
+}
+
+.thermal-receipt .credit-box {
+  border: 1.5px solid #000000;
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: 2.5px 0;
+  background: #ffffff;
+}
+
+.thermal-receipt .barcode-container {
+  text-align: center;
+  margin: 3px auto 1px auto;
+  padding-top: 1px;
+}
+
+.thermal-receipt .barcode-text {
+  font-size: 9.5px !important;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-top: 1px;
+  font-family: monospace;
+}
+
+.thermal-receipt .receipt-footer {
+  text-align: center;
+  font-size: 9px !important;
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+.thermal-receipt .receipt-tear-space {
+  height: 3mm;
+}
+
 @media print {
-  body * { visibility: hidden; }
-  html, body {
-    width: 100%;
+  @page {
     margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-    color: #000 !important;
+    size: auto;
   }
-  #thermal-receipt-container, #thermal-receipt-container * { visibility: visible; }
-  #thermal-receipt-container {
+
+  /* 1. COMPLETELY HIDE ALL UI DOM ELEMENTS TO PREVENT EXTRA PAGES */
+  body > *:not(#thermal-receipt-container) {
+    display: none !important;
+  }
+
+  body > #thermal-receipt-container {
     display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100% !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 70mm !important;
+    max-width: 70mm !important;
+    background: #ffffff !important;
   }
+
+  body > #thermal-receipt-container * {
+    visibility: visible !important;
+  }
+
+  html, body {
+    width: 70mm !important;
+    max-width: 70mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   .thermal-receipt {
-    width: 100% !important;
-    max-width: 58mm;
-    margin: 0 auto !important;
-    padding: 4px 6px !important;
-    font-family: "Courier New", Courier, monospace !important;
-    font-size: 11px !important;
-    line-height: 1.25 !important;
-    color: #000 !important;
-    background: #fff !important;
+    width: 70mm !important;
+    max-width: 70mm !important;
+    padding: 1.5mm 2mm 2.5mm 2.5mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
-  .thermal-receipt.width-80mm { max-width: 80mm !important; font-size: 13px !important; }
-  .thermal-receipt .dashed-line { border-bottom: 1px dashed #000 !important; margin: 4px 0 !important; }
-  .thermal-receipt table { width: 100% !important; border-collapse: collapse !important; font-size: inherit !important; }
-  .thermal-receipt th, .thermal-receipt td { padding: 2px 0 !important; }
-  .thermal-receipt .text-left  { text-align: left  !important; }
-  .thermal-receipt .text-center{ text-align: center!important; }
-  .thermal-receipt .text-right { text-align: right !important; }
-  .thermal-receipt .font-bold  { font-weight: bold !important; }
 
   /* Full-Page Document / A4 Manifest / Report Print */
   .a4-document-print {
@@ -428,7 +577,7 @@ button:active, .btn-touch:active {
     padding: 15px !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     font-size: 12px !important;
-    color: #000 !important;
+    color: #000000 !important;
   }
   .a4-document-print table {
     width: 100% !important;
@@ -437,7 +586,7 @@ button:active, .btn-touch:active {
   }
   .a4-document-print th {
     background: #f1f5f9 !important;
-    color: #000 !important;
+    color: #000000 !important;
     border: 1px solid #cbd5e1 !important;
     padding: 6px !important;
     font-weight: bold !important;
@@ -1898,16 +2047,21 @@ button:active, .btn-touch:active {
         </div>
 
         <div>
-          <label class="text-[11px] font-bold text-slate-500 block mb-1">Thermal Printer Width</label>
-          <select id="sett-printer-width" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold">
+          <label class="text-[11px] font-bold text-slate-500 block mb-1">Thermal Printer Width (ප්‍රින්ටර් ප්‍රමාණය)</label>
+          <select id="sett-printer-width" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800">
+            <option value="80mm" selected>80mm (Wide Thermal Printer / Epson TM-T82 / USB / POS)</option>
             <option value="58mm">58mm (Standard Mobile Bluetooth Printer - 32 Cols)</option>
-            <option value="80mm">80mm (Wide Thermal Printer - 48 Cols)</option>
           </select>
         </div>
 
-        <button onclick="Settings.saveCompanyProfile()" class="w-full bg-emerald-600 text-white text-xs font-bold py-2.5 rounded-2xl shadow hover:bg-emerald-700 active:scale-95">
-          Save Company Profile & Settings
-        </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <button type="button" onclick="Settings.saveCompanyProfile()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-3 rounded-2xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+            <span>💾 Save Profile & Settings</span>
+          </button>
+          <button type="button" onclick="Settings.handleTestPrint()" class="w-full bg-slate-900 hover:bg-slate-800 text-emerald-400 text-xs font-black py-3 rounded-2xl border border-slate-700 shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
+            <span>🖨️ Test Print (Epson TM-T82 ටෙස්ට් බිල)</span>
+          </button>
+        </div>
       </div>
 
       <!-- ============================================================
@@ -2400,13 +2554,33 @@ button:active, .btn-touch:active {
           </div>
         </div>
 
-        <!-- Remember Me Checkbox -->
-        <div class="flex items-center justify-between pt-1">
-          <label class="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-300 hover:text-white transition-colors">
-            <input type="checkbox" id="login-remember-me"
-              class="w-4 h-4 rounded text-emerald-500 bg-slate-800 border-slate-700 focus:ring-emerald-500/30 focus:ring-offset-slate-900 cursor-pointer" />
-            <span class="font-medium text-[11px] sm:text-xs">Password එක Save කර තබන්න</span>
+        <!-- Remember Me Toggle -->
+        <div class="flex items-center justify-between pt-1.5 pb-0.5">
+          <label for="login-remember-me" class="flex items-center gap-3 cursor-pointer select-none group">
+            <!-- Custom Toggle Switch -->
+            <div class="relative">
+              <input type="checkbox" id="login-remember-me" class="sr-only peer" />
+              <div class="w-10 h-5 bg-slate-700 peer-focus:ring-2 peer-focus:ring-emerald-500/40 rounded-full peer 
+                          peer-checked:after:translate-x-5 peer-checked:after:border-white 
+                          after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                          after:bg-white after:border-slate-300 after:border after:rounded-full 
+                          after:h-4 after:w-4 after:transition-all after:shadow-sm
+                          peer-checked:bg-emerald-600 border border-slate-600 peer-checked:border-emerald-500
+                          transition-all duration-200 shadow-inner"></div>
+            </div>
+            <div class="flex flex-col leading-tight">
+              <span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">
+                💾 Login Save කරන්න
+              </span>
+              <span class="text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors">
+                App open කළ විට auto login වේ
+              </span>
+            </div>
           </label>
+          <!-- Saved indicator badge -->
+          <span id="remember-me-status-badge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-900/60 text-emerald-400 border border-emerald-700/50">
+            ✓ Saved
+          </span>
         </div>
 
         <!-- Submit Button -->
@@ -2757,9 +2931,21 @@ button:active, .btn-touch:active {
         <input type="text" id="coll-modal-note" placeholder="Cash recovery / Check note" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs" />
       </div>
 
-      <button onclick="Collections.submitCollection()" class="w-full bg-green-600 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-green-600/30 hover:bg-green-700 active:scale-95">
-        Save & Record Payment 💵
-      </button>
+      <div class="flex items-center gap-2 px-1">
+        <input type="checkbox" id="coll-modal-autoprint" checked class="w-4 h-4 text-green-600 rounded border-slate-300 focus:ring-green-500" />
+        <label for="coll-modal-autoprint" class="text-xs font-bold text-slate-700 select-none cursor-pointer">
+          🖨️ Auto Print Receipt (රිසිට්පත Print කරන්න)
+        </label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="Collections.submitCollection(false)" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black py-3 rounded-2xl active:scale-95 transition-all">
+          Save Only 💾
+        </button>
+        <button onclick="Collections.submitCollection(true)" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-green-600/30 active:scale-95 transition-all flex items-center justify-center gap-1">
+          Save &amp; Print 🖨️
+        </button>
+      </div>
     </div>
   </div>
 
@@ -3123,10 +3309,6 @@ button:active, .btn-touch:active {
   </div>
 
 
-  <!-- =========================================================================
-       PRINT CONTAINER (For 58mm / 80mm Mobile Thermal Receipts)
-       ========================================================================= -->
-  <div id="thermal-receipt-container"></div>
 
 
   <!-- =========================================================================
@@ -3744,6 +3926,11 @@ button:active, .btn-touch:active {
     </div>
   </div>
 
+
+  <!-- =========================================================================
+       THERMAL RECEIPT PRINT CONTAINER (Hidden on screen, active on window.print)
+       ========================================================================= -->
+  <div id="thermal-receipt-container"></div>
 
   <!-- =========================================================================
        APPLICATION SCRIPTS
@@ -13855,7 +14042,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 });
 
 
-// --- db.js ---
+// --- BEGIN: db.js ---
 /**
  * Real-Time Cloud Database Layer using Google Firebase Firestore (JS SDK v10)
  * Project ID: company-pos
@@ -15060,7 +15247,9 @@ async function importDatabaseFromJson(jsonString) {
 }
 
 
-// --- auth.js ---
+// --- END: db.js ---
+
+// --- BEGIN: auth.js ---
 /**
  * Multi-User Authentication & Role-Based Access Control (RBAC)
  * Supports Admin vs Sales Rep Roles, Custom PINs, and Session State
@@ -15216,8 +15405,19 @@ const Auth = {
     if (passwordEl) passwordEl.value = '';
 
     const rememberEl = document.getElementById('login-remember-me');
+    const rememberActive = localStorage.getItem('spice_pos_remember') === 'true';
     if (rememberEl) {
-      rememberEl.checked = localStorage.getItem('spice_pos_remember') === 'true';
+      rememberEl.checked = rememberActive;
+    }
+
+    // Show/hide "✓ Saved" badge next to toggle
+    const savedBadge = document.getElementById('remember-me-status-badge');
+    if (savedBadge) {
+      if (rememberActive) {
+        savedBadge.classList.remove('hidden');
+      } else {
+        savedBadge.classList.add('hidden');
+      }
     }
 
     // Focus appropriate input field
@@ -15313,7 +15513,7 @@ const Auth = {
           matchedUser = {
             id: matchedTenant.id,
             username: matchedTenant.adminUsername,
-            fullName: `${matchedTenant.ownerName || 'Admin'} (${matchedTenant.companyName})`,
+            fullName: matchedTenant.ownerName || 'Admin',
             role: 'admin',
             pin: matchedTenant.adminPin,
             isActive: matchedTenant.isActive !== false,
@@ -16051,7 +16251,7 @@ const Auth = {
           matchedUser = {
             id: tenant.id,
             username: tenant.adminUsername,
-            fullName: `${tenant.ownerName || 'Admin'} (${tenant.companyName})`,
+            fullName: tenant.ownerName || 'Admin',
             role: 'admin',
             pin: tenant.adminPin,
             isActive: tenant.isActive !== false,
@@ -16122,10 +16322,17 @@ const Auth = {
       localStorage.setItem('spice_pos_remember', 'true');
       localStorage.setItem('spice_pos_saved_user', JSON.stringify(matchedUser));
       localStorage.setItem('spice_pos_last_username', matchedUser.username);
+      // Show the ✓ Saved badge when user logs in with remember checked
+      setTimeout(() => {
+        const savedBadge = document.getElementById('remember-me-status-badge');
+        if (savedBadge) savedBadge.classList.remove('hidden');
+      }, 100);
     } else {
       localStorage.removeItem('spice_pos_remember');
       localStorage.removeItem('spice_pos_saved_user');
       localStorage.setItem('spice_pos_last_username', matchedUser.username);
+      const savedBadge = document.getElementById('remember-me-status-badge');
+      if (savedBadge) savedBadge.classList.add('hidden');
     }
 
     const expiredModal = document.getElementById('modal-subscription-expired');
@@ -16196,7 +16403,9 @@ const Auth = {
 
 
 
-// --- companyControl.js ---
+// --- END: auth.js ---
+
+// --- BEGIN: companyControl.js ---
 /**
  * Software Company Control Module (SaaS Master Controller / Super Admin Portal)
  * 
@@ -17014,7 +17223,9 @@ const CompanyControl = {
 
 window.CompanyControl = CompanyControl;
 
-// --- state.js ---
+// --- END: companyControl.js ---
+
+// --- BEGIN: state.js ---
 /**
  * Global Reactive Application State
  */
@@ -17068,7 +17279,9 @@ const State = {
   }
 };
 
-// --- ui.js ---
+// --- END: state.js ---
+
+// --- BEGIN: ui.js ---
 /**
  * UI Controller, Formatting Utilities, Live Clock & Camera Helpers
  */
@@ -17388,7 +17601,9 @@ const UI = {
   }
 };
 
-// --- dashboard.js ---
+// --- END: ui.js ---
+
+// --- BEGIN: dashboard.js ---
 /**
  * Executive Dashboard Module
  */
@@ -18018,7 +18233,9 @@ const Dashboard = {
   }
 };
 
-// --- bestShops.js ---
+// --- END: dashboard.js ---
+
+// --- BEGIN: bestShops.js ---
 /**
  * Best Shops (Top 10 Customers Leaderboard) Module
  */
@@ -18338,7 +18555,9 @@ const BestShops = {
   }
 };
 
-// --- pos.js ---
+// --- END: bestShops.js ---
+
+// --- BEGIN: pos.js ---
 /**
  * Field Point of Sale (POS) & Order Booking Module
  */
@@ -19327,7 +19546,9 @@ const POS = {
   }
 };
 
-// --- repbills.js ---
+// --- END: pos.js ---
+
+// --- BEGIN: repbills.js ---
 /**
  * Rep Bills Module — "My Bills" Tab
  * Shows all bills (invoices) created by the currently logged-in rep.
@@ -19615,7 +19836,9 @@ const RepBills = {
   }
 };
 
-// --- collections.js ---
+// --- END: repbills.js ---
+
+// --- BEGIN: collections.js ---
 /**
  * Dedicated Debt Collections & Recovery Module
  */
@@ -19739,11 +19962,12 @@ const Collections = {
     UI.openModal('modal-dedicated-collection');
   },
 
-  async submitCollection() {
+  async submitCollection(forcePrint) {
     if (!this.selectedShop) return;
 
     const amountPaid = Number(document.getElementById('coll-modal-amount').value) || 0;
     const note = document.getElementById('coll-modal-note').value.trim();
+    const shouldPrint = forcePrint !== undefined ? forcePrint : (document.getElementById('coll-modal-autoprint')?.checked !== false);
 
     if (amountPaid <= 0) {
       UI.showToast('Please enter a valid payment amount', 'warning');
@@ -19754,6 +19978,7 @@ const Collections = {
     const newCredit = Math.max(0, previousCredit - amountPaid);
     const date = new Date().toISOString();
     const tenantId = (Auth.currentUser && Auth.currentUser.tenantId) ? Auth.currentUser.tenantId : (getActiveTenantId() || 1);
+    const collectedByName = (Auth.currentUser && (Auth.currentUser.fullName || Auth.currentUser.username)) || 'Sales Rep';
 
     // 1. Add creditPayment record
     const paymentId = await db.creditPayments.add({
@@ -19764,7 +19989,8 @@ const Collections = {
       amountPaid: amountPaid,
       previousCredit: previousCredit,
       newCredit: newCredit,
-      note: note || 'Field Debt Collection'
+      note: note || 'Field Debt Collection',
+      collectedBy: collectedByName
     });
 
     // 2. Update Shop Credit
@@ -19773,10 +19999,17 @@ const Collections = {
     UI.closeModal('modal-dedicated-collection');
     UI.showToast(`Collected ${UI.formatCurrency(amountPaid)} from ${this.selectedShop.name}!`, 'success');
 
+    // 3. Print receipt if requested
+    if (shouldPrint && typeof Print !== 'undefined' && Print.printCollectionReceipt) {
+      setTimeout(() => {
+        Print.printCollectionReceipt(paymentId);
+      }, 250);
+    }
+
     // Refresh views
     await this.loadDebtors();
     await this.loadRecentCollections();
-    Dashboard.loadDashboard();
+    if (typeof Dashboard !== 'undefined') Dashboard.loadDashboard();
   },
 
   async loadRecentCollections() {
@@ -19805,7 +20038,7 @@ const Collections = {
     for (const p of payments) {
       const shop = await db.shops.get(p.shopId);
       html += `
-        <div class="bg-green-50/70 border border-green-200 p-3 rounded-2xl flex items-center justify-between">
+        <div class="bg-green-50/70 border border-green-200 p-3 rounded-2xl flex items-center justify-between gap-2">
           <div>
             <h5 class="font-bold text-xs text-slate-800">${shop ? shop.name : 'Unknown Shop'}</h5>
             <div class="text-[10px] text-slate-500 mt-0.5">${UI.formatDateTime(p.date)} ${p.note ? `• ${p.note}` : ''}</div>
@@ -19813,8 +20046,11 @@ const Collections = {
               Old: ${UI.formatCurrency(p.previousCredit)} ➔ New: ${UI.formatCurrency(p.newCredit)}
             </div>
           </div>
-          <div class="text-right font-black text-xs sm:text-sm text-green-700">
-            +${UI.formatCurrency(p.amountPaid)}
+          <div class="text-right flex flex-col items-end gap-1 flex-shrink-0">
+            <div class="font-black text-xs sm:text-sm text-green-700">+${UI.formatCurrency(p.amountPaid)}</div>
+            <button onclick="Print.printCollectionReceipt(${p.id})" class="px-2.5 py-1 bg-white hover:bg-green-100 text-green-800 border border-green-300 rounded-xl font-black text-[11px] flex items-center gap-1 shadow-xs active:scale-95 transition-all">
+              🖨️ Print
+            </button>
           </div>
         </div>
       `;
@@ -19824,7 +20060,9 @@ const Collections = {
   }
 };
 
-// --- routes.js ---
+// --- END: collections.js ---
+
+// --- BEGIN: routes.js ---
 /**
  * Route & Territory Management Module
  */
@@ -19949,7 +20187,9 @@ const Routes = {
   }
 };
 
-// --- shops.js ---
+// --- END: routes.js ---
+
+// --- BEGIN: shops.js ---
 /**
  * Shop / Customer Directory — QR Code, Open/Closed Status, Delete Cascade
  */
@@ -20744,17 +20984,20 @@ const Shops = {
         `;
       } else if (ev.type === 'payment') {
         html += `
-          <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center justify-between">
+          <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center justify-between gap-2">
             <div>
               <div class="flex items-center gap-1.5">
                 <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-200 text-emerald-900">💵 DEBT PAYMENT</span>
                 <span class="text-xs text-emerald-800 font-bold">${UI.formatDateTime(ev.date)}</span>
               </div>
-              <p class="text-[11px] text-emerald-700 mt-1">${ev.note}</p>
+              <p class="text-[11px] text-emerald-700 mt-1">${ev.note || 'Debt Collection'}</p>
               <p class="text-[10px] text-slate-500 mt-0.5">Credit: ${UI.formatCurrency(ev.previousCredit)} ➔ ${UI.formatCurrency(ev.newCredit)}</p>
             </div>
-            <div class="text-right">
+            <div class="text-right flex flex-col items-end gap-1.5 flex-shrink-0">
               <div class="text-sm font-black text-emerald-800">+${UI.formatCurrency(ev.amountPaid)}</div>
+              <button onclick="Print.printCollectionReceipt(${ev.id})" class="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all" title="Print Collection Receipt">
+                🖨️ Print
+              </button>
             </div>
           </div>
         `;
@@ -20816,7 +21059,9 @@ const Shops = {
   }
 };
 
-// --- products.js ---
+// --- END: shops.js ---
+
+// --- BEGIN: products.js ---
 /**
  * Product Master Catalog Module
  * Supports Spice Hanging Cards, Packet Packaging, Loose Returns, and Free Issue Rules
@@ -21069,7 +21314,9 @@ const Products = {
   }
 };
 
-// --- production.js ---
+// --- END: products.js ---
+
+// --- BEGIN: production.js ---
 /**
  * Daily Orders, Packing Matrix & Delivery Dispatch Module
  */
@@ -21933,7 +22180,9 @@ const Production = {
   }
 };
 
-// --- stores.js ---
+// --- END: production.js ---
+
+// --- BEGIN: stores.js ---
 /**
  * Production Stores Management Module
  * Allows Stores Keepers to:
@@ -22446,7 +22695,9 @@ const Stores = {
 
 window.Stores = Stores;
 
-// --- lorry.js ---
+// --- END: stores.js ---
+
+// --- BEGIN: lorry.js ---
 /**
  * Delivery Driver Lorry Loading & Unloading Module
  * Allows Delivery Drivers & Stores Keepers to:
@@ -23027,100 +23278,360 @@ const Lorry = {
 
 window.Lorry = Lorry;
 
-// --- print.js ---
+// --- END: lorry.js ---
+
+// --- BEGIN: print.js ---
 /**
- * Thermal Invoice Printing (58mm and 80mm Bluetooth Mobile Printers) & Document Print Module
+ * Thermal Invoice Printing (Epson TM-T82 80mm & 58mm Bluetooth/USB Printers) & Document Print Module
  */
 
 const Print = {
   _currentPreviewSaleId: null,
 
-  async generateReceiptHTML(saleId) {
+  // Robust multi-tenant Company Profile & Logo resolver
+  async getCompanyProfile(saleTenantId = null) {
+    let localOverride = null;
+    try {
+      const stored = localStorage.getItem('pos_company_profile');
+      if (stored) localOverride = JSON.parse(stored);
+    } catch (e) {}
+
+    try {
+      const activeTid = saleTenantId || (typeof Auth !== 'undefined' && Auth.currentUser?.tenantId) || (typeof getActiveTenantId === 'function' ? getActiveTenantId() : 1) || 1;
+      
+      // 1. Try tenant-isolated retrieval
+      if (typeof filterByTenant === 'function') {
+        const comps = filterByTenant(await db.company.toArray(), activeTid);
+        if (comps && comps.length > 0) {
+          const comp = comps[0];
+          return {
+            ...comp,
+            name: comp.name || localOverride?.name || 'WHOLESALE DISTRIBUTORS',
+            logoBase64: comp.logoBase64 || localOverride?.logoBase64 || ''
+          };
+        }
+      }
+
+      // 2. Direct array lookup
+      const allComps = await db.company.toArray();
+      if (allComps && allComps.length > 0) {
+        const match = allComps.find(c => Number(c.tenantId) === Number(activeTid)) || allComps[0];
+        if (match) {
+          return {
+            ...match,
+            name: match.name || localOverride?.name || 'WHOLESALE DISTRIBUTORS',
+            logoBase64: match.logoBase64 || localOverride?.logoBase64 || ''
+          };
+        }
+      }
+
+      if (localOverride && localOverride.name) {
+        return localOverride;
+      }
+    } catch (err) {
+      console.warn('Print.getCompanyProfile notice:', err);
+    }
+
+    return {
+      name: localOverride?.name || 'WHOLESALE DISTRIBUTORS',
+      tagline: localOverride?.tagline || 'Wholesale Distribution',
+      address: localOverride?.address || '',
+      phone: localOverride?.phone || '',
+      regNo: localOverride?.regNo || '',
+      receiptFooter: localOverride?.receiptFooter || 'Thank you for your business! / ස්තූතියි!',
+      printerWidth: localOverride?.printerWidth || '80mm',
+      logoBase64: localOverride?.logoBase64 || ''
+    };
+  },
+
+  /**
+   * Pure JavaScript Code 128 (Subset B) Vector SVG Barcode Generator
+   * Generates razor-sharp, scanner-readable vector barcodes for Epson TM-T82 & thermal receipt printers
+   */
+  generateBarcodeSVG(text, options = {}) {
+    if (!text) return '';
+    const str = String(text).trim();
+    if (!str) return '';
+
+    const barHeight = options.height || 38;
+    const moduleWidth = options.moduleWidth || 1.35;
+    const quietZone = options.quietZone !== undefined ? options.quietZone : 8;
+
+    // Code 128 Patterns for ASCII characters 32 to 126
+    const patterns = [
+      "212222", "222122", "222221", "121223", "121322", "131222", "122213", "122312", "132212", "221213", // 0-9
+      "221312", "231212", "112232", "122132", "122231", "113222", "123122", "123221", "223211", "221132", // 10-19
+      "221231", "213212", "223112", "312131", "311222", "321122", "321221", "312212", "322112", "322211", // 20-29
+      "212123", "212321", "232121", "111323", "131123", "131321", "112313", "132113", "132311", "211313", // 30-39
+      "231113", "231311", "112133", "112331", "132131", "113123", "113321", "133121", "313121", "211331", // 40-49
+      "231131", "213113", "213311", "213131", "311123", "311321", "331121", "312113", "312311", "332111", // 50-59
+      "314111", "221411", "431111", "111224", "111422", "121124", "121421", "141122", "141221", "112214", // 60-69
+      "112412", "122114", "122411", "142112", "142211", "241211", "221114", "413111", "241112", "134111", // 70-79
+      "111242", "121142", "121241", "114212", "124112", "124211", "411212", "421112", "421211", "212141", // 80-89
+      "214121", "412121", "111143", "111341", "131141", "114113", "114311", "411113", "411311", "113141", // 90-99
+      "114131", "311141", "411131", "211412", "211214", "211232", "2331112" // 100-106 (106 = STOP)
+    ];
+
+    const START_B = 104;
+    const STOP = 106;
+
+    const codes = [START_B];
+    let checksum = START_B;
+
+    for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i);
+      const code = (charCode >= 32 && charCode <= 126) ? charCode - 32 : 0;
+      codes.push(code);
+      checksum += code * (i + 1);
+    }
+
+    codes.push(checksum % 103);
+    codes.push(STOP);
+
+    let patternStr = "";
+    for (const c of codes) {
+      patternStr += (patterns[c] || "212222");
+    }
+
+    let totalModules = quietZone * 2;
+    for (let j = 0; j < patternStr.length; j++) {
+      totalModules += parseInt(patternStr[j], 10);
+    }
+
+    const svgWidth = totalModules * moduleWidth;
+    let currentX = quietZone * moduleWidth;
+    let rects = "";
+
+    let isBar = true;
+    for (let k = 0; k < patternStr.length; k++) {
+      const width = parseInt(patternStr[k], 10) * moduleWidth;
+      if (isBar) {
+        rects += `<rect x="${currentX.toFixed(2)}" y="0" width="${width.toFixed(2)}" height="${barHeight}" fill="#000000" />`;
+      }
+      currentX += width;
+      isBar = !isBar;
+    }
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth.toFixed(2)} ${barHeight}" width="${svgWidth.toFixed(0)}px" height="${barHeight}px" style="display:block; margin:0 auto; max-width:100%; height:auto;">
+        <rect width="100%" height="100%" fill="#ffffff" />
+        ${rects}
+      </svg>
+    `;
+  },
+
+  async generateReceiptHTML(saleId, options = {}) {
     const sale = await db.sales.get(saleId);
     if (!sale) return '';
 
-    const shop = await db.shops.get(sale.shopId);
-    const route = await db.routes.get(sale.routeId);
+    const shop = sale.shopId ? await db.shops.get(sale.shopId) : null;
+    const route = sale.routeId ? await db.routes.get(sale.routeId) : null;
     const items = await db.saleItems.where('saleId').equals(saleId).toArray();
-    const company = await db.company.toCollection().first();
+    const company = await this.getCompanyProfile(sale.tenantId);
 
-    const printerWidth = company?.printerWidth || '58mm';
-    const is80mm = printerWidth === '80mm';
+    const printerWidth = company?.printerWidth || '80mm';
+    const is80mm = printerWidth === '80mm' || printerWidth !== '58mm';
 
+    // Clean Sales Rep Name (Remove company names, LTD, PVT, brackets, dashes)
+    let cleanRepName = (sale.repName || 'Sales Rep').trim();
+    // 1. Remove anything in parentheses (e.g. "(RUBIK MARKETING (PVT)LTD)")
+    cleanRepName = cleanRepName.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+    // 2. Remove company suffix terms like "(PVT) LTD", "PVT LTD", "PVT. LTD.", "LIMITED", "LTD", "MARKETING", "DISTRIBUTORS" etc.
+    cleanRepName = cleanRepName.replace(/\b(pvt|pvt\.|ltd|ltd\.|limited|marketing|markerting|distributors|distribution|mills|traders|enterprise|co|company)\b/gi, ' ').trim();
+    // 3. Remove dashes, slashes or colons followed by anything
+    cleanRepName = cleanRepName.split(/[-–—/|:]/)[0].trim();
+    // 4. Remove extra spaces
+    cleanRepName = cleanRepName.replace(/\s+/g, ' ').trim();
+    if (!cleanRepName) cleanRepName = 'Sales Rep';
+
+    // 0. Detect Original vs Duplicate / Copy Status
+    const printCount = Number(sale.printCount) || 0;
+    const isDuplicate = options.isDuplicate !== undefined ? Boolean(options.isDuplicate) : (printCount > 0);
+    const copyNumber = isDuplicate ? Math.max(2, printCount + 1) : 1;
+
+    // 1. Build Item Rows (Crisp 2-line layout for high clarity)
     let itemsRows = '';
-    for (const item of items) {
+    let itemsGrossSubtotal = 0;
+    let totalItemsCount = 0;
+    let totalCardsCount = 0;
+    let totalPacketsCount = 0;
+
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx];
       const freeQty = Number(item.freeQty) || 0;
+      const qty = Number(item.qty) || 0;
+      const rate = Number(item.sellingPrice) || 0;
+      const lineSubtotal = Number(item.subtotal) || (qty * rate);
+      itemsGrossSubtotal += lineSubtotal;
+      totalItemsCount += (qty + freeQty);
+
+      if (item.unit === 'Card') {
+        totalCardsCount += (qty + freeQty);
+      } else {
+        totalPacketsCount += (qty + freeQty);
+      }
+
       itemsRows += `
-        <tr>
-          <td colspan="3" class="text-left font-bold" style="padding-top: 3px;">
-            ${item.productName}
-            ${freeQty > 0 ? `<span style="font-size:10px; color:#6b21a8; font-weight:bold;"> [ +${freeQty} FREE ]</span>` : ''}
+        <tr class="item-row">
+          <td colspan="2" style="padding-top: 2px; padding-bottom: 1px;">
+            <div style="font-weight: 900; font-size: ${is80mm ? '12.5px' : '11px'}; color: #000; line-height: 1.25;">
+              ${idx + 1}. ${item.productName}
+              ${freeQty > 0 ? `<span style="display:inline-block; font-size: 9px; font-weight: 900; background: #000; color: #fff; padding: 0.5px 3.5px; border-radius: 2px; margin-left: 3px;">+${freeQty} FREE</span>` : ''}
+            </div>
           </td>
         </tr>
-        <tr>
-          <td class="text-left" style="padding-left: 6px;">
-            ${item.qty} ${item.unit} ${freeQty > 0 ? `(+${freeQty})` : ''} x ${Number(item.sellingPrice).toFixed(2)}
+        <tr style="border-bottom: 1px dotted #888;">
+          <td style="padding-left: 6px; padding-bottom: 2px; font-size: ${is80mm ? '11.5px' : '10px'}; color: #000; text-align: left;">
+            ${qty} ${item.unit || 'Card'} ${freeQty > 0 ? `(+${freeQty} Free)` : ''} &times; Rs. ${rate.toFixed(2)}
           </td>
-          <td class="text-right" colspan="2" style="font-weight:bold;">${Number(item.subtotal).toFixed(2)}</td>
+          <td style="padding-bottom: 2px; font-weight: 900; font-size: ${is80mm ? '12px' : '10.5px'}; color: #000; text-align: right; white-space: nowrap;">
+            ${lineSubtotal.toFixed(2)}
+          </td>
         </tr>
       `;
     }
 
-    // Fetch returns for this sale if any
+    // 2. Fetch Sales Returns / Replacements for this sale
     let returnRows = '';
     let totalReturnDeduction = 0;
     if (db.salesReturns) {
       const returns = await db.salesReturns.where('saleId').equals(saleId).toArray();
       for (const ret of returns) {
         const isDeduct = ret.action === 'deduct';
-        if (isDeduct) totalReturnDeduction += Number(ret.refundAmount) || 0;
+        const refundAmt = Number(ret.refundAmount) || 0;
+        if (isDeduct) totalReturnDeduction += refundAmt;
+
         returnRows += `
           <tr>
-            <td colspan="3" class="text-left font-bold" style="padding-top: 2px; color: #b91c1c;">
+            <td colspan="2" style="padding-top: 1.5px; font-weight: bold; font-size: ${is80mm ? '11px' : '9.5px'}; color: #000;">
               ${isDeduct ? '🔄 [RETURN]' : '🔁 [EXCHANGE]'} ${ret.productName} (${ret.qty} ${ret.returnType === 'Unit' ? 'Loose Pkts' : 'Cards'})
             </td>
           </tr>
-          <tr>
-            <td class="text-left" style="padding-left: 6px; font-size: 10px; color: #666;">
-              ${ret.reason || 'Return'} • ${isDeduct ? 'Deducted from bill' : '1-to-1 Item Replacement'}
+          <tr style="border-bottom: 1px dotted #ccc;">
+            <td style="padding-left: 6px; padding-bottom: 1.5px; font-size: 9px; color: #222;">
+              ${ret.reason || 'Sales Return'} • ${isDeduct ? 'Deducted from bill' : '1-to-1 Item Replaced'}
             </td>
-            <td class="text-right" colspan="2" style="font-weight:bold; color: ${isDeduct ? '#b91c1c' : '#047857'};">
-              ${isDeduct ? '-Rs. ' + Number(ret.refundAmount).toFixed(2) : '✓ Replaced'}
+            <td style="text-align: right; font-weight: bold; font-size: ${is80mm ? '11px' : '9.5px'}; color: #000; padding-bottom: 1.5px;">
+              ${isDeduct ? '-Rs. ' + refundAmt.toFixed(2) : '✓ Replaced'}
             </td>
           </tr>
         `;
       }
     }
 
-    const currentShopCredit = shop ? (shop.currentCredit || 0) : 0;
+    // 3. Customer Current Balance
+    const currentShopCredit = shop ? (Number(shop.currentCredit) || 0) : 0;
+    const invCreditAmount = Number(sale.creditAmount) || 0;
+    const invPaidAmount = Number(sale.paidAmount) || 0;
+    const netBillTotal = Number(sale.totalAmount) || 0;
+
+    // 4. Barcode Generation
+    const barcodeSVG = this.generateBarcodeSVG(sale.invoiceNo, {
+      height: is80mm ? 26 : 22,
+      moduleWidth: is80mm ? 1.25 : 1.05
+    });
+
+    // 5. Build Logo HTML
+    let logoHtml = '';
+    if (company?.logoBase64 && company.logoBase64.trim()) {
+      logoHtml = `
+        <div style="text-align: center; margin: 0 auto 2px auto;">
+          <img src="${company.logoBase64}" class="receipt-logo" alt="Logo" style="max-height: ${is80mm ? '42px' : '34px'}; max-width: ${is80mm ? '155px' : '110px'}; margin: 0 auto; display: block; object-fit: contain; filter: grayscale(100%) contrast(160%);" />
+        </div>
+      `;
+    }
+
+    // 6. Duplicate / Original Banner Style
+    let copyBannerHtml = '';
+    if (isDuplicate) {
+      copyBannerHtml = `
+        <div style="text-align: center; margin: 1.5px 0;">
+          <div style="display: inline-block; border: 1.5px solid #000; padding: 1px 6px; font-size: ${is80mm ? '11px' : '9.5px'}; font-weight: 900; letter-spacing: 0.3px; text-transform: uppercase; background: #fff;">
+            ⚠️ DUPLICATE COPY / දෙවන පිටපත (Copy #${copyNumber})
+          </div>
+        </div>
+      `;
+    } else {
+      copyBannerHtml = `
+        <div style="text-align: center; margin: 1.5px 0;">
+          <div style="display: inline-block; border: 1px solid #000; padding: 1px 5px; font-size: ${is80mm ? '10.5px' : '9px'}; font-weight: 800; letter-spacing: 0.3px; background: #fff;">
+            [ ORIGINAL INVOICE / මුල් පිටපත ]
+          </div>
+        </div>
+      `;
+    }
 
     return `
-      <div class="thermal-receipt ${is80mm ? 'width-80mm' : ''}">
-        ${company?.logoBase64 ? `<div class="text-center mb-1"><img src="${company.logoBase64}" style="max-height: 48px; max-width: 140px; margin: 0 auto;" /></div>` : ''}
+      <div class="thermal-receipt ${is80mm ? 'width-80mm' : 'width-58mm'}">
         
-        <div class="text-center font-bold" style="font-size: 13px;">${company?.name || 'LANKA SPICE DISTRIBUTORS'}</div>
-        <div class="text-center text-[10px]">${company?.tagline || 'Wholesale Spice & Card Distribution'}</div>
-        <div class="text-center text-[10px]">${company?.address || ''}</div>
-        <div class="text-center text-[10px]">Tel: ${company?.phone || ''}</div>
-        ${company?.regNo ? `<div class="text-center text-[9px]">Reg: ${company.regNo}</div>` : ''}
+        <!-- HEADER / LOGO SECTION -->
+        ${logoHtml}
+        <div class="receipt-header-title" style="font-size: ${is80mm ? '15px' : '13px'}; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.15;">
+          ${company?.name || 'SPICE WHOLESALE DISTRIBUTORS'}
+        </div>
+        ${company?.tagline ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'}; font-weight: bold; margin-top: 1px;">${company.tagline}</div>` : ''}
+        ${company?.address ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'};">${company.address}</div>` : ''}
+        ${company?.phone ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'}; font-weight: bold;">📞 Tel: ${company.phone}</div>` : ''}
+        ${company?.regNo ? `<div class="receipt-header-sub" style="text-align: center; font-size: 8.5px;">Business Reg: ${company.regNo}</div>` : ''}
         
-        <div class="dashed-line"></div>
+        <!-- DIVIDER -->
+        <div class="receipt-divider-double"></div>
         
-        <div class="text-center font-bold" style="letter-spacing: 1px;">${sale.status === 'Pending' ? 'ORDER NOTE / ඇණවුම' : 'INVOICE / බිල්පත'}</div>
-        <div class="text-xs">Inv No: <b>${sale.invoiceNo}</b></div>
-        <div class="text-xs">Date: ${UI.formatDateTime(sale.date)}</div>
-        <div class="text-xs">Route: ${route ? route.name : 'Direct'}</div>
-        <div class="text-xs">Shop: <b>${shop ? shop.name : 'Walk-in'}</b></div>
-        ${shop?.phone ? `<div class="text-xs">Tel: ${shop.phone}</div>` : ''}
-        ${sale.repName ? `<div class="text-xs">Sales Rep: <b>${sale.repName}</b></div>` : ''}
-        
-        <div class="dashed-line"></div>
+        <!-- INVOICE BADGE -->
+        <div style="text-align: center; margin: 1.5px 0;">
+          <span class="receipt-badge" style="display: inline-block; font-size: ${is80mm ? '11px' : '9.5px'}; font-weight: 900; letter-spacing: 0.4px; padding: 1px 6px; border: 1.5px solid #000; border-radius: 3px;">
+            ${sale.status === 'Pending' ? 'ORDER NOTE / ඇණවුම' : 'TAX INVOICE / බිල්පත'}
+          </span>
+        </div>
 
-        <table>
+        <!-- ORIGINAL VS DUPLICATE COPY BANNER -->
+        ${copyBannerHtml}
+
+        <!-- META INFORMATION TABLE (FULL-WIDTH 70mm FIT) -->
+        <table style="width: 100%; border-collapse: collapse; font-size: ${is80mm ? '11.5px' : '10px'}; line-height: 1.3; margin: 1.5px 0;">
+          <tr>
+            <td style="color: #000; font-weight: 900; width: 26%; white-space: nowrap;">Inv No:</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '12.5px' : '11px'};"><b>${sale.invoiceNo}</b></td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Date:</td>
+            <td style="text-align: right; font-weight: bold;">${UI.formatDateTime(sale.date)}</td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Doc Copy:</td>
+            <td style="text-align: right; font-weight: 900; color: ${isDuplicate ? '#000' : '#047857'};">
+              ${isDuplicate ? `DUPLICATE (Reprint #${copyNumber})` : 'ORIGINAL (First Print)'}
+            </td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Route:</td>
+            <td style="text-align: right; font-weight: bold;">${route ? route.name : 'Direct Distribution'}</td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Shop:</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '12px' : '10.5px'};">${shop ? shop.name : 'Walk-in Customer'}</td>
+          </tr>
+          ${shop?.ownerName || shop?.phone ? `
+            <tr>
+              <td style="color: #000; font-weight: 900; white-space: nowrap;">Contact:</td>
+              <td style="text-align: right; font-weight: bold;">${shop?.ownerName ? shop.ownerName : ''} ${shop?.phone ? `(${shop.phone})` : ''}</td>
+            </tr>
+          ` : ''}
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Billed By:</td>
+            <td style="text-align: right; font-weight: 900;">${cleanRepName}</td>
+          </tr>
+        </table>
+        
+        <!-- DIVIDER -->
+        <div class="receipt-divider"></div>
+
+        <!-- LINE ITEMS TABLE -->
+        <table style="width: 100%; border-collapse: collapse;">
           <thead>
-            <tr style="border-bottom: 1px dashed #000;">
-              <th class="text-left">ITEM / QTY</th>
-              <th class="text-right" colspan="2">AMOUNT</th>
+            <tr style="border-bottom: 1.5px solid #000;">
+              <th style="text-align: left; font-size: ${is80mm ? '10.5px' : '9px'}; padding: 1.5px 0; font-weight: 900;">ITEM / DESCRIPTION</th>
+              <th style="text-align: right; font-size: ${is80mm ? '10.5px' : '9px'}; padding: 1.5px 0; font-weight: 900;">AMOUNT (LKR)</th>
             </tr>
           </thead>
           <tbody>
@@ -23128,83 +23639,291 @@ const Print = {
           </tbody>
         </table>
 
+        <!-- SUMMARY COUNT -->
+        <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: #000; font-weight: bold; padding: 1.5px 0 2.5px 0; border-bottom: 1px dotted #888;">
+          <span>Items: <b>${items.length} lines</b> (${totalItemsCount} units total)</span>
+          <span>${totalCardsCount > 0 ? `${totalCardsCount} Cards` : ''} ${totalPacketsCount > 0 ? `${totalPacketsCount} Pkts` : ''}</span>
+        </div>
+
+        <!-- SALES RETURNS & EXCHANGES (IF ANY) -->
         ${returnRows ? `
-          <div class="dashed-line"></div>
-          <div class="text-center font-bold" style="font-size: 10px; color: #b91c1c;">RETURNS / EXCHANGES (ආපසු/මාරු)</div>
-          <table>
-            <tbody>
-              ${returnRows}
-            </tbody>
-          </table>
+          <div style="margin-top: 2px; padding-top: 1px;">
+            <div style="text-align: center; font-weight: bold; font-size: 9.5px; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 1px 0; margin: 2px 0;">
+              🔄 RETURNS &amp; EXCHANGES
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tbody>
+                ${returnRows}
+              </tbody>
+            </table>
+          </div>
         ` : ''}
 
-        <div class="dashed-line"></div>
+        <!-- DIVIDER -->
+        <div class="receipt-divider-double"></div>
 
-        <table>
+        <!-- FINANCIAL TOTALS BREAKDOWN -->
+        <table style="width: 100%; font-size: ${is80mm ? '12px' : '10.5px'}; line-height: 1.3;">
           ${totalReturnDeduction > 0 ? `
             <tr>
-              <td class="text-left">Returns Deducted:</td>
-              <td class="text-right font-bold" style="color: #b91c1c;">-Rs. ${totalReturnDeduction.toFixed(2)}</td>
+              <td style="text-align: left; color: #000; font-weight: bold;">Gross Subtotal:</td>
+              <td style="text-align: right; font-weight: bold;">Rs. ${itemsGrossSubtotal.toFixed(2)}</td>
             </tr>
-          ` : ''}
-          <tr>
-            <td class="text-left font-bold">NET TOTAL BILL:</td>
-            <td class="text-right font-bold" style="font-size: 13px;">Rs. ${Number(sale.totalAmount).toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td class="text-left">Payment Mode:</td>
-            <td class="text-right font-bold">[ ${sale.paymentType} ]</td>
-          </tr>
-          <tr>
-            <td class="text-left">Amount Paid:</td>
-            <td class="text-right font-bold" style="color: #047857;">Rs. ${Number(sale.paidAmount).toFixed(2)}</td>
-          </tr>
-          ${sale.creditAmount > 0 ? `
             <tr>
-              <td class="text-left font-bold" style="color: #b91c1c;">Invoice Credit:</td>
-              <td class="text-right font-bold" style="color: #b91c1c;">Rs. ${Number(sale.creditAmount).toFixed(2)}</td>
+              <td style="text-align: left; color: #000; font-weight: bold;">Returns Deducted:</td>
+              <td style="text-align: right; font-weight: bold;">-Rs. ${totalReturnDeduction.toFixed(2)}</td>
+            </tr>
+          ` : ''}
+          <tr style="border-top: 1.5px solid #000; border-bottom: 1.5px solid #000;">
+            <td style="text-align: left; font-weight: 900; font-size: ${is80mm ? '13.5px' : '12px'}; padding: 2.5px 0; white-space: nowrap;">NET TOTAL BILL:</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '14.5px' : '12.5px'}; padding: 2.5px 0;">Rs. ${netBillTotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="text-align: left; padding-top: 2px; font-weight: 900; white-space: nowrap;">Payment Mode:</td>
+            <td style="text-align: right; font-weight: 900; padding-top: 2px;">[ ${sale.paymentType || 'Cash'} ]</td>
+          </tr>
+          <tr>
+            <td style="text-align: left; font-weight: 900; white-space: nowrap;">Cash Paid Now:</td>
+            <td style="text-align: right; font-weight: 900;">Rs. ${invPaidAmount.toFixed(2)}</td>
+          </tr>
+          ${invCreditAmount > 0 ? `
+            <tr>
+              <td style="text-align: left; font-weight: 900; white-space: nowrap;">Credit Added:</td>
+              <td style="text-align: right; font-weight: 900;">Rs. ${invCreditAmount.toFixed(2)}</td>
             </tr>
           ` : ''}
         </table>
 
-        <div class="dashed-line"></div>
+        <!-- SHOP OUTSTANDING LEDGER BOX -->
+        <div class="credit-box" style="border: 1.5px solid #000; border-radius: 3px; padding: 2px 4px; margin: 2.5px 0; background: #fff;">
+          <table style="width: 100%; font-size: ${is80mm ? '11px' : '9.5px'};">
+            <tr>
+              <td style="text-align: left; font-weight: 900; text-transform: uppercase;">Total Outstanding Shop Credit:</td>
+              <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '12px' : '10.5px'};">Rs. ${currentShopCredit.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
 
-        <!-- Shop Balance Status Section -->
-        <table style="background: #fdfdfd; padding: 2px 0;">
-          <tr>
-            <td class="text-left font-bold" style="font-size: 11px;">TOTAL OUTSTANDING CREDIT:</td>
-            <td class="text-right font-bold" style="font-size: 12px;">Rs. ${Number(currentShopCredit).toFixed(2)}</td>
-          </tr>
-        </table>
+        <!-- DUAL SIGNATURE SECTION (SALES REP & CUSTOMER / SHOP OWNER) -->
+        <div style="margin-top: 5px; margin-bottom: 2px; padding-top: 2px; border-top: 1px dashed #000;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <!-- LEFT: Sales Rep Signature -->
+              <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 2.5px; border-right: 1px solid #888;">
+                <div style="height: 10px;"></div>
+                <div style="border-top: 1.5px solid #000; margin: 0 3px;"></div>
+                <div style="font-weight: 900; font-size: ${is80mm ? '10.5px' : '9px'}; text-transform: uppercase; margin-top: 1.5px;">SALES REP SIG.</div>
+                <div style="font-size: 8.5px; color: #222;">(නියෝජිත අත්සන)</div>
+                <div style="font-size: 9.5px; font-weight: bold; color: #000;">${cleanRepName}</div>
+              </td>
+              <!-- RIGHT: Customer Signature -->
+              <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 2.5px;">
+                <div style="height: 10px;"></div>
+                <div style="border-top: 1.5px solid #000; margin: 0 3px;"></div>
+                <div style="font-weight: 900; font-size: ${is80mm ? '10.5px' : '9px'}; text-transform: uppercase; margin-top: 1.5px;">CUSTOMER SIG.</div>
+                <div style="font-size: 8.5px; color: #222;">(කඩහිමි / Customer)</div>
+                <div style="font-size: 8.5px; color: #000;">Goods Received ✓</div>
+              </td>
+            </tr>
+          </table>
+        </div>
 
-        <div class="dashed-line"></div>
+        <!-- BARCODE SECTION -->
+        <div class="barcode-container" style="text-align: center; margin: 3px auto 1px auto; padding-top: 1px;">
+          ${barcodeSVG}
+          <div class="barcode-text" style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px; margin-top: 1px; font-family: monospace;">
+            * ${sale.invoiceNo} *
+          </div>
+        </div>
 
-        <div class="text-center text-[10px] mt-2">${company?.receiptFooter || 'Thank you for your business! / ස්තූතියි!'}</div>
-        <div class="text-center text-[9px] mt-1" style="color: #444;">Powered by Spice POS PWA</div>
+        <!-- DIVIDER -->
+        <div class="receipt-divider"></div>
+
+        <!-- FOOTER MESSAGE -->
+        <div class="receipt-footer" style="text-align: center; font-size: 9px; margin-top: 1.5px; line-height: 1.25;">
+          <div style="font-weight: bold;">${company?.receiptFooter || 'Thank you for your business! / ස්තූතියි!'}</div>
+          <div style="font-size: 7.5px; color: #444; margin-top: 1px;">
+            MOB POS Enterprise • System Powered
+          </div>
+        </div>
+
+        <!-- TEAR-OFF BOTTOM SPACING FOR THERMAL PRINTERS -->
+        <div class="receipt-tear-space" style="height: 3mm;"></div>
       </div>
     `;
   },
 
-  async printInvoice(saleId) {
-    const html = await this.generateReceiptHTML(saleId);
+  /**
+   * Test receipt generation for Epson TM-T82 hardware test
+   */
+  async generateTestReceiptHTML() {
+    const company = await this.getCompanyProfile();
+    const printerWidth = company?.printerWidth || '80mm';
+    const is80mm = printerWidth === '80mm' || printerWidth !== '58mm';
+    const demoInv = 'INV-TEST-' + String(Date.now()).slice(-4);
+    const barcodeSVG = this.generateBarcodeSVG(demoInv, {
+      height: is80mm ? 26 : 22,
+      moduleWidth: is80mm ? 1.25 : 1.05
+    });
+
+    let logoHtml = '';
+    if (company?.logoBase64 && company.logoBase64.trim()) {
+      logoHtml = `
+        <div style="text-align: center; margin: 0 auto 2px auto;">
+          <img src="${company.logoBase64}" class="receipt-logo" alt="Logo" style="max-height: ${is80mm ? '42px' : '34px'}; max-width: ${is80mm ? '155px' : '110px'}; margin: 0 auto; display: block; object-fit: contain; filter: grayscale(100%) contrast(160%);" />
+        </div>
+      `;
+    }
+
+    return `
+      <div class="thermal-receipt ${is80mm ? 'width-80mm' : 'width-58mm'}">
+        ${logoHtml}
+        <div class="receipt-header-title" style="font-size: ${is80mm ? '15px' : '13px'}; font-weight: 900; text-align: center; text-transform: uppercase;">
+          ${company?.name || 'SPICE WHOLESALE DISTRIBUTORS'}
+        </div>
+        ${company?.tagline ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'}; font-weight: bold;">${company.tagline}</div>` : ''}
+        ${company?.address ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'};">${company.address}</div>` : ''}
+        ${company?.phone ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'}; font-weight: bold;">📞 Tel: ${company.phone}</div>` : ''}
+        
+        <div class="receipt-divider-double"></div>
+        
+        <div style="text-align: center; margin: 1.5px 0;">
+          <span class="receipt-badge" style="display: inline-block; font-size: ${is80mm ? '11px' : '9.5px'}; font-weight: 900; padding: 1px 6px; border: 1.5px solid #000; border-radius: 3px;">
+            🖨️ PRINTER TEST RECEIPT (ටෙස්ට් බිල)
+          </span>
+        </div>
+
+        <table style="width: 100%; font-size: ${is80mm ? '11px' : '9.5px'}; line-height: 1.3; margin: 1.5px 0;">
+          <tr>
+            <td style="width: 30%; font-weight: 900;">Printer Model:</td>
+            <td style="text-align: right; font-weight: bold;">Epson TM-T82 (80mm USB)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 900;">Test Inv No:</td>
+            <td style="text-align: right; font-weight: 900;">${demoInv}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 900;">Copy Mode:</td>
+            <td style="text-align: right; font-weight: bold; color: #047857;">ORIGINAL &amp; DUPLICATE READY</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 900;">Date &amp; Time:</td>
+            <td style="text-align: right; font-weight: bold;">${new Date().toLocaleString()}</td>
+          </tr>
+        </table>
+
+        <div class="receipt-divider"></div>
+
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1.5px solid #000;">
+              <th style="text-align: left; font-size: ${is80mm ? '10.5px' : '9px'}; padding: 1.5px 0;">SAMPLE ITEM</th>
+              <th style="text-align: right; font-size: ${is80mm ? '10.5px' : '9px'}; padding: 1.5px 0;">AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="item-row">
+              <td colspan="2" style="padding-top: 1.5px;">
+                <div style="font-weight: 900; font-size: ${is80mm ? '12.5px' : '11px'};">1. Chilli Powder Card - 20s <span style="font-size: 9px; background: #000; color: #fff; padding: 0.5px 3px; border-radius: 2px;">+1 FREE</span></div>
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px dotted #888;">
+              <td style="padding-left: 6px; font-size: ${is80mm ? '11.5px' : '10px'};">12 Cards (+1 Free) &times; Rs. 500.00</td>
+              <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '12px' : '10.5px'};">6,000.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="receipt-divider-double"></div>
+
+        <table style="width: 100%; font-size: ${is80mm ? '12px' : '10.5px'};">
+          <tr style="border-top: 1.5px solid #000; border-bottom: 1.5px solid #000;">
+            <td style="font-weight: 900; font-size: ${is80mm ? '13.5px' : '12px'}; padding: 2.5px 0;">NET TOTAL BILL:</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '14.5px' : '12.5px'}; padding: 2.5px 0;">Rs. 6,000.00</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 5px; margin-bottom: 2px; padding-top: 2px; border-top: 1px dashed #000;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 2.5px; border-right: 1px solid #888;">
+                <div style="height: 10px;"></div>
+                <div style="border-top: 1.5px solid #000; margin: 0 3px;"></div>
+                <div style="font-weight: 900; font-size: ${is80mm ? '10.5px' : '9px'}; text-transform: uppercase; margin-top: 1.5px;">SALES REP SIG.</div>
+                <div style="font-size: 8.5px; color: #222;">(නියෝජිත අත්සන)</div>
+              </td>
+              <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 2.5px;">
+                <div style="height: 10px;"></div>
+                <div style="border-top: 1.5px solid #000; margin: 0 3px;"></div>
+                <div style="font-weight: 900; font-size: ${is80mm ? '10.5px' : '9px'}; text-transform: uppercase; margin-top: 1.5px;">CUSTOMER SIG.</div>
+                <div style="font-size: 8.5px; color: #222;">(කඩහිමි අත්සන)</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="barcode-container" style="text-align: center; margin: 3px auto 1px auto;">
+          ${barcodeSVG}
+          <div class="barcode-text" style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px; margin-top: 1px; font-family: monospace;">
+            * ${demoInv} *
+          </div>
+        </div>
+
+        <div class="receipt-divider"></div>
+
+        <div class="receipt-footer" style="text-align: center; font-size: 9px; margin-top: 1.5px;">
+          <div style="font-weight: bold;">Epson TM-T82 80mm Alignment OK ✓</div>
+        </div>
+
+        <div class="receipt-tear-space" style="height: 3mm;"></div>
+      </div>
+    `;
+  },
+
+  async printInvoice(saleId, options = {}) {
+    const sale = await db.sales.get(saleId);
+    if (!sale) return;
+
+    const currentPrintCount = Number(sale.printCount) || 0;
+    const isDuplicate = options.isDuplicate !== undefined ? Boolean(options.isDuplicate) : (currentPrintCount > 0);
+
+    const html = await this.generateReceiptHTML(saleId, { isDuplicate });
     if (!html) return;
 
-    const receiptContainer = document.getElementById('thermal-receipt-container');
-    if (receiptContainer) {
-      receiptContainer.innerHTML = html;
-      setTimeout(() => {
-        window.print();
-      }, 100);
+    let receiptContainer = document.getElementById('thermal-receipt-container');
+    if (!receiptContainer) {
+      receiptContainer = document.createElement('div');
+      receiptContainer.id = 'thermal-receipt-container';
+      document.body.appendChild(receiptContainer);
     }
+
+    receiptContainer.innerHTML = html;
+
+    // Update print count in database
+    try {
+      await db.sales.update(saleId, {
+        printCount: currentPrintCount + 1,
+        lastPrintedAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn('Could not update printCount:', e);
+    }
+
+    setTimeout(() => {
+      window.print();
+    }, 150);
   },
 
   async printExistingInvoice(saleId) {
+    // When re-printing an existing invoice, it automatically prints as DUPLICATE if already printed once
     await this.printInvoice(saleId);
   },
 
   async previewInvoice(saleId) {
     this._currentPreviewSaleId = saleId;
-    const html = await this.generateReceiptHTML(saleId);
+    const sale = await db.sales.get(saleId);
+    const isDuplicate = sale ? (Number(sale.printCount) > 0) : false;
+    const html = await this.generateReceiptHTML(saleId, { isDuplicate });
     const previewContainer = document.getElementById('preview-receipt-content');
     if (previewContainer) {
       previewContainer.innerHTML = html;
@@ -23219,9 +23938,213 @@ const Print = {
     }
   },
 
+
+  /**
+   * Debt Collection & Recovery Payment Receipt (ණය ගෙවීම් රිසිට්පත)
+   */
+  async generateCollectionReceiptHTML(paymentId) {
+    const payment = await db.creditPayments.get(paymentId);
+    if (!payment) return '';
+
+    const shop = payment.shopId ? await db.shops.get(payment.shopId) : null;
+    const route = payment.routeId ? await db.routes.get(payment.routeId) : null;
+    const company = await this.getCompanyProfile(payment.tenantId);
+
+    const printerWidth = company?.printerWidth || '80mm';
+    const is80mm = printerWidth === '80mm' || printerWidth !== '58mm';
+
+    let cleanRepName = (payment.collectedBy || (Auth.currentUser && (Auth.currentUser.fullName || Auth.currentUser.username)) || 'Sales Rep').trim();
+    cleanRepName = cleanRepName.replace(/\s*\(.*?\)\s*/g, ' ').trim();
+    cleanRepName = cleanRepName.replace(/\b(pvt|pvt\.|ltd|ltd\.|limited|marketing|markerting|distributors|distribution|mills|traders|enterprise|co|company)\b/gi, ' ').trim();
+    cleanRepName = cleanRepName.split(/[-–—/|:]/)[0].trim();
+    cleanRepName = cleanRepName.replace(/\s+/g, ' ').trim();
+    if (!cleanRepName) cleanRepName = 'Sales Rep';
+
+    const receiptNo = payment.receiptNo || `REC-COL-${String(payment.id).padStart(5, '0')}`;
+    const barcodeSVG = this.generateBarcodeSVG(receiptNo, {
+      height: is80mm ? 26 : 22,
+      moduleWidth: is80mm ? 1.25 : 1.05
+    });
+
+    let logoHtml = '';
+    if (company?.logoBase64 && company.logoBase64.trim()) {
+      logoHtml = `
+        <div style="text-align: center; margin: 0 auto 2px auto;">
+          <img src="${company.logoBase64}" class="receipt-logo" alt="Logo" style="max-height: ${is80mm ? '42px' : '34px'}; max-width: ${is80mm ? '155px' : '110px'}; margin: 0 auto; display: block; object-fit: contain; filter: grayscale(100%) contrast(160%);" />
+        </div>
+      `;
+    }
+
+    return `
+      <div class="thermal-receipt ${is80mm ? 'width-80mm' : 'width-58mm'}">
+        <!-- HEADER / LOGO SECTION -->
+        ${logoHtml}
+        <div class="receipt-header-title" style="font-size: ${is80mm ? '15px' : '13px'}; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.15;">
+          ${company?.name || 'SPICE WHOLESALE DISTRIBUTORS'}
+        </div>
+        ${company?.tagline ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'}; font-weight: bold; margin-top: 1px;">${company.tagline}</div>` : ''}
+        ${company?.address ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'};">${company.address}</div>` : ''}
+        ${company?.phone ? `<div class="receipt-header-sub" style="text-align: center; font-size: ${is80mm ? '9.5px' : '8px'}; font-weight: bold;">📞 Tel: ${company.phone}</div>` : ''}
+        ${company?.regNo ? `<div class="receipt-header-sub" style="text-align: center; font-size: 8.5px;">Business Reg: ${company.regNo}</div>` : ''}
+        
+        <!-- DIVIDER -->
+        <div class="receipt-divider-double"></div>
+        
+        <!-- PAYMENT RECEIPT BADGE -->
+        <div style="text-align: center; margin: 1.5px 0;">
+          <span class="receipt-badge" style="display: inline-block; font-size: ${is80mm ? '11px' : '9.5px'}; font-weight: 900; letter-spacing: 0.4px; padding: 1px 6px; border: 1.5px solid #000; border-radius: 3px;">
+            💳 PAYMENT RECEIPT / ණය ගෙවීම් රිසිට්පත
+          </span>
+        </div>
+
+        <!-- META INFORMATION TABLE -->
+        <table style="width: 100%; border-collapse: collapse; font-size: ${is80mm ? '11.5px' : '10px'}; line-height: 1.3; margin: 1.5px 0;">
+          <tr>
+            <td style="color: #000; font-weight: 900; width: 28%; white-space: nowrap;">Receipt No:</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '12.5px' : '11px'};"><b>${receiptNo}</b></td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Date &amp; Time:</td>
+            <td style="text-align: right; font-weight: bold;">${UI.formatDateTime(payment.date)}</td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Route:</td>
+            <td style="text-align: right; font-weight: bold;">${route ? route.name : 'Field Collection'}</td>
+          </tr>
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Shop / Customer:</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '12px' : '10.5px'};">${shop ? shop.name : 'Unknown Shop'}</td>
+          </tr>
+          ${shop?.ownerName || shop?.phone ? `
+            <tr>
+              <td style="color: #000; font-weight: 900; white-space: nowrap;">Contact:</td>
+              <td style="text-align: right; font-weight: bold;">${shop?.ownerName ? shop.ownerName : ''} ${shop?.phone ? `(${shop.phone})` : ''}</td>
+            </tr>
+          ` : ''}
+          <tr>
+            <td style="color: #000; font-weight: 900; white-space: nowrap;">Collected By:</td>
+            <td style="text-align: right; font-weight: 900;">${cleanRepName}</td>
+          </tr>
+          ${payment.note ? `
+            <tr>
+              <td style="color: #000; font-weight: 900; white-space: nowrap;">Note / Ref:</td>
+              <td style="text-align: right; font-weight: bold;">${payment.note}</td>
+            </tr>
+          ` : ''}
+        </table>
+
+        <!-- DIVIDER -->
+        <div class="receipt-divider"></div>
+
+        <!-- PAYMENT DETAILS SUMMARY -->
+        <table style="width: 100%; font-size: ${is80mm ? '12px' : '10.5px'}; line-height: 1.35; margin: 2px 0;">
+          <tr>
+            <td style="text-align: left; color: #000; font-weight: bold;">Previous Balance:</td>
+            <td style="text-align: right; font-weight: bold;">Rs. ${(Number(payment.previousCredit) || 0).toFixed(2)}</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; background: #fafafa;">
+            <td style="text-align: left; font-weight: 900; font-size: ${is80mm ? '13.5px' : '12px'}; padding: 3px 0; white-space: nowrap;">COLLECTED (PAID):</td>
+            <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '14.5px' : '12.5px'}; padding: 3px 0; color: #000;">Rs. ${(Number(payment.amountPaid) || 0).toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="text-align: left; padding-top: 2px; font-weight: 900; white-space: nowrap;">Payment Mode:</td>
+            <td style="text-align: right; font-weight: 900; padding-top: 2px;">[ Cash ]</td>
+          </tr>
+        </table>
+
+        <!-- REMAINING BALANCE BOX -->
+        <div class="credit-box" style="border: 1.5px solid #000; border-radius: 3px; padding: 3px 4px; margin: 3px 0; background: #fff;">
+          <table style="width: 100%; font-size: ${is80mm ? '11.5px' : '10px'};">
+            <tr>
+              <td style="text-align: left; font-weight: 900; text-transform: uppercase;">Remaining Shop Credit:</td>
+              <td style="text-align: right; font-weight: 900; font-size: ${is80mm ? '13px' : '11px'};">Rs. ${(Number(payment.newCredit) || 0).toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- DUAL SIGNATURE SECTION -->
+        <div style="margin-top: 5px; margin-bottom: 2px; padding-top: 2px; border-top: 1px dashed #000;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <!-- LEFT: Collected By -->
+              <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 2.5px; border-right: 1px solid #888;">
+                <div style="height: 10px;"></div>
+                <div style="border-top: 1.5px solid #000; margin: 0 3px;"></div>
+                <div style="font-weight: 900; font-size: ${is80mm ? '10.5px' : '9px'}; text-transform: uppercase; margin-top: 1.5px;">COLLECTED BY</div>
+                <div style="font-size: 8.5px; color: #222;">(මුදල් එකතුකරු)</div>
+                <div style="font-size: 9.5px; font-weight: bold; color: #000;">${cleanRepName}</div>
+              </td>
+              <!-- RIGHT: Customer / Shop Owner -->
+              <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 2.5px;">
+                <div style="height: 10px;"></div>
+                <div style="border-top: 1.5px solid #000; margin: 0 3px;"></div>
+                <div style="font-weight: 900; font-size: ${is80mm ? '10.5px' : '9px'}; text-transform: uppercase; margin-top: 1.5px;">PAID BY (CUSTOMER)</div>
+                <div style="font-size: 8.5px; color: #222;">(කඩහිමි අත්සන)</div>
+                <div style="font-size: 8.5px; color: #000;">Payment Confirmed ✓</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- BARCODE SECTION -->
+        <div class="barcode-container" style="text-align: center; margin: 3px auto 1px auto; padding-top: 1px;">
+          ${barcodeSVG}
+          <div class="barcode-text" style="font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px; margin-top: 1px; font-family: monospace;">
+            * ${receiptNo} *
+          </div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="receipt-divider"></div>
+
+        <!-- FOOTER MESSAGE -->
+        <div class="receipt-footer" style="text-align: center; font-size: 9px; margin-top: 1.5px; line-height: 1.25;">
+          <div style="font-weight: bold;">Thank you for your payment! / ස්තූතියි!</div>
+          <div style="font-size: 7.5px; color: #444; margin-top: 1px;">
+            MOB POS Enterprise • Official Debt Recovery Receipt
+          </div>
+        </div>
+
+        <!-- TEAR-OFF BOTTOM SPACING -->
+        <div class="receipt-tear-space" style="height: 3mm;"></div>
+      </div>
+    `;
+  },
+
+  async printCollectionReceipt(paymentId) {
+    const html = await this.generateCollectionReceiptHTML(paymentId);
+    if (!html) return;
+
+    let receiptContainer = document.getElementById('thermal-receipt-container');
+    if (!receiptContainer) {
+      receiptContainer = document.createElement('div');
+      receiptContainer.id = 'thermal-receipt-container';
+      document.body.appendChild(receiptContainer);
+    }
+    receiptContainer.innerHTML = html;
+
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  },
+
+  async printTestReceipt() {
+    const html = await this.generateTestReceiptHTML();
+    let receiptContainer = document.getElementById('thermal-receipt-container');
+    if (!receiptContainer) {
+      receiptContainer = document.createElement('div');
+      receiptContainer.id = 'thermal-receipt-container';
+      document.body.appendChild(receiptContainer);
+    }
+    receiptContainer.innerHTML = html;
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  },
+
   // Print Van Packing Manifest / Sheet
   async printPackingManifest(targetDate, routeName, matrixItems, ordersList) {
-    const company = await db.company.toCollection().first();
+    const company = await this.getCompanyProfile();
     let itemsRows = '';
     let totalCards = 0;
     let totalPackets = 0;
@@ -23264,7 +24187,7 @@ const Print = {
     const html = `
       <div class="a4-document-print">
         <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:12px;">
-          <h1 style="font-size:18px; margin:0; font-weight:black;">${company?.name || 'LANKA SPICE DISTRIBUTORS'}</h1>
+          <h1 style="font-size:18px; margin:0; font-weight:black;">${company?.name || 'SPICE WHOLESALE DISTRIBUTORS'}</h1>
           <h2 style="font-size:14px; margin:4px 0 0 0; color:#15803d; font-weight:bold;">📦 VAN LOAD PACKING MANIFEST (පැකින් ලැයිස්තුව)</h2>
           <div style="font-size:11px; margin-top:4px; color:#444;">
             Target Date: <b>${UI.formatDate(targetDate)}</b> | Route: <b>${routeName}</b> | Generated: ${new Date().toLocaleTimeString()}
@@ -23315,18 +24238,23 @@ const Print = {
       </div>
     `;
 
-    const receiptContainer = document.getElementById('thermal-receipt-container');
-    if (receiptContainer) {
-      receiptContainer.innerHTML = html;
-      setTimeout(() => {
-        window.print();
-      }, 100);
+    let receiptContainer = document.getElementById('thermal-receipt-container');
+    if (!receiptContainer) {
+      receiptContainer = document.createElement('div');
+      receiptContainer.id = 'thermal-receipt-container';
+      document.body.appendChild(receiptContainer);
     }
+
+    receiptContainer.innerHTML = html;
+    setTimeout(() => {
+      window.print();
+    }, 150);
   }
 };
 
+// --- END: print.js ---
 
-// --- reports.js ---
+// --- BEGIN: reports.js ---
 /**
  * Reports & Custom Analytics Module
  * Comprehensive financial, sales, free issues, returns, collections, and multi-type PDF generation
@@ -25031,7 +25959,9 @@ ${this.getBaseReportStyles('#d97706')}
   }
 };
 
-// --- settings.js ---
+// --- END: reports.js ---
+
+// --- BEGIN: settings.js ---
 /**
  * Company Profile & Settings Module
  */
@@ -25041,19 +25971,45 @@ const Settings = {
 
   async loadSettings() {
     try {
-      const comps = filterByTenant(await db.company.toArray());
-      const company = comps.length > 0 ? comps[0] : await db.company.toCollection().first();
-      if (!company) return;
+      let company = null;
+      if (typeof filterByTenant === 'function') {
+        const comps = filterByTenant(await db.company.toArray());
+        if (comps.length > 0) company = comps[0];
+      }
+      if (!company) {
+        company = await db.company.toCollection().first();
+      }
 
-      document.getElementById('sett-company-name').value = company.name || '';
-      document.getElementById('sett-tagline').value = company.tagline || '';
-      document.getElementById('sett-address').value = company.address || '';
-      document.getElementById('sett-phone').value = company.phone || '';
-      document.getElementById('sett-regno').value = company.regNo || '';
-      document.getElementById('sett-footer').value = company.receiptFooter || '';
-      document.getElementById('sett-printer-width').value = company.printerWidth || '58mm';
+      let localSaved = null;
+      try {
+        const stored = localStorage.getItem('pos_company_profile');
+        if (stored) localSaved = JSON.parse(stored);
+      } catch (e) {}
 
-      this.currentLogoBase64 = company.logoBase64 || '';
+      const name = company?.name || localSaved?.name || '';
+      const tagline = company?.tagline || localSaved?.tagline || '';
+      const address = company?.address || localSaved?.address || '';
+      const phone = company?.phone || localSaved?.phone || '';
+      const regNo = company?.regNo || localSaved?.regNo || '';
+      const receiptFooter = company?.receiptFooter || localSaved?.receiptFooter || 'Thank you for your business! / ස්තූතියි!';
+      const printerWidth = company?.printerWidth || localSaved?.printerWidth || '80mm';
+      this.currentLogoBase64 = company?.logoBase64 || localSaved?.logoBase64 || '';
+
+      const nameEl = document.getElementById('sett-company-name');
+      if (nameEl) nameEl.value = name;
+      const tagEl = document.getElementById('sett-tagline');
+      if (tagEl) tagEl.value = tagline;
+      const addrEl = document.getElementById('sett-address');
+      if (addrEl) addrEl.value = address;
+      const phoneEl = document.getElementById('sett-phone');
+      if (phoneEl) phoneEl.value = phone;
+      const regEl = document.getElementById('sett-regno');
+      if (regEl) regEl.value = regNo;
+      const footEl = document.getElementById('sett-footer');
+      if (footEl) footEl.value = receiptFooter;
+      const printEl = document.getElementById('sett-printer-width');
+      if (printEl) printEl.value = printerWidth;
+
       this.updateLogoPreview();
 
       // Load Role Permissions Panel
@@ -25224,7 +26180,7 @@ const Settings = {
     const phone = document.getElementById('sett-phone').value.trim();
     const regNo = document.getElementById('sett-regno').value.trim();
     const receiptFooter = document.getElementById('sett-footer').value.trim();
-    const printerWidth = document.getElementById('sett-printer-width').value;
+    const printerWidth = document.getElementById('sett-printer-width').value || '80mm';
 
     if (!name) {
       UI.showToast('Company name is required', 'warning');
@@ -25232,37 +26188,71 @@ const Settings = {
     }
 
     const tenantId = (Auth.currentUser && Auth.currentUser.tenantId) ? Auth.currentUser.tenantId : (getActiveTenantId() || 1);
-    const comps = filterByTenant(await db.company.toArray());
-    const company = comps.length > 0 ? comps[0] : null;
+    
+    // Save to localStorage immediately as persistent mirror
+    const profileObj = {
+      tenantId,
+      name,
+      tagline,
+      address,
+      phone,
+      regNo,
+      receiptFooter,
+      printerWidth,
+      logoBase64: this.currentLogoBase64 || ''
+    };
+    try {
+      localStorage.setItem('pos_company_profile', JSON.stringify(profileObj));
+    } catch (e) {}
 
-    if (company) {
-      await db.company.update(company.id, {
-        name,
-        tagline,
-        address,
-        phone,
-        regNo,
-        receiptFooter,
-        printerWidth,
-        logoBase64: this.currentLogoBase64
-      });
+    // Update all matching or primary company records in IndexedDB
+    const allComps = await db.company.toArray();
+    if (allComps.length > 0) {
+      for (const comp of allComps) {
+        if (Number(comp.tenantId) === Number(tenantId) || comp.id === 1) {
+          await db.company.update(comp.id, profileObj);
+        }
+      }
     } else {
       await db.company.add({
-        tenantId,
-        name,
-        tagline,
-        address,
-        phone,
-        regNo,
-        receiptFooter,
-        printerWidth,
-        logoBase64: this.currentLogoBase64,
+        id: 1,
+        ...profileObj,
         pin: '1234'
       });
     }
 
-    UI.showToast('Company profile & printer settings saved!', 'success');
-    Dashboard.loadDashboard();
+    // Also sync tenant companyName in db.tenants if tenant record exists
+    if (db.tenants) {
+      try {
+        const tenant = await db.tenants.where('tenantId').equals(tenantId).first();
+        if (tenant) {
+          await db.tenants.update(tenant.id, { companyName: name, phone: phone || tenant.phone });
+        }
+      } catch (tErr) {
+        console.warn('Tenant sync notice:', tErr);
+      }
+    }
+
+    // Update Header Immediately
+    const headerTitle = document.getElementById('app-company-name-header');
+    if (headerTitle) {
+      headerTitle.textContent = name;
+    }
+
+    UI.showToast('Company profile & printer settings saved! ✅', 'success');
+    if (typeof Dashboard !== 'undefined' && Dashboard.loadDashboard) {
+      Dashboard.loadDashboard();
+    }
+  },
+
+  async handleTestPrint() {
+    try {
+      UI.showToast('Preparing test receipt for Epson TM-T82...', 'info');
+      await Print.printTestReceipt();
+    } catch (err) {
+      console.error('Test print error:', err);
+      UI.showToast('Failed to print test receipt: ' + err.message, 'error');
+    }
   },
 
   async handleChangePin() {
@@ -25349,7 +26339,9 @@ const Settings = {
 };
 
 
-// --- users.js ---
+// --- END: settings.js ---
+
+// --- BEGIN: users.js ---
 /**
  * User & Staff Management Module
  * Supports 7 Specialized Roles:
@@ -25689,7 +26681,9 @@ const Users = {
 
 window.Users = Users;
 
-// --- app.js ---
+// --- END: users.js ---
+
+// --- BEGIN: app.js ---
 /**
  * Main Application Bootstrap & Lifecycle
  */
@@ -25774,6 +26768,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('Spice Wholesale Card POS v3.2 - Local Offline & Multi-Role Active');
 });
 
+
+// --- END: app.js ---
 
 </script>
 
