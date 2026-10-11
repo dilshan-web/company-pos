@@ -1,15 +1,56 @@
-﻿const CACHE_NAME = 'spice-pos-v3.5.0';
+const CACHE_NAME = 'spice-pos-v4.2.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './css/styles.css',
+  './icons/icon.svg',
+  './js/libs/tailwind.js',
+  './js/libs/dexie.min.js',
+  './js/libs/qrcode.min.js',
+  './js/libs/jsqr.min.js',
+  './js/db.js',
+  './js/auth.js',
+  './js/state.js',
+  './js/ui.js',
+  './js/dashboard.js',
+  './js/bestShops.js',
+  './js/pos.js',
+  './js/collections.js',
+  './js/routes.js',
+  './js/shops.js',
+  './js/products.js',
+  './js/production.js',
+  './js/print.js',
+  './js/reports.js',
+  './js/settings.js',
+  './js/users.js',
+  './js/app.js',
+  './js/repbills.js',
+  './js/lorry.js',
+  './js/stores.js',
+  './js/sounds.js',
+  './js/gps.js',
+  './js/map.js',
+  './js/payroll.js',
+  './js/companyControl.js',
+  './js/routeSession.js',
+  './css/leaflet.css',
+  './js/libs/leaflet.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching app shell v3.5.0');
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('[ServiceWorker] Caching app shell');
+      // Cache files individually - one missing file won't break the whole offline mode
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[ServiceWorker] Failed to cache:', url, err);
+          })
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -17,12 +58,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          console.log('[SW] Deleting old cache:', key);
-          return caches.delete(key);
-        }
-      }));
+      return Promise.all(
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('[ServiceWorker] Removing old cache', key);
+            return caches.delete(key);
+          }
+        })
+      );
     }).then(() => self.clients.claim())
   );
 });
@@ -30,33 +73,31 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Network-First for HTML navigation so users ALWAYS get the latest deployed version when online
-  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request).then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse);
+            });
+          }
+        }).catch(() => {});
+        return cachedResponse;
+      }
+      return fetch(event.request).then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
         }
         return response;
       }).catch(() => {
-        return caches.match('./index.html') || caches.match('./');
-      })
-    );
-    return;
-  }
-
-  // Cache-first with network fallback for other static assets
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('./index.html');
         }
-        return response;
-      }).catch(() => caches.match('./index.html'));
+      });
     })
   );
 });
