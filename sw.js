@@ -1,38 +1,14 @@
-const CACHE_NAME = 'spice-pos-v4.1.0';
+﻿const CACHE_NAME = 'spice-pos-v3.5.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json',
-  './css/styles.css',
-  './icons/icon.svg',
-  './js/libs/tailwind.js',
-  './js/libs/dexie.min.js',
-  './js/libs/qrcode.min.js',
-  './js/libs/jsqr.min.js',
-  './js/db.js',
-  './js/sync.js',
-  './js/auth.js',
-  './js/state.js',
-  './js/ui.js',
-  './js/dashboard.js',
-  './js/bestShops.js',
-  './js/pos.js',
-  './js/collections.js',
-  './js/routes.js',
-  './js/shops.js',
-  './js/products.js',
-  './js/production.js',
-  './js/print.js',
-  './js/reports.js',
-  './js/settings.js',
-  './js/users.js',
-  './js/app.js'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Caching app shell');
+      console.log('[SW] Caching app shell v3.5.0');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
@@ -41,14 +17,12 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[ServiceWorker] Removing old cache', key);
-            return caches.delete(key);
-          }
-        })
-      );
+      return Promise.all(keyList.map((key) => {
+        if (key !== CACHE_NAME) {
+          console.log('[SW] Deleting old cache:', key);
+          return caches.delete(key);
+        }
+      }));
     }).then(() => self.clients.claim())
   );
 });
@@ -56,31 +30,33 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        if (response && response.status === 200 && response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+  // Network-First for HTML navigation so users ALWAYS get the latest deployed version when online
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
       }).catch(() => {
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html');
+        return caches.match('./index.html') || caches.match('./');
+      })
+    );
+    return;
+  }
+
+  // Cache-first with network fallback for other static assets
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
-      });
+        return response;
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });

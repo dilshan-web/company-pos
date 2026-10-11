@@ -1523,6 +1523,12 @@ button:active, .btn-touch:active {
         <span class="truncate font-black">Routes (මාර්ග)</span>
       </button>
 
+      <div class="px-2.5 pt-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 hr-or-admin">HR & Management</div>
+      <button onclick="UI.switchTab('payroll')" data-tab="payroll" class="desktop-nav-btn w-full px-2.5 py-2.5 rounded-2xl text-xs font-bold bg-pink-50/80 hover:bg-pink-100 text-pink-950 border border-pink-200/80 hover:border-pink-400 transition-all flex items-center gap-2.5 hr-or-admin text-left shadow-xs">
+        <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-pink-600 to-rose-700 text-white flex items-center justify-center text-xs shadow-sm shrink-0">👥</div>
+        <span class="truncate font-black">HR & Payroll (වැටුප්)</span>
+      </button>
+
       <div class="px-2.5 pt-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 admin-only">Administration</div>
       <button onclick="UI.switchTab('reports')" data-tab="reports" class="desktop-nav-btn w-full px-2.5 py-2.5 rounded-2xl text-xs font-bold bg-violet-50/80 hover:bg-violet-100 text-violet-950 border border-violet-200/80 hover:border-violet-400 transition-all flex items-center gap-2.5 management-or-admin text-left shadow-xs">
         <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center text-xs shadow-sm shrink-0">📊</div>
@@ -3274,6 +3280,107 @@ button:active, .btn-touch:active {
       </div>
     </section>
 
+
+    <!-- ==========================================
+         TAB 13: HR & STAFF PAYROLL MANAGEMENT (මානව සම්පත් & වැටුප්)
+         ========================================== -->
+    <section id="tab-payroll" class="app-tab-page hidden space-y-4 hr-or-admin">
+      <!-- HR Hero Header -->
+      <div class="bg-gradient-to-br from-pink-700 via-rose-700 to-pink-900 rounded-3xl p-5 text-white shadow-xl shadow-pink-900/20 relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between relative z-10 flex-wrap gap-2">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xl">👥</span>
+              <span class="text-[10px] font-black uppercase tracking-widest text-pink-200">Human Resources & Staff Payroll</span>
+            </div>
+            <h2 class="text-xl font-black mt-0.5 tracking-tight">HR Department & Salaries (වැටුප් කළමනාකරණය)</h2>
+            <p class="text-xs text-pink-100/90 mt-0.5">Automated Basic, Card Targets, Daily Bill Targets, Attendance & Stores Commissions</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="Payroll.openRulesModal()" class="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-2xl text-xs font-black backdrop-blur active:scale-95 flex items-center gap-1.5 border border-white/20 shadow-xs">
+              <span>⚙️ Target Rules (නීති)</span>
+            </button>
+            <button onclick="Payroll.saveMonthlyPayrollSheet()" class="bg-white text-pink-900 px-3.5 py-2 rounded-2xl text-xs font-black shadow-lg hover:bg-pink-50 active:scale-95 transition-all flex items-center gap-1">
+              <span>💾 Save & Approve Sheet</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Summary Chips -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 text-center">
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-pink-200 block">Total Net Payroll (මුළු වැටුප්)</span>
+            <div id="payroll-kpi-total-net" class="text-base sm:text-lg font-black text-white mt-0.5">Rs. 0</div>
+          </div>
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-pink-200 block">Basic Salaries (මූලික)</span>
+            <div id="payroll-kpi-total-basic" class="text-base sm:text-lg font-black text-white mt-0.5">Rs. 0</div>
+          </div>
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-emerald-300 block">Commissions & Targets (කොමිස්)</span>
+            <div id="payroll-kpi-total-incentives" class="text-base sm:text-lg font-black text-emerald-300 mt-0.5">Rs. 0</div>
+          </div>
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-amber-300 block">Active Staff (සේවකයින්)</span>
+            <div id="payroll-kpi-total-staff" class="text-base sm:text-lg font-black text-amber-300 mt-0.5">0 Staff</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Month Selector & Auto-Calculate Bar -->
+      <div class="card-3d-white p-4 rounded-3xl border border-slate-200 flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-black text-slate-700 flex items-center gap-1">
+            <span>📅</span> Salary Month (වැටුප් මාසය):
+          </label>
+          <input type="month" id="payroll-month-select" onchange="Payroll.onMonthChange(this.value)" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-1.5 text-xs font-black text-slate-800 focus:ring-2 focus:ring-pink-500 outline-none" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="Payroll.recalculateMonth()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black rounded-2xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5">
+            <span>⚡ Auto Calculate Month (ගණනය කරන්න)</span>
+          </button>
+          <button onclick="Payroll.loadMonthlyPayroll()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-bold active:scale-95" title="Refresh">
+            🔄
+          </button>
+        </div>
+      </div>
+
+      <!-- Monthly Payroll Master Sheet Table -->
+      <div class="card-3d-white p-4 rounded-3xl border border-slate-200 space-y-3 overflow-hidden">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 flex-wrap gap-2">
+          <div>
+            <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">Monthly Salary Sheet (මාසික වැටුප් සටහන)</h3>
+            <p class="text-[11px] text-slate-500">Live inline editable salary amounts with automatic instant net pay recalculation</p>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-xl">
+            💡 Checkboxes toggle Basic Salary inclusion
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[760px]">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
+                <th class="p-3">Staff / Role</th>
+                <th class="p-3 text-right">Basic Salary</th>
+                <th class="p-3 text-center">Days Worked</th>
+                <th class="p-3 text-right">Card & Bill Bonuses</th>
+                <th class="p-3 text-right">Fuel / Allowances</th>
+                <th class="p-3 text-right">Advance / Deduct</th>
+                <th class="p-3 text-right">Net Payable</th>
+                <th class="p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="payroll-table-body" class="divide-y divide-slate-100">
+              <!-- Populated by payroll.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
   </div>
 
@@ -3343,6 +3450,14 @@ button:active, .btn-touch:active {
           <div>
             <span class="font-bold text-xs block">Routes</span>
             <span class="text-[10px] text-slate-400">Add & View Routes</span>
+          </div>
+        </button>
+
+        <button onclick="UI.closeModal('modal-more-menu'); UI.switchTab('payroll')" class="col-span-2 p-3 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 rounded-2xl flex items-center gap-3 border border-pink-200 text-left cursor-pointer active:scale-95 hr-or-admin">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-600 to-rose-700 text-white flex items-center justify-center text-xl shadow-md">👥</div>
+          <div class="text-left min-w-0 flex-1">
+            <div class="text-xs font-black text-slate-900">HR Department & Payroll (වැටුප් & කොමිස්)</div>
+            <div class="text-[10px] text-pink-700">Automated salaries, card targets, attendance bonuses & payslips</div>
           </div>
         </button>
 
@@ -3489,9 +3604,61 @@ button:active, .btn-touch:active {
 
         <!-- Submit Button -->
         <button type="submit"
-          class="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-[0.98] text-white font-black text-sm py-3.5 rounded-2xl shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
+          class="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-[0.98] text-white font-black text-sm py-3.5 rounded-2xl shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer">
           <span>🔓 Sign In (ඇතුල් වන්න)</span>
         </button>
+
+        <!-- Quick Role Direct 1-Click Login Selector -->
+        <div class="pt-3 border-t border-slate-800/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-black tracking-wider text-slate-400">⚡ 1-Click Role Login (ක්ෂණිකව ඇතුල් වන්න)</span>
+            <span class="text-[9px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-700/40">Demo / Quick PIN</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <button type="button" onclick="Auth.quickRoleLogin('admin', '1234')" class="p-2 rounded-xl bg-purple-950/50 hover:bg-purple-900/70 border border-purple-700/40 text-left transition-all active:scale-95 flex items-center gap-2 cursor-pointer group">
+              <span class="text-base group-hover:scale-110 transition-transform">👑</span>
+              <div class="min-w-0">
+                <div class="font-black text-white text-[11px] leading-tight truncate">Admin (Owner)</div>
+                <div class="text-[9px] text-purple-300 font-mono">PIN: 1234</div>
+              </div>
+            </button>
+            <button type="button" onclick="Auth.quickRoleLogin('hr1', '9999')" class="p-2 rounded-xl bg-pink-950/50 hover:bg-pink-900/70 border border-pink-700/40 text-left transition-all active:scale-95 flex items-center gap-2 cursor-pointer group">
+              <span class="text-base group-hover:scale-110 transition-transform">👥</span>
+              <div class="min-w-0">
+                <div class="font-black text-white text-[11px] leading-tight truncate">HR Officer (වැටුප්)</div>
+                <div class="text-[9px] text-pink-300 font-mono">hr1 / PIN: 9999</div>
+              </div>
+            </button>
+            <button type="button" onclick="Auth.quickRoleLogin('rep1', '5555')" class="p-2 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/70 border border-emerald-700/40 text-left transition-all active:scale-95 flex items-center gap-2 cursor-pointer group">
+              <span class="text-base group-hover:scale-110 transition-transform">🚚</span>
+              <div class="min-w-0">
+                <div class="font-black text-white text-[11px] leading-tight truncate">Sales Rep (POS)</div>
+                <div class="text-[9px] text-emerald-300 font-mono">rep1 / PIN: 5555</div>
+              </div>
+            </button>
+            <button type="button" onclick="Auth.quickRoleLogin('delivery1', '7777')" class="p-2 rounded-xl bg-sky-950/50 hover:bg-sky-900/70 border border-sky-700/40 text-left transition-all active:scale-95 flex items-center gap-2 cursor-pointer group">
+              <span class="text-base group-hover:scale-110 transition-transform">📦</span>
+              <div class="min-w-0">
+                <div class="font-black text-white text-[11px] leading-tight truncate">Delivery Driver</div>
+                <div class="text-[9px] text-sky-300 font-mono">PIN: 7777</div>
+              </div>
+            </button>
+            <button type="button" onclick="Auth.quickRoleLogin('stores1', '8888')" class="p-2 rounded-xl bg-teal-950/50 hover:bg-teal-900/70 border border-teal-700/40 text-left transition-all active:scale-95 flex items-center gap-2 cursor-pointer group">
+              <span class="text-base group-hover:scale-110 transition-transform">🏬</span>
+              <div class="min-w-0">
+                <div class="font-black text-white text-[11px] leading-tight truncate">Stores Keeper</div>
+                <div class="text-[9px] text-teal-300 font-mono">PIN: 8888</div>
+              </div>
+            </button>
+            <button type="button" onclick="Auth.quickRoleLogin('sm1', '2222')" class="p-2 rounded-xl bg-blue-950/50 hover:bg-blue-900/70 border border-blue-700/40 text-left transition-all active:scale-95 flex items-center gap-2 cursor-pointer group">
+              <span class="text-base group-hover:scale-110 transition-transform">👔</span>
+              <div class="min-w-0">
+                <div class="font-black text-white text-[11px] leading-tight truncate">Sales Manager</div>
+                <div class="text-[9px] text-blue-300 font-mono">PIN: 2222</div>
+              </div>
+            </button>
+          </div>
+        </div>
       </form>
 
       <!-- Security / Help Footer -->
@@ -15017,7 +15184,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 });
 
 
-// --- BEGIN: sounds.js ---
+// --- sounds.js ---
 /**
  * SoundFX — High-Fidelity Web Audio API Sound Engine for MOB POS
  * Fully self-contained, offline, and zero external assets required.
@@ -15243,9 +15410,7 @@ if (typeof document !== 'undefined') {
 SoundFX.loadSettings();
 window.SoundFX = SoundFX;
 
-// --- END: sounds.js ---
-
-// --- BEGIN: db.js ---
+// --- db.js ---
 /**
  * Real-Time Cloud Database Layer using Google Firebase Firestore (JS SDK v10)
  * Project ID: company-pos
@@ -15321,6 +15486,8 @@ function notifyFirestoreChange(collectionName) {
         Products.loadProducts();
       } else if (tabId === 'tab-routes' && typeof Routes !== 'undefined' && Routes.loadRoutes) {
         Routes.loadRoutes();
+      } else if (tabId === 'tab-payroll' && typeof Payroll !== 'undefined' && Payroll.loadMonthlyPayroll) {
+        Payroll.loadMonthlyPayroll();
       } else if (tabId === 'tab-users' && typeof Users !== 'undefined' && Users.loadUsers) {
         Users.loadUsers();
       } else if (tabId === 'tab-map' && typeof MapView !== 'undefined' && MapView.refreshMap) {
@@ -15490,6 +15657,17 @@ class FirestoreCollection {
     try {
       this._initPromise = new Promise((resolve) => {
         let firstLoad = true;
+
+        // Timeout fallback: if offline and no persistence, resolve after 5s with current cache
+        const timeoutId = setTimeout(() => {
+          if (firstLoad) {
+            firstLoad = false;
+            this._isInitialized = true;
+            console.warn(`[DB] '${this.name}' snapshot timed out (offline?) - using cache`);
+            resolve(this._cache);
+          }
+        }, 5000);
+
         firestore.collection(this.name).onSnapshot(
           (snapshot) => {
             snapshot.docChanges().forEach((change) => {
@@ -15508,6 +15686,7 @@ class FirestoreCollection {
             this._isInitialized = true;
             if (firstLoad) {
               firstLoad = false;
+              clearTimeout(timeoutId);
               resolve(this._cache);
             } else {
               notifyFirestoreChange(this.name);
@@ -15515,6 +15694,8 @@ class FirestoreCollection {
           },
           (err) => {
             console.warn(`Firestore onSnapshot error for '${this.name}':`, err);
+            clearTimeout(timeoutId);
+            this._isInitialized = true;
             resolve(this._cache);
           }
         );
@@ -15533,7 +15714,12 @@ class FirestoreCollection {
 
     if (firestore) {
       try {
-        const snap = await firestore.collection(this.name).get();
+        // Add timeout to avoid hanging when offline without persistence
+        const fetchPromise = firestore.collection(this.name).get();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('offline timeout')), 5000)
+        );
+        const snap = await Promise.race([fetchPromise, timeoutPromise]);
         snap.forEach((doc) => {
           const data = doc.data();
           const docId = data.id !== undefined ? data.id : doc.id;
@@ -15541,7 +15727,8 @@ class FirestoreCollection {
         });
         this._isInitialized = true;
       } catch (err) {
-        console.warn(`Fallback fetch error on '${this.name}':`, err);
+        console.warn(`Fallback fetch error on '${this.name}' (possibly offline):`, err);
+        this._isInitialized = true; // mark as initialized so we proceed with empty/cached data
       }
     }
   }
@@ -15834,7 +16021,9 @@ const db = {
   lorryTrips: new FirestoreCollection('lorryTrips'),
   tenants: new FirestoreCollection('tenants'),
   repLocations: new FirestoreCollection('repLocations'),
-  gpsVisits: new FirestoreCollection('gpsVisits')
+  gpsVisits: new FirestoreCollection('gpsVisits'),
+  payroll: new FirestoreCollection('payroll'),
+  payrollRules: new FirestoreCollection('payrollRules')
 };
 
 window.db = db;
@@ -16024,11 +16213,55 @@ async function initDatabaseDefaults() {
         isActive: true,
         createdAt: new Date().toISOString()
       });
+
+      await db.users.add({
+        id: 8,
+        tenantId: 1,
+        username: 'hr1',
+        fullName: 'HR & Payroll Officer (මානව සම්පත්)',
+        role: 'hr',
+        pin: '9999',
+        phone: '077 888 9900',
+        assignedRouteId: null,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      });
     }
+
+    // Guarantee that HR user exists even on pre-existing databases
+    await ensureHrUserExists();
   } catch (err) {
     console.error('Error init defaults:', err);
   }
 }
+
+// Auto-seed HR user if missing from existing users collection
+async function ensureHrUserExists() {
+  if (typeof db === 'undefined' || !db.users) return;
+  try {
+    const allUsers = await db.users.toArray();
+    const hasHr = allUsers.some(u => u.role === 'hr' || u.username === 'hr1');
+    if (!hasHr) {
+      const maxId = allUsers.reduce((m, u) => Math.max(m, Number(u.id) || 0), 0);
+      await db.users.add({
+        id: maxId + 1,
+        tenantId: 1,
+        username: 'hr1',
+        fullName: 'HR & Payroll Officer (මානව සම්පත්)',
+        role: 'hr',
+        pin: '9999',
+        phone: '077 888 9900',
+        assignedRouteId: null,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      });
+      console.log('✅ Auto-seeded HR user hr1 (PIN: 9999)');
+    }
+  } catch (e) {
+    console.warn('ensureHrUserExists check error:', e);
+  }
+}
+window.ensureHrUserExists = ensureHrUserExists;
 
 // 8. Seed Sample Realistic Sri Lankan Spice Business Data
 async function seedSampleData() {
@@ -16468,9 +16701,7 @@ async function importDatabaseFromJson(jsonString) {
 }
 
 
-// --- END: db.js ---
-
-// --- BEGIN: auth.js ---
+// --- auth.js ---
 /**
  * Multi-User Authentication & Role-Based Access Control (RBAC)
  * Supports Admin vs Sales Rep Roles, Custom PINs, and Session State
@@ -16484,6 +16715,9 @@ const Auth = {
   _keyboardBound: false,
   async init() {
     this.bindKeyboardEvents();
+    if (typeof ensureHrUserExists === 'function') {
+      try { await ensureHrUserExists(); } catch (e) {}
+    }
     if (typeof CompanyControl !== 'undefined' && CompanyControl.autoCheckAllSubscriptions) {
       await CompanyControl.autoCheckAllSubscriptions();
     }
@@ -16507,6 +16741,9 @@ const Auth = {
 
   async checkInitialLock() {
     this.bindKeyboardEvents();
+    if (typeof ensureHrUserExists === 'function') {
+      try { await ensureHrUserExists(); } catch (e) {}
+    }
     
     // 1. Check active session storage first
     let savedUserJson = sessionStorage.getItem('spice_pos_user');
@@ -16571,6 +16808,8 @@ const Auth = {
 
         if (this.currentUser.role === 'superadmin') {
           UI.switchTab('superadmin');
+        } else if (this.currentUser.role === 'hr') {
+          UI.switchTab('payroll');
         } else if (this.currentUser.role === 'rep') {
           UI.switchTab('pos');
         } else if (this.currentUser.role === 'delivery') {
@@ -16682,7 +16921,7 @@ const Auth = {
   },
 
   getSuperAdminPin() {
-    return localStorage.getItem('spice_pos_superadmin_pin') || '9999';
+    return localStorage.getItem('spice_pos_superadmin_pin') || '0000';
   },
 
   async handleKeypadPress(digit) {
@@ -16783,6 +17022,8 @@ const Auth = {
           matchedUser = { id: 6, username: 'delivery1', fullName: 'Delivery Driver (බෙදාහැරීම්)', role: 'delivery', pin: '7777', isActive: true };
         } else if (pinEntered === '8888') {
           matchedUser = { id: 7, username: 'stores1', fullName: 'Production Stores Keeper (ස්ටෝර්ස්)', role: 'stores', pin: '8888', isActive: true };
+        } else if (pinEntered === '9999') {
+          matchedUser = { id: 8, username: 'hr1', fullName: 'HR & Payroll Officer (මානව සම්පත්)', role: 'hr', pin: '9999', isActive: true };
         }
       }
 
@@ -16843,6 +17084,8 @@ const Auth = {
         try {
           if (matchedUser.role === 'superadmin') {
             UI.switchTab('superadmin');
+          } else if (matchedUser.role === 'hr') {
+            UI.switchTab('payroll');
           } else if (matchedUser.role === 'rep') {
             UI.switchTab('pos');
           } else if (matchedUser.role === 'delivery') {
@@ -16859,6 +17102,7 @@ const Auth = {
         const roleLabels = {
           'superadmin': '⚡ Software Company Controller (SaaS Master)',
           'admin': '👑 Admin (Owner)',
+          'hr': '👥 HR & Payroll Officer (මානව සම්පත්)',
           'sm': '👔 Sales Manager (SM)',
           'asm': '💼 Area Sales Manager (ASM)',
           'supervisor': '📋 Supervisor',
@@ -16882,7 +17126,7 @@ const Auth = {
       ].filter(p => Boolean(p) && p.length >= 4);
 
       if (allUsers.length === 0 && allTenants.length === 0) {
-        allKnownPins.push('1234', '2222', '3333', '4444', '5555', '7777', '8888');
+        allKnownPins.push('1234', '2222', '3333', '4444', '5555', '7777', '8888', '9999');
       }
 
       const hasPrefixMatch = allKnownPins.some(p => p.startsWith(pinEntered) && p.length > pinEntered.length);
@@ -17126,7 +17370,9 @@ const Auth = {
     const isRep = role === 'rep';
     const isDelivery = role === 'delivery';
     const isStores = role === 'stores';
+    const isHR = role === 'hr';
     const isManagement = isSuperAdmin || isAdmin || isSM || isASM || isSupervisor;
+    const isHROrAdmin = isSuperAdmin || isAdmin || isHR;
 
     // 0. SuperAdmin-Only elements
     document.querySelectorAll('.superadmin-only').forEach(el => {
@@ -17153,6 +17399,12 @@ const Auth = {
     // 2. Admin-Only elements (Full master settings, sensitive user configs, erase database)
     document.querySelectorAll('.admin-only').forEach(el => {
       if (isSuperAdmin || isAdmin) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    });
+
+    // 2b. HR or Admin (Payroll & Salary Management)
+    document.querySelectorAll('.hr-or-admin').forEach(el => {
+      if (isHROrAdmin) el.classList.remove('hidden');
       else el.classList.add('hidden');
     });
 
@@ -17332,6 +17584,27 @@ const Auth = {
             <span class="mt-0.5 truncate font-bold">Logout</span>
           </button>
         `;
+      } else if (isHR) {
+        // HR Officer Navigation: Payroll, Users, Dashboard, Logout
+        navInner.className = 'max-w-lg mx-auto grid grid-cols-4 py-1.5 px-1';
+        navInner.innerHTML = `
+          <button onclick="UI.switchTab('payroll')" data-tab="payroll" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-pink-600 font-black text-[10px]">
+            <div class="nav-icon-wrap w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-rose-700 text-white flex items-center justify-center text-base shadow-md shadow-pink-500/30">👥</div>
+            <span class="mt-0.5 truncate font-extrabold">HR &amp; Payroll</span>
+          </button>
+          <button onclick="UI.switchTab('users')" data-tab="users" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
+            <div class="nav-icon-wrap w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center text-base shadow-md shadow-purple-500/30">👥</div>
+            <span class="mt-0.5 truncate">Staff &amp; Users</span>
+          </button>
+          <button onclick="UI.switchTab('dashboard')" data-tab="dashboard" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
+            <div class="nav-icon-wrap w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-base shadow-md shadow-violet-500/30">📊</div>
+            <span class="mt-0.5 truncate">Dashboard</span>
+          </button>
+          <button onclick="Auth.lockApp()" class="flex flex-col items-center justify-center py-1 text-red-500 text-[10px]">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-rose-700 text-white flex items-center justify-center text-base shadow-md shadow-red-500/30">🔒</div>
+            <span class="mt-0.5 truncate font-bold">Logout</span>
+          </button>
+        `;
       } else {
         // Admin, SM, ASM, Supervisor Navigation: Full Tabs
         navInner.className = 'max-w-lg mx-auto grid grid-cols-6 py-1.5 px-1';
@@ -17375,6 +17648,7 @@ const Auth = {
       const styles = {
         'superadmin': { icon: '⚡', label: 'Software Controller', cls: 'bg-indigo-100 text-indigo-900 border-indigo-300 font-black shadow-xs' },
         'admin': { icon: '👑', label: 'Admin (Owner)', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+        'hr': { icon: '👥', label: 'HR & Payroll', cls: 'bg-pink-50 text-pink-700 border-pink-200 font-black' },
         'sm': { icon: '👔', label: 'Sales Manager', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
         'asm': { icon: '💼', label: 'ASM', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
         'supervisor': { icon: '📋', label: 'Supervisor', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -17391,6 +17665,15 @@ const Auth = {
         </div>
       `;
     }
+  },
+
+  // 1-Click Fast Role Sign-in Helper
+  async quickRoleLogin(username, pin) {
+    const usernameEl = document.getElementById('lock-username-input');
+    const passwordEl = document.getElementById('lock-password-input');
+    if (usernameEl) usernameEl.value = username;
+    if (passwordEl) passwordEl.value = pin;
+    await this.handleTextLogin();
   },
 
   // Toggle Password Show/Hide
@@ -17499,6 +17782,24 @@ const Auth = {
           if (db.tenants) targetTenant = await db.tenants.toCollection().first();
         }
       }
+
+      // 4. Built-in staff fallbacks (if DB unseeded)
+      if (!matchedUser && allUsers.length === 0) {
+        const fallbacks = {
+          'admin': { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: '1234', isActive: true },
+          'hr1': { id: 8, username: 'hr1', fullName: 'HR & Payroll Officer (මානව සම්පත්)', role: 'hr', pin: '9999', isActive: true },
+          'rep1': { id: 5, username: 'rep1', fullName: 'Sales Rep (Order Booker)', role: 'rep', pin: '5555', isActive: true },
+          'delivery1': { id: 6, username: 'delivery1', fullName: 'Delivery Driver (බෙදාහැරීම්)', role: 'delivery', pin: '7777', isActive: true },
+          'stores1': { id: 7, username: 'stores1', fullName: 'Production Stores Keeper (ස්ටෝර්ස්)', role: 'stores', pin: '8888', isActive: true },
+          'sm1': { id: 2, username: 'sm1', fullName: 'Sales Manager (SM)', role: 'sm', pin: '2222', isActive: true },
+          'asm1': { id: 3, username: 'asm1', fullName: 'Area Sales Manager (ASM)', role: 'asm', pin: '3333', isActive: true },
+          'sup1': { id: 4, username: 'sup1', fullName: 'Field Supervisor (සුපවයිසර්)', role: 'supervisor', pin: '4444', isActive: true }
+        };
+        const candidate = fallbacks[username];
+        if (candidate && String(candidate.pin).trim() === password) {
+          matchedUser = candidate;
+        }
+      }
     } catch (e) {
       console.error('Text login DB error:', e);
     }
@@ -17564,6 +17865,7 @@ const Auth = {
 
     try {
       if (matchedUser.role === 'superadmin')    UI.switchTab('superadmin');
+      else if (matchedUser.role === 'hr')       UI.switchTab('payroll');
       else if (matchedUser.role === 'rep')      UI.switchTab('pos');
       else if (matchedUser.role === 'delivery') UI.switchTab('production');
       else if (matchedUser.role === 'stores')   UI.switchTab('stores');
@@ -17573,6 +17875,7 @@ const Auth = {
     const roleLabels = {
       'superadmin': '⚡ Software Controller',
       'admin':      '👑 Admin (Owner)',
+      'hr':         '👥 HR & Payroll Officer',
       'sm':         '👔 Sales Manager',
       'asm':        '💼 Area Sales Manager',
       'supervisor': '📋 Supervisor',
@@ -17585,48 +17888,126 @@ const Auth = {
   },
 
   async updatePin(oldPin, newPin) {
-    const company = await db.company.toCollection().first();
-    const currentPin = company?.pin || '1234';
-
-    if (oldPin !== currentPin) {
-      return { success: false, message: 'Current master PIN is incorrect' };
-    }
-
     if (!newPin || newPin.length < 4) {
       return { success: false, message: 'New PIN must be at least 4 digits' };
     }
 
-    if (company) {
-      await db.company.update(company.id, { pin: newPin });
+    const currentUser = this.currentUser;
+    let verified = false;
+
+    try {
+      // 1. Check current user's actual PIN (most accurate source)
+      if (currentUser) {
+        if (String(currentUser.pin || '').trim() === oldPin) {
+          verified = true;
+        }
+
+        // 2. Check db.users record for current user
+        if (!verified && db.users && currentUser.id) {
+          const liveUser = await db.users.get(currentUser.id);
+          if (liveUser && String(liveUser.pin || '').trim() === oldPin) {
+            verified = true;
+          }
+        }
+
+        // 3. Check db.tenants adminPin for admin role
+        if (!verified && currentUser.role === 'admin' && db.tenants) {
+          const tenantId = currentUser.tenantId;
+          let tenant = null;
+          if (tenantId) {
+            tenant = await db.tenants.get(tenantId);
+          }
+          if (!tenant) {
+            tenant = await db.tenants.where('adminUsername').equals(currentUser.username || 'admin').first();
+          }
+          if (!tenant) {
+            tenant = await db.tenants.toCollection().first();
+          }
+          if (tenant && String(tenant.adminPin || '').trim() === oldPin) {
+            verified = true;
+          }
+        }
+      }
+
+      // 4. Fallback: company master record PIN
+      if (!verified) {
+        const company = await db.company.toCollection().first();
+        if (company && String(company.pin || '1234').trim() === oldPin) {
+          verified = true;
+        }
+      }
+    } catch (e) {
+      console.warn('updatePin verification error:', e);
     }
 
-    // Also update in db.tenants so Super Admin sees live updated PIN
+    if (!verified) {
+      return { success: false, message: 'Current PIN incorrect (PIN වැරදිය)' };
+    }
+
+    // Update PIN everywhere
     try {
+      // Update company record
+      const company = await db.company.toCollection().first();
+      if (company) {
+        await db.company.update(company.id, { pin: newPin, updatedAt: new Date().toISOString() });
+      }
+
+      // Update tenants.adminPin
       if (db.tenants) {
-        const tenant = await db.tenants.toCollection().first();
+        const tenantId = currentUser?.tenantId;
+        let tenant = null;
+        if (tenantId) {
+          tenant = await db.tenants.get(tenantId);
+        }
+        if (!tenant) {
+          tenant = await db.tenants.where('adminUsername').equals(currentUser?.username || 'admin').first();
+        }
+        if (!tenant) {
+          tenant = await db.tenants.toCollection().first();
+        }
         if (tenant) {
           await db.tenants.update(tenant.id, { adminPin: newPin, updatedAt: new Date().toISOString() });
         }
       }
+
+      // Update users table — current user and all admin users
       if (db.users) {
-        const adminUser = await db.users.where('role').equals('admin').first();
-        if (adminUser) {
-          await db.users.update(adminUser.id, { pin: newPin, updatedAt: new Date().toISOString() });
+        if (currentUser && currentUser.id && currentUser.role !== 'superadmin') {
+          try {
+            await db.users.update(currentUser.id, { pin: newPin, updatedAt: new Date().toISOString() });
+          } catch (e) {}
+        }
+        // Also update any other admin users for this tenant
+        if (currentUser?.role === 'admin') {
+          try {
+            const adminUser = await db.users.where('role').equals('admin').first();
+            if (adminUser && adminUser.id !== currentUser.id) {
+              await db.users.update(adminUser.id, { pin: newPin, updatedAt: new Date().toISOString() });
+            }
+          } catch (e) {}
+        }
+      }
+
+      // Update the in-memory session so the updated PIN is reflected immediately
+      if (currentUser) {
+        currentUser.pin = newPin;
+        sessionStorage.setItem('spice_pos_user', JSON.stringify(currentUser));
+        if (localStorage.getItem('spice_pos_remember') === 'true') {
+          localStorage.setItem('spice_pos_saved_user', JSON.stringify(currentUser));
         }
       }
     } catch (e) {
-      console.warn('Sync PIN to tenants error:', e);
+      console.warn('updatePin save error:', e);
+      return { success: false, message: 'PIN update failed: ' + e.message };
     }
 
-    return { success: true, message: 'Master security PIN updated successfully!' };
+    return { success: true, message: 'PIN / Password updated successfully! (PIN සාර්ථකව වෙනස් කරන ලදී)' };
   }
 };
 
 
 
-// --- END: auth.js ---
-
-// --- BEGIN: companyControl.js ---
+// --- companyControl.js ---
 /**
  * Software Company Control Module (SaaS Master Controller / Super Admin Portal)
  * 
@@ -18444,9 +18825,7 @@ const CompanyControl = {
 
 window.CompanyControl = CompanyControl;
 
-// --- END: companyControl.js ---
-
-// --- BEGIN: state.js ---
+// --- state.js ---
 /**
  * Global Reactive Application State
  */
@@ -18500,9 +18879,7 @@ const State = {
   }
 };
 
-// --- END: state.js ---
-
-// --- BEGIN: ui.js ---
+// --- ui.js ---
 /**
  * UI Controller, Formatting Utilities, Live Clock & Camera Helpers
  */
@@ -18831,9 +19208,7 @@ const UI = {
   }
 };
 
-// --- END: ui.js ---
-
-// --- BEGIN: dashboard.js ---
+// --- dashboard.js ---
 /**
  * Executive Dashboard Module
  */
@@ -19463,9 +19838,7 @@ const Dashboard = {
   }
 };
 
-// --- END: dashboard.js ---
-
-// --- BEGIN: bestShops.js ---
+// --- bestShops.js ---
 /**
  * Best Shops (Top 10 Customers Leaderboard) Module
  */
@@ -19785,9 +20158,7 @@ const BestShops = {
   }
 };
 
-// --- END: bestShops.js ---
-
-// --- BEGIN: pos.js ---
+// --- pos.js ---
 /**
  * Field Point of Sale (POS) & Order Booking Module
  */
@@ -20883,9 +21254,7 @@ const POS = {
   }
 };
 
-// --- END: pos.js ---
-
-// --- BEGIN: repbills.js ---
+// --- repbills.js ---
 /**
  * Rep Bills Module — "My Bills" Tab
  * Shows all bills (invoices) created by the currently logged-in rep.
@@ -21173,9 +21542,7 @@ const RepBills = {
   }
 };
 
-// --- END: repbills.js ---
-
-// --- BEGIN: collections.js ---
+// --- collections.js ---
 /**
  * Dedicated Debt Collections & Recovery Module
  */
@@ -21398,9 +21765,7 @@ const Collections = {
   }
 };
 
-// --- END: collections.js ---
-
-// --- BEGIN: gps.js ---
+// --- gps.js ---
 /**
  * GPS & Real-Time Geolocation Tracking Engine for MOB POS
  * 1. Step-Level Pinpoint Accuracy (Tracks movements of 1-2 meters instantly)
@@ -21779,9 +22144,7 @@ const GPS = {
 
 window.GPS = GPS;
 
-// --- END: gps.js ---
-
-// --- BEGIN: map.js ---
+// --- map.js ---
 /**
  * Live GPS Route Map & Fleet Tracking Module for MOB POS
  * 1. High-speed Google Maps roadmap & satellite tile engine (Max Zoom 22, 0% 403 errors)
@@ -23323,9 +23686,7 @@ const MapView = {
 
 window.MapView = MapView;
 
-// --- END: map.js ---
-
-// --- BEGIN: routeSession.js ---
+// --- routeSession.js ---
 /**
  * RouteSession — Daily Active Route Lifecycle & Lock Controller for MOB POS
  * 1. Allows Rep to select & start today's active route (e.g. Galnewa Route)
@@ -23631,9 +23992,7 @@ const RouteSession = {
 
 window.RouteSession = RouteSession;
 
-// --- END: routeSession.js ---
-
-// --- BEGIN: routes.js ---
+// --- routes.js ---
 /**
  * Route & Territory Management Module
  */
@@ -23760,9 +24119,7 @@ const Routes = {
   }
 };
 
-// --- END: routes.js ---
-
-// --- BEGIN: shops.js ---
+// --- shops.js ---
 /**
  * Shop / Customer Directory — QR Code, Open/Closed Status, Delete Cascade
  */
@@ -24728,9 +25085,7 @@ const Shops = {
   }
 };
 
-// --- END: shops.js ---
-
-// --- BEGIN: products.js ---
+// --- products.js ---
 /**
  * Product Master Catalog Module
  * Supports Spice Hanging Cards, Packet Packaging, Loose Returns, and Free Issue Rules
@@ -24983,9 +25338,7 @@ const Products = {
   }
 };
 
-// --- END: products.js ---
-
-// --- BEGIN: production.js ---
+// --- production.js ---
 /**
  * Daily Orders, Packing Matrix & Delivery Dispatch Module
  */
@@ -25852,9 +26205,7 @@ const Production = {
   }
 };
 
-// --- END: production.js ---
-
-// --- BEGIN: stores.js ---
+// --- stores.js ---
 /**
  * Production Stores Management Module
  * Allows Stores Keepers to:
@@ -26466,9 +26817,7 @@ const Stores = {
 
 window.Stores = Stores;
 
-// --- END: stores.js ---
-
-// --- BEGIN: lorry.js ---
+// --- lorry.js ---
 /**
  * Delivery Driver Lorry Loading & Unloading Module
  * Allows Delivery Drivers & Stores Keepers to:
@@ -27049,9 +27398,7 @@ const Lorry = {
 
 window.Lorry = Lorry;
 
-// --- END: lorry.js ---
-
-// --- BEGIN: print.js ---
+// --- print.js ---
 /**
  * Thermal Invoice Printing (Epson TM-T82 80mm & 58mm Bluetooth/USB Printers) & Document Print Module
  */
@@ -28027,9 +28374,7 @@ const Print = {
   }
 };
 
-// --- END: print.js ---
-
-// --- BEGIN: reports.js ---
+// --- reports.js ---
 /**
  * Reports & Custom Analytics Module
  * Comprehensive financial, sales, free issues, returns, collections, and multi-type PDF generation
@@ -29734,9 +30079,7 @@ ${this.getBaseReportStyles('#d97706')}
   }
 };
 
-// --- END: reports.js ---
-
-// --- BEGIN: settings.js ---
+// --- settings.js ---
 /**
  * Company Profile & Settings Module
  */
@@ -30114,9 +30457,866 @@ const Settings = {
 };
 
 
-// --- END: settings.js ---
+// --- payroll.js ---
+/**
+ * HR & Payroll / Salary Management Module for MOB POS
+ * 1. Automatic Salary Engine:
+ *    - Basic Salary (with toggle/checkbox support)
+ *    - Attendance Incentive (e.g. 25 days worked -> +Rs. 5,000)
+ *    - Daily Bill Count Target (e.g. >= 20 bills/day -> +Rs. 3,000)
+ *    - Product / Category Card Target Commission (Tiered Slabs: e.g. 100 cards -> +1,000, 200 cards -> +2,000)
+ *    - Stores Keeper Card Packing / Dispatch Commission (e.g. Rs. 2.00 / card dispatched)
+ *    - Team Turnover Commission for SM / ASM / Supervisor (e.g. 0.5% - 1.0%)
+ *    - Allowances (Fuel / Bike, Phone, Food) & Deductions (Advance, EPF, Shortage)
+ * 2. Role Support:
+ *    - Company Owner / Director
+ *    - Sales Manager (SM)
+ *    - Area Sales Manager (ASM)
+ *    - Field Supervisor (SV)
+ *    - Sales Reps (Reps)
+ *    - Delivery Drivers
+ *    - Stores Keepers (With basic salary toggle)
+ *    - HR & Office Staff
+ * 3. Interactive Monthly Payroll Dashboard with Live Edit
+ * 4. 1-Click Professional 80mm Thermal & A4 Payslip Printing
+ * 5. Security: Strictly restricted to Admin, SuperAdmin, and HR roles
+ */
 
-// --- BEGIN: users.js ---
+const Payroll = {
+  currentMonth: '',
+  payrollSheetCache: [],
+  selectedPayslipId: null,
+
+  // Default Salary & Target Rules
+  DEFAULT_RULES: {
+    // Role-wise default basic salaries
+    basicSalaries: {
+      'owner': 100000,
+      'sm': 65000,
+      'asm': 50000,
+      'supervisor': 42000,
+      'rep': 35000,
+      'delivery': 35000,
+      'stores': 30000,
+      'hr': 40000
+    },
+    // Attendance Incentive
+    attendanceMinDays: 25,
+    attendanceBonus: 5000,
+    // Daily Bill Count Target
+    dailyBillMinAvg: 20,
+    dailyBillBonus: 3000,
+    // Stores Keeper Commission
+    storesRatePerCard: 2.00,
+    storesEnableBasic: true,
+    // Team Sales Overrides
+    smCommissionPct: 1.0,
+    asmCommissionPct: 0.5,
+    supervisorCommissionPct: 0.3,
+    // Product Card Target Slabs (e.g. Chilli, Curry, Meat Curry)
+    cardTargetSlabs: [
+      { id: 1, name: 'Chilli Powder Card (මිරිස් කුඩු)', categoryKey: 'chilli', minCards: 100, bonus: 1000 },
+      { id: 2, name: 'Chilli Powder Card (මිරිස් කුඩු 200+)', categoryKey: 'chilli', minCards: 200, bonus: 2000 },
+      { id: 3, name: 'Curry Powder Card (තුනපහ කුඩු)', categoryKey: 'curry', minCards: 100, bonus: 1500 },
+      { id: 4, name: 'Meat Curry Card (මස් කුඩු)', categoryKey: 'meat', minCards: 80, bonus: 1000 },
+      { id: 5, name: 'Total All Cards (සියලු කාඩ්පත් 500+)', categoryKey: 'all', minCards: 500, bonus: 3500 }
+    ],
+    // Default Allowances
+    repFuelAllowance: 8000,
+    deliveryFuelAllowance: 6000
+  },
+
+  async init() {
+    const today = new Date();
+    const curYear = today.getFullYear();
+    const curMonth = String(today.getMonth() + 1).padStart(2, '0');
+    this.currentMonth = `${curYear}-${curMonth}`;
+
+    const monthInput = document.getElementById('payroll-month-select');
+    if (monthInput) monthInput.value = this.currentMonth;
+
+    await this.loadMonthlyPayroll();
+  },
+
+  async getPayrollRules() {
+    try {
+      const activeTid = getActiveTenantId() || 1;
+      const rawRules = await db.payrollRules?.toArray();
+      const rules = filterByTenant(rawRules);
+      if (rules.length > 0) {
+        return Object.assign({}, this.DEFAULT_RULES, rules[0]);
+      }
+    } catch (e) {}
+    return Object.assign({}, this.DEFAULT_RULES);
+  },
+
+  async savePayrollRules(newRules) {
+    try {
+      const activeTid = getActiveTenantId() || 1;
+      const rawRules = await db.payrollRules?.toArray();
+      const rules = filterByTenant(rawRules);
+      const payload = Object.assign({}, this.DEFAULT_RULES, newRules, {
+        tenantId: activeTid,
+        updatedAt: new Date().toISOString()
+      });
+
+      if (rules.length > 0) {
+        await db.payrollRules.update(rules[0].id, payload);
+      } else {
+        await db.payrollRules.add(payload);
+      }
+      UI.showToast('Salary & Card Target Rules saved successfully! ⚙️✓', 'success');
+      if (typeof SoundFX !== 'undefined') SoundFX.play('save');
+    } catch (err) {
+      UI.showToast('Error saving payroll rules: ' + err.message, 'error');
+    }
+  },
+
+  async onMonthChange(monthStr) {
+    this.currentMonth = monthStr;
+    await this.loadMonthlyPayroll();
+  },
+
+  /** Load payroll sheet for selected month (either from DB or auto-generate) */
+  async loadMonthlyPayroll() {
+    const tableBody = document.getElementById('payroll-table-body');
+    if (!tableBody) return;
+
+    try {
+      const activeTid = getActiveTenantId() || 1;
+      const monthStr = this.currentMonth || new Date().toISOString().slice(0, 7);
+
+      // Check if finalized/draft records exist for this month in db.payroll
+      let records = [];
+      if (db.payroll) {
+        const rawPayroll = await db.payroll.toArray();
+        const allPayroll = filterByTenant(rawPayroll);
+        records = allPayroll.filter(p => p.month === monthStr);
+      }
+
+      // If no records saved yet, automatically generate fresh live calculation
+      if (records.length === 0) {
+        records = await this.computeFreshMonthlyPayroll(monthStr);
+      }
+
+      this.payrollSheetCache = records;
+      this.renderPayrollTable(records);
+      this.updatePayrollKpiChips(records);
+    } catch (err) {
+      console.error('Error loading payroll:', err);
+      UI.showToast('Error loading payroll: ' + err.message, 'error');
+    }
+  },
+
+  /** Trigger automatic full recalculation for the selected month */
+  async recalculateMonth() {
+    UI.showToast(`⚡ Calculating automated salaries for ${this.currentMonth}...`, 'info');
+    const records = await this.computeFreshMonthlyPayroll(this.currentMonth);
+    this.payrollSheetCache = records;
+    this.renderPayrollTable(records);
+    this.updatePayrollKpiChips(records);
+    UI.showToast(`✅ Salaries calculated based on real sales, attendance & card targets!`, 'success');
+    if (typeof SoundFX !== 'undefined') SoundFX.play('sale');
+  },
+
+  /** Compute fresh monthly payroll by querying DB sales, GPS visits, stocks, and staff */
+  async computeFreshMonthlyPayroll(monthStr) {
+    const activeTid = getActiveTenantId() || 1;
+    const rules = await this.getPayrollRules();
+
+    // 1. Load Staff Users
+    const rawUsers = await db.users.toArray();
+    const users = filterByTenant(rawUsers).filter(u => u.isActive !== false);
+
+    // Add Company Owner entry if not in users
+    const allStaff = [...users];
+    const hasOwner = allStaff.some(u => u.role === 'admin' || u.role === 'owner');
+    if (!hasOwner) {
+      allStaff.unshift({
+        id: 'owner_1',
+        fullName: 'Company Owner / Director (අයිතිකරු)',
+        username: 'owner',
+        role: 'owner',
+        phone: '077 123 4567'
+      });
+    }
+
+    // 2. Load Sales for this Month
+    const rawSales = await db.sales.toArray();
+    const allSales = filterByTenant(rawSales);
+    const monthSales = allSales.filter(s => s.status !== 'Cancelled' && s.date && s.date.startsWith(monthStr));
+
+    // 3. Load Sale Items for this Month
+    const rawItems = await db.saleItems?.toArray() || [];
+    const allItems = filterByTenant(rawItems);
+    const saleIdSet = new Set(monthSales.map(s => s.id));
+    const monthSaleItems = allItems.filter(i => saleIdSet.has(i.saleId));
+
+    // 4. Load GPS Visits / Attendance for this Month
+    const rawVisits = await db.gpsVisits?.toArray() || [];
+    const allVisits = filterByTenant(rawVisits);
+    const monthVisits = allVisits.filter(v => v.date && v.date.startsWith(monthStr));
+
+    // 5. Calculate Total Company Sales (Turnover) for Management Commissions
+    const totalCompanyTurnover = monthSales.reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
+
+    // 6. Calculate Stores Dispatched Card Quantity
+    let totalCardsDispatched = 0;
+    monthSaleItems.forEach(item => {
+      const isCard = (item.unit && item.unit.toLowerCase().includes('card')) || (item.productName && item.productName.toLowerCase().includes('card'));
+      if (isCard) {
+        totalCardsDispatched += (Number(item.quantity) || 0);
+      }
+    });
+
+    const computedList = [];
+
+    for (const staff of allStaff) {
+      const role = staff.role || 'rep';
+      const staffId = String(staff.id);
+
+      // A. Basic Salary
+      let basic = rules.basicSalaries[role] !== undefined ? Number(rules.basicSalaries[role]) : 35000;
+      let isBasicEnabled = true;
+      if (role === 'stores') {
+        isBasicEnabled = rules.storesEnableBasic !== false;
+        if (!isBasicEnabled) basic = 0;
+      }
+
+      // B. Attendance & Working Days Calculation
+      const staffSales = monthSales.filter(s => String(s.repId) === staffId);
+      const staffVisits = monthVisits.filter(v => String(v.repId) === staffId);
+      
+      const activeDates = new Set();
+      staffSales.forEach(s => s.date && activeDates.add(s.date.split('T')[0]));
+      staffVisits.forEach(v => v.date && activeDates.add(v.date));
+      
+      const workingDays = Math.max(activeDates.size, role === 'admin' || role === 'owner' || role === 'hr' || role === 'stores' ? 26 : activeDates.size);
+      const isAttendanceQualified = workingDays >= rules.attendanceMinDays;
+      const attendanceBonus = isAttendanceQualified ? Number(rules.attendanceBonus) : 0;
+
+      // C. Daily Bill Count Target Calculation
+      const totalBills = staffSales.length;
+      const avgDailyBills = workingDays > 0 ? Number((totalBills / workingDays).toFixed(1)) : 0;
+      const isBillTargetAchieved = avgDailyBills >= rules.dailyBillMinAvg && totalBills >= (rules.dailyBillMinAvg * 10);
+      const dailyBillBonus = isBillTargetAchieved ? Number(rules.dailyBillBonus) : 0;
+
+      // D. Product / Category Card Target Slabs Commission
+      let cardCommission = 0;
+      const cardBreakdown = [];
+
+      if (role === 'rep') {
+        const staffSaleIds = new Set(staffSales.map(s => s.id));
+        const staffItems = monthSaleItems.filter(i => staffSaleIds.has(i.saleId));
+
+        const cardCounts = { chilli: 0, curry: 0, meat: 0, all: 0 };
+
+        staffItems.forEach(item => {
+          const name = (item.productName || '').toLowerCase();
+          const qty = Number(item.quantity) || 0;
+          const isCard = (item.unit && item.unit.toLowerCase().includes('card')) || name.includes('card') || name.includes('කාඩ්');
+
+          if (isCard) {
+            cardCounts.all += qty;
+            if (name.includes('chilli') || name.includes('මිරිස්')) cardCounts.chilli += qty;
+            if (name.includes('curry') || name.includes('තුනපහ')) cardCounts.curry += qty;
+            if (name.includes('meat') || name.includes('මස්')) cardCounts.meat += qty;
+          }
+        });
+
+        // Evaluate Card Target Slabs
+        rules.cardTargetSlabs.forEach(slab => {
+          const key = slab.categoryKey || 'all';
+          const achievedQty = cardCounts[key] || 0;
+          if (achievedQty >= slab.minCards) {
+            cardCommission += Number(slab.bonus);
+            cardBreakdown.push({
+              slabName: slab.name,
+              minCards: slab.minCards,
+              achievedQty: achievedQty,
+              bonus: slab.bonus
+            });
+          }
+        });
+      }
+
+      // E. Stores Keeper Packing / Dispatch Commission
+      let storesBonus = 0;
+      if (role === 'stores') {
+        const rate = Number(rules.storesRatePerCard) || 2.00;
+        storesBonus = Math.round(totalCardsDispatched * rate);
+      }
+
+      // F. Team Turnover Commission (SM / ASM / Supervisor)
+      let teamCommission = 0;
+      if (role === 'sm') {
+        teamCommission = Math.round(totalCompanyTurnover * (Number(rules.smCommissionPct || 1.0) / 100));
+      } else if (role === 'asm') {
+        teamCommission = Math.round(totalCompanyTurnover * (Number(rules.asmCommissionPct || 0.5) / 100));
+      } else if (role === 'supervisor') {
+        teamCommission = Math.round(totalCompanyTurnover * (Number(rules.supervisorCommissionPct || 0.3) / 100));
+      }
+
+      // G. Allowances & Deductions
+      let fuelAllowance = (role === 'rep') ? Number(rules.repFuelAllowance || 8000) : ((role === 'delivery') ? Number(rules.deliveryFuelAllowance || 6000) : 0);
+      let otherAllowances = 0;
+      let salaryAdvance = 0;
+      let otherDeductions = 0;
+
+      const totalAllowances = fuelAllowance + otherAllowances;
+      const totalIncentives = attendanceBonus + dailyBillBonus + cardCommission + storesBonus + teamCommission;
+      const totalDeductions = salaryAdvance + otherDeductions;
+      const netSalary = Math.max(0, basic + totalIncentives + totalAllowances - totalDeductions);
+
+      computedList.push({
+        id: `pay_${monthStr}_${staff.id}`,
+        tenantId: activeTid,
+        month: monthStr,
+        userId: staff.id,
+        userName: staff.fullName || staff.username,
+        userUsername: staff.username,
+        userRole: role,
+        userPhone: staff.phone || '',
+        basicSalary: basic,
+        isBasicEnabled: isBasicEnabled,
+        workingDays: workingDays,
+        isAttendanceQualified: isAttendanceQualified,
+        attendanceBonus: attendanceBonus,
+        totalBills: totalBills,
+        avgDailyBills: avgDailyBills,
+        isBillTargetAchieved: isBillTargetAchieved,
+        dailyBillBonus: dailyBillBonus,
+        cardCommission: cardCommission,
+        cardBreakdown: cardBreakdown,
+        storesCardsDispatched: totalCardsDispatched,
+        storesBonus: storesBonus,
+        teamCommission: teamCommission,
+        fuelAllowance: fuelAllowance,
+        otherAllowances: otherAllowances,
+        salaryAdvance: salaryAdvance,
+        otherDeductions: otherDeductions,
+        netSalary: netSalary,
+        status: 'Draft', // 'Draft' | 'Approved' | 'Paid'
+        notes: '',
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    return computedList;
+  },
+
+  renderPayrollTable(records) {
+    const container = document.getElementById('payroll-table-body');
+    if (!container) return;
+
+    if (records.length === 0) {
+      container.innerHTML = `
+        <tr>
+          <td colspan="10" class="text-center py-8 text-slate-400 font-bold text-xs">
+            No employees found for this month. Click '⚡ Auto Calculate Salaries' to compute.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const roleBadgeMap = {
+      'owner': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-purple-100 text-purple-700">👑 Owner</span>',
+      'sm': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-blue-100 text-blue-700">👔 SM</span>',
+      'asm': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-indigo-100 text-indigo-700">💼 ASM</span>',
+      'supervisor': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-amber-100 text-amber-700">📋 Supervisor</span>',
+      'rep': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-emerald-100 text-emerald-700">🚚 Rep</span>',
+      'delivery': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-sky-100 text-sky-700">📦 Delivery</span>',
+      'stores': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-teal-100 text-teal-700">🏬 Stores</span>',
+      'hr': '<span class="px-2 py-0.5 rounded-lg text-[9px] font-black bg-pink-100 text-pink-700">👥 HR</span>'
+    };
+
+    let html = '';
+    records.forEach((row, idx) => {
+      const roleBadge = roleBadgeMap[row.userRole] || `<span class="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-slate-100 text-slate-700">${row.userRole}</span>`;
+      const totalIncentives = (row.attendanceBonus || 0) + (row.dailyBillBonus || 0) + (row.cardCommission || 0) + (row.storesBonus || 0) + (row.teamCommission || 0);
+      const totalAllowances = (row.fuelAllowance || 0) + (row.otherAllowances || 0);
+      const totalDeductions = (row.salaryAdvance || 0) + (row.otherDeductions || 0);
+
+      html += `
+        <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-xs font-semibold text-slate-700">
+          <!-- Employee & Role -->
+          <td class="p-3">
+            <div class="font-black text-slate-900 text-xs sm:text-sm leading-tight">${row.userName}</div>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              ${roleBadge}
+              <span class="text-[10px] text-slate-400 font-mono">@${row.userUsername}</span>
+            </div>
+          </td>
+
+          <!-- Basic Salary (Editable with Checkbox toggle) -->
+          <td class="p-3 text-right">
+            <div class="flex items-center justify-end gap-1">
+              <input type="checkbox" onchange="Payroll.toggleBasicSalary(${idx}, this.checked)" ${row.isBasicEnabled !== false ? 'checked' : ''} title="Toggle Basic Salary" class="w-3.5 h-3.5 text-emerald-600 rounded" />
+              <input type="number" step="500" value="${row.basicSalary || 0}" onchange="Payroll.updateCell(${idx}, 'basicSalary', this.value)" class="w-24 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-black text-slate-900 focus:ring-1 focus:ring-emerald-500 outline-none" />
+            </div>
+            <span class="text-[9px] text-slate-400 block mt-0.5">LKR</span>
+          </td>
+
+          <!-- Attendance & Working Days -->
+          <td class="p-3 text-center">
+            <div class="font-black ${row.isAttendanceQualified ? 'text-emerald-700' : 'text-slate-600'}">
+              ${row.workingDays || 0} Days
+            </div>
+            ${row.attendanceBonus > 0 ? `
+              <span class="text-[9.5px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 block mt-0.5">+Rs. ${row.attendanceBonus.toLocaleString()}</span>
+            ` : `<span class="text-[9px] text-slate-400 block mt-0.5">&lt; 25 Days</span>`}
+          </td>
+
+          <!-- Card Target & Daily Bill Commission -->
+          <td class="p-3 text-right">
+            <div class="font-black text-emerald-700">
+              Rs. ${totalIncentives.toLocaleString()}
+            </div>
+            <div class="text-[9.5px] text-slate-500 mt-0.5 space-y-0.5">
+              ${row.cardCommission > 0 ? `<span class="block text-purple-700">🏷️ Cards: +Rs. ${row.cardCommission.toLocaleString()}</span>` : ''}
+              ${row.dailyBillBonus > 0 ? `<span class="block text-blue-700">📋 Bills: +Rs. ${row.dailyBillBonus.toLocaleString()}</span>` : ''}
+              ${row.storesBonus > 0 ? `<span class="block text-teal-700">🏬 Dispatch: +Rs. ${row.storesBonus.toLocaleString()}</span>` : ''}
+              ${row.teamCommission > 0 ? `<span class="block text-amber-700">👑 Team: +Rs. ${row.teamCommission.toLocaleString()}</span>` : ''}
+            </div>
+          </td>
+
+          <!-- Allowances (Fuel, Bike, Phone) -->
+          <td class="p-3 text-right">
+            <input type="number" step="500" value="${totalAllowances}" onchange="Payroll.updateCell(${idx}, 'fuelAllowance', this.value)" class="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-black text-slate-800 focus:ring-1 focus:ring-emerald-500 outline-none" />
+            <span class="text-[9px] text-slate-400 block mt-0.5">Fuel / Bike</span>
+          </td>
+
+          <!-- Deductions (Advance, EPF) -->
+          <td class="p-3 text-right">
+            <input type="number" step="500" value="${totalDeductions}" onchange="Payroll.updateCell(${idx}, 'salaryAdvance', this.value)" class="w-20 bg-rose-50/60 border border-rose-200 rounded-lg px-2 py-1 text-right text-xs font-black text-rose-700 focus:ring-1 focus:ring-rose-500 outline-none" />
+            <span class="text-[9px] text-rose-500 block mt-0.5">Advance / Cut</span>
+          </td>
+
+          <!-- Net Salary Payable (Bold Highlighted) -->
+          <td class="p-3 text-right">
+            <div class="text-sm font-black text-emerald-700 bg-emerald-50/80 px-2 py-1 rounded-xl border border-emerald-200 inline-block shadow-xs">
+              Rs. ${(row.netSalary || 0).toLocaleString()}
+            </div>
+          </td>
+
+          <!-- Status & Actions -->
+          <td class="p-3 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="Payroll.printPayslip(${idx})" class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 active:scale-95 transition-all" title="Print 80mm / A4 Payslip">
+                🖨️ Slip
+              </button>
+              <button onclick="Payroll.openAdjustModal(${idx})" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl active:scale-95 transition-all" title="Detailed Edit & Custom Bonus">
+                ⚙️ Edit
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = html;
+  },
+
+  updatePayrollKpiChips(records) {
+    let totalBasic = 0;
+    let totalIncentives = 0;
+    let totalNet = 0;
+
+    records.forEach(r => {
+      totalBasic += (Number(r.basicSalary) || 0);
+      totalIncentives += (Number(r.attendanceBonus) || 0) + (Number(r.dailyBillBonus) || 0) + (Number(r.cardCommission) || 0) + (Number(r.storesBonus) || 0) + (Number(r.teamCommission) || 0);
+      totalNet += (Number(r.netSalary) || 0);
+    });
+
+    const totalNetEl = document.getElementById('payroll-kpi-total-net');
+    const totalBasicEl = document.getElementById('payroll-kpi-total-basic');
+    const totalIncentivesEl = document.getElementById('payroll-kpi-total-incentives');
+    const totalStaffEl = document.getElementById('payroll-kpi-total-staff');
+
+    if (totalNetEl) totalNetEl.textContent = `Rs. ${totalNet.toLocaleString()}`;
+    if (totalBasicEl) totalBasicEl.textContent = `Rs. ${totalBasic.toLocaleString()}`;
+    if (totalIncentivesEl) totalIncentivesEl.textContent = `Rs. ${totalIncentives.toLocaleString()}`;
+    if (totalStaffEl) totalStaffEl.textContent = `${records.length} Staff`;
+  },
+
+  /** Inline Cell Update with instantaneous live math */
+  updateCell(index, field, value) {
+    const row = this.payrollSheetCache[index];
+    if (!row) return;
+
+    row[field] = Number(value) || 0;
+    this.recalculateRowNet(row);
+    this.renderPayrollTable(this.payrollSheetCache);
+    this.updatePayrollKpiChips(this.payrollSheetCache);
+  },
+
+  toggleBasicSalary(index, isChecked) {
+    const row = this.payrollSheetCache[index];
+    if (!row) return;
+
+    row.isBasicEnabled = isChecked;
+    if (!isChecked) {
+      row._previousBasic = row.basicSalary;
+      row.basicSalary = 0;
+    } else {
+      row.basicSalary = row._previousBasic || 30000;
+    }
+    this.recalculateRowNet(row);
+    this.renderPayrollTable(this.payrollSheetCache);
+    this.updatePayrollKpiChips(this.payrollSheetCache);
+  },
+
+  recalculateRowNet(row) {
+    const basic = row.isBasicEnabled !== false ? (Number(row.basicSalary) || 0) : 0;
+    const totalIncentives = (Number(row.attendanceBonus) || 0) + (Number(row.dailyBillBonus) || 0) + (Number(row.cardCommission) || 0) + (Number(row.storesBonus) || 0) + (Number(row.teamCommission) || 0);
+    const totalAllowances = (Number(row.fuelAllowance) || 0) + (Number(row.otherAllowances) || 0);
+    const totalDeductions = (Number(row.salaryAdvance) || 0) + (Number(row.otherDeductions) || 0);
+    row.netSalary = Math.max(0, basic + totalIncentives + totalAllowances - totalDeductions);
+  },
+
+  /** Save entire monthly payroll sheet to Cloud Database */
+  async saveMonthlyPayrollSheet() {
+    if (!this.payrollSheetCache || this.payrollSheetCache.length === 0) {
+      UI.showToast('No payroll records to save.', 'warning');
+      return;
+    }
+
+    try {
+      const activeTid = getActiveTenantId() || 1;
+      const monthStr = this.currentMonth;
+
+      for (const row of this.payrollSheetCache) {
+        const payload = Object.assign({}, row, {
+          tenantId: activeTid,
+          month: monthStr,
+          status: 'Approved',
+          updatedAt: new Date().toISOString()
+        });
+
+        const existing = await db.payroll?.where('id').equals(row.id).first();
+        if (existing) {
+          await db.payroll.update(existing.id, payload);
+        } else {
+          await db.payroll?.add(payload);
+        }
+      }
+
+      UI.showToast(`💾 Monthly Payroll for ${monthStr} saved & approved successfully!`, 'success');
+      if (typeof SoundFX !== 'undefined') SoundFX.play('save');
+    } catch (err) {
+      UI.showToast('Error saving payroll sheet: ' + err.message, 'error');
+    }
+  },
+
+  /** Open Employee Salary Adjustment Modal */
+  openAdjustModal(index) {
+    const row = this.payrollSheetCache[index];
+    if (!row) return;
+
+    this.selectedPayslipId = index;
+    document.getElementById('payroll-adj-name').textContent = `${row.userName} (${row.userRole.toUpperCase()})`;
+    document.getElementById('payroll-adj-basic').value = row.basicSalary || 0;
+    document.getElementById('payroll-adj-attendance').value = row.attendanceBonus || 0;
+    document.getElementById('payroll-adj-card-bonus').value = row.cardCommission || 0;
+    document.getElementById('payroll-adj-bill-bonus').value = row.dailyBillBonus || 0;
+    document.getElementById('payroll-adj-stores-bonus').value = row.storesBonus || 0;
+    document.getElementById('payroll-adj-team-bonus').value = row.teamCommission || 0;
+    document.getElementById('payroll-adj-fuel').value = row.fuelAllowance || 0;
+    document.getElementById('payroll-adj-other-allow').value = row.otherAllowances || 0;
+    document.getElementById('payroll-adj-advance').value = row.salaryAdvance || 0;
+    document.getElementById('payroll-adj-other-deduct').value = row.otherDeductions || 0;
+    document.getElementById('payroll-adj-notes').value = row.notes || '';
+
+    UI.openModal('modal-payroll-adjust');
+  },
+
+  saveAdjustModal() {
+    if (this.selectedPayslipId === null) return;
+    const row = this.payrollSheetCache[this.selectedPayslipId];
+    if (!row) return;
+
+    row.basicSalary = Number(document.getElementById('payroll-adj-basic').value) || 0;
+    row.attendanceBonus = Number(document.getElementById('payroll-adj-attendance').value) || 0;
+    row.cardCommission = Number(document.getElementById('payroll-adj-card-bonus').value) || 0;
+    row.dailyBillBonus = Number(document.getElementById('payroll-adj-bill-bonus').value) || 0;
+    row.storesBonus = Number(document.getElementById('payroll-adj-stores-bonus').value) || 0;
+    row.teamCommission = Number(document.getElementById('payroll-adj-team-bonus').value) || 0;
+    row.fuelAllowance = Number(document.getElementById('payroll-adj-fuel').value) || 0;
+    row.otherAllowances = Number(document.getElementById('payroll-adj-other-allow').value) || 0;
+    row.salaryAdvance = Number(document.getElementById('payroll-adj-advance').value) || 0;
+    row.otherDeductions = Number(document.getElementById('payroll-adj-other-deduct').value) || 0;
+    row.notes = document.getElementById('payroll-adj-notes').value.trim();
+
+    this.recalculateRowNet(row);
+    UI.closeModal('modal-payroll-adjust');
+    this.renderPayrollTable(this.payrollSheetCache);
+    this.updatePayrollKpiChips(this.payrollSheetCache);
+    UI.showToast('Adjustments applied! ✅', 'success');
+  },
+
+  /** Print 80mm POS Thermal Payslip or A4 Format */
+  async printPayslip(index) {
+    const row = this.payrollSheetCache[index];
+    if (!row) return;
+
+    const company = filterByTenant(await db.company.toArray())[0] || {
+      name: 'LANKA SPICE DISTRIBUTORS',
+      tagline: 'Wholesale Card & Sachet Distribution',
+      phone: '077 123 4567 / 025 222 3456'
+    };
+
+    const monthLabel = this.currentMonth;
+    const datePrinted = new Date().toLocaleString();
+
+    const slipHtml = `
+      <div style="font-family: 'Courier New', monospace; width: 100%; max-width: 320px; margin: 0 auto; color: #000; font-size: 11.5px; padding: 10px 4px; line-height: 1.35;">
+        <!-- Header -->
+        <div style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
+          <div style="font-size: 15px; font-weight: 900; text-transform: uppercase;">${company.name}</div>
+          <div style="font-size: 10px; font-weight: bold;">${company.tagline || 'Wholesale Distribution'}</div>
+          <div style="font-size: 10px;">📞 ${company.phone || ''}</div>
+          <div style="font-size: 13px; font-weight: 900; margin-top: 4px; background: #000; color: #fff; padding: 2px 4px; border-radius: 4px; display: inline-block;">
+            SALARY PAYSLIP / වැටුප් පත්‍රිකාව
+          </div>
+        </div>
+
+        <!-- Staff Info -->
+        <div style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 6px; font-size: 11px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Staff Name:</span>
+            <strong>${row.userName}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Role/Designation:</span>
+            <strong>${row.userRole.toUpperCase()}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Salary Month:</span>
+            <strong>${monthLabel}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Working Days:</span>
+            <span>${row.workingDays} Days</span>
+          </div>
+        </div>
+
+        <!-- Earnings Section -->
+        <div style="font-weight: 900; font-size: 11px; margin-bottom: 2px; text-decoration: underline;">EARNINGS & INCENTIVES (ඉපැයීම්):</div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 4px;">
+          ${row.isBasicEnabled !== false ? `
+            <tr><td>Basic Salary:</td><td style="text-align: right; font-weight: bold;">Rs. ${(row.basicSalary || 0).toLocaleString()}</td></tr>
+          ` : '<tr><td>Basic Salary:</td><td style="text-align: right; color: #666;">(Commission Only)</td></tr>'}
+          ${row.attendanceBonus > 0 ? `
+            <tr><td>Attendance Bonus (25+ Days):</td><td style="text-align: right;">+Rs. ${row.attendanceBonus.toLocaleString()}</td></tr>
+          ` : ''}
+          ${row.dailyBillBonus > 0 ? `
+            <tr><td>Daily Bill Target Bonus:</td><td style="text-align: right;">+Rs. ${row.dailyBillBonus.toLocaleString()}</td></tr>
+          ` : ''}
+          ${row.cardCommission > 0 ? `
+            <tr><td>Card Target Commission:</td><td style="text-align: right;">+Rs. ${row.cardCommission.toLocaleString()}</td></tr>
+          ` : ''}
+          ${row.storesBonus > 0 ? `
+            <tr><td>Stores Dispatch Bonus:</td><td style="text-align: right;">+Rs. ${row.storesBonus.toLocaleString()}</td></tr>
+          ` : ''}
+          ${row.teamCommission > 0 ? `
+            <tr><td>Team Turnover Commission:</td><td style="text-align: right;">+Rs. ${row.teamCommission.toLocaleString()}</td></tr>
+          ` : ''}
+          ${row.fuelAllowance > 0 ? `
+            <tr><td>Fuel / Bike Allowance:</td><td style="text-align: right;">+Rs. ${row.fuelAllowance.toLocaleString()}</td></tr>
+          ` : ''}
+          ${row.otherAllowances > 0 ? `
+            <tr><td>Other Allowance:</td><td style="text-align: right;">+Rs. ${row.otherAllowances.toLocaleString()}</td></tr>
+          ` : ''}
+        </table>
+
+        <!-- Deductions Section -->
+        ${(row.salaryAdvance > 0 || row.otherDeductions > 0) ? `
+          <div style="font-weight: 900; font-size: 11px; margin-top: 4px; margin-bottom: 2px; text-decoration: underline; color: #900;">DEDUCTIONS (අඩුකිරීම්):</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 4px;">
+            ${row.salaryAdvance > 0 ? `
+              <tr><td>Salary Advance (අත්තිකාරම්):</td><td style="text-align: right; color: #900;">-Rs. ${row.salaryAdvance.toLocaleString()}</td></tr>
+            ` : ''}
+            ${row.otherDeductions > 0 ? `
+              <tr><td>Other Deductions:</td><td style="text-align: right; color: #900;">-Rs. ${row.otherDeductions.toLocaleString()}</td></tr>
+            ` : ''}
+          </table>
+        ` : ''}
+
+        <!-- Net Salary Box -->
+        <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 6px 0; margin: 6px 0; text-align: center;">
+          <div style="font-size: 11px; font-weight: bold; text-transform: uppercase;">NET SALARY PAYABLE (ශුද්ධ වැටුප):</div>
+          <div style="font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">
+            Rs. ${(row.netSalary || 0).toLocaleString()}.00
+          </div>
+        </div>
+
+        ${row.notes ? `
+          <div style="font-size: 10px; font-style: italic; margin-bottom: 6px;">Note: ${row.notes}</div>
+        ` : ''}
+
+        <!-- Signatures -->
+        <div style="display: flex; justify-content: space-between; margin-top: 25px; padding-top: 5px; border-top: 1px dotted #999; font-size: 9.5px; text-align: center;">
+          <div>
+            ...........................<br>
+            Prepared By (HR)
+          </div>
+          <div>
+            ...........................<br>
+            Approved (Owner)
+          </div>
+          <div>
+            ...........................<br>
+            Employee Signature
+          </div>
+        </div>
+
+        <div style="text-align: center; font-size: 9px; color: #666; margin-top: 8px;">
+          Printed: ${datePrinted} • MOB POS HR Engine
+        </div>
+      </div>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=380,height=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Payslip - ${row.userName} (${monthLabel})</title>
+            <style>
+              @media print {
+                body { margin: 0; padding: 0; }
+                @page { margin: 2mm; size: auto; }
+              }
+            </style>
+          </head>
+          <body onload="window.print();">
+            ${slipHtml}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  },
+
+  /** Open Payroll Rules & Card Target Slab Settings Modal */
+  async openRulesModal() {
+    const rules = await this.getPayrollRules();
+
+    document.getElementById('rule-basic-owner').value = rules.basicSalaries['owner'] || 100000;
+    document.getElementById('rule-basic-sm').value = rules.basicSalaries['sm'] || 65000;
+    document.getElementById('rule-basic-asm').value = rules.basicSalaries['asm'] || 50000;
+    document.getElementById('rule-basic-supervisor').value = rules.basicSalaries['supervisor'] || 42000;
+    document.getElementById('rule-basic-rep').value = rules.basicSalaries['rep'] || 35000;
+    document.getElementById('rule-basic-delivery').value = rules.basicSalaries['delivery'] || 35000;
+    document.getElementById('rule-basic-stores').value = rules.basicSalaries['stores'] || 30000;
+    document.getElementById('rule-basic-hr').value = rules.basicSalaries['hr'] || 40000;
+
+    document.getElementById('rule-attendance-days').value = rules.attendanceMinDays || 25;
+    document.getElementById('rule-attendance-bonus').value = rules.attendanceBonus || 5000;
+    document.getElementById('rule-bill-target').value = rules.dailyBillMinAvg || 20;
+    document.getElementById('rule-bill-bonus').value = rules.dailyBillBonus || 3000;
+
+    document.getElementById('rule-stores-rate').value = rules.storesRatePerCard || 2.00;
+    document.getElementById('rule-stores-basic-toggle').checked = rules.storesEnableBasic !== false;
+
+    document.getElementById('rule-sm-comm').value = rules.smCommissionPct || 1.0;
+    document.getElementById('rule-asm-comm').value = rules.asmCommissionPct || 0.5;
+
+    // Populate Card Target Slabs Table
+    this.renderCardSlabsEditor(rules.cardTargetSlabs || []);
+
+    UI.openModal('modal-payroll-rules');
+  },
+
+  renderCardSlabsEditor(slabs) {
+    const container = document.getElementById('payroll-card-slabs-list');
+    if (!container) return;
+
+    let html = '';
+    slabs.forEach((s, idx) => {
+      html += `
+        <div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl" id="slab-row-${idx}">
+          <input type="text" value="${s.name}" placeholder="Slab Description" class="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 slab-name-input" />
+          <select class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 slab-key-input">
+            <option value="chilli" ${s.categoryKey === 'chilli' ? 'selected' : ''}>🌶️ Chilli (මිරිස්)</option>
+            <option value="curry" ${s.categoryKey === 'curry' ? 'selected' : ''}>🌿 Curry (තුනපහ)</option>
+            <option value="meat" ${s.categoryKey === 'meat' ? 'selected' : ''}>🍖 Meat (මස් කුඩු)</option>
+            <option value="all" ${s.categoryKey === 'all' ? 'selected' : ''}>📦 All Cards (සියල්ල)</option>
+          </select>
+          <input type="number" value="${s.minCards}" placeholder="Min Cards" class="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-black text-slate-800 slab-min-input" title="Target Cards Required" />
+          <input type="number" value="${s.bonus}" placeholder="Bonus Rs" class="w-24 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-black text-emerald-700 slab-bonus-input" title="Bonus Cash LKR" />
+          <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-bold px-1.5 text-base">✕</button>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  },
+
+  addNewCardSlabRow() {
+    const container = document.getElementById('payroll-card-slabs-list');
+    if (!container) return;
+
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl';
+    div.innerHTML = `
+      <input type="text" value="New Card Target" placeholder="Slab Description" class="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 slab-name-input" />
+      <select class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 slab-key-input">
+        <option value="chilli">🌶️ Chilli (මිරිස්)</option>
+        <option value="curry">🌿 Curry (තුනපහ)</option>
+        <option value="meat">🍖 Meat (මස් කුඩු)</option>
+        <option value="all">📦 All Cards (සියල්ල)</option>
+      </select>
+      <input type="number" value="100" placeholder="Min Cards" class="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-black text-slate-800 slab-min-input" />
+      <input type="number" value="1000" placeholder="Bonus Rs" class="w-24 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right text-xs font-black text-emerald-700 slab-bonus-input" />
+      <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-bold px-1.5 text-base">✕</button>
+    `;
+    container.appendChild(div);
+  },
+
+  async saveRulesModal() {
+    const slabs = [];
+    const slabRows = document.querySelectorAll('#payroll-card-slabs-list > div');
+    slabRows.forEach((row, idx) => {
+      const name = row.querySelector('.slab-name-input')?.value.trim() || `Slab ${idx + 1}`;
+      const categoryKey = row.querySelector('.slab-key-input')?.value || 'all';
+      const minCards = Number(row.querySelector('.slab-min-input')?.value) || 100;
+      const bonus = Number(row.querySelector('.slab-bonus-input')?.value) || 1000;
+      slabs.push({ id: idx + 1, name, categoryKey, minCards, bonus });
+    });
+
+    const newRules = {
+      basicSalaries: {
+        'owner': Number(document.getElementById('rule-basic-owner')?.value) || 100000,
+        'sm': Number(document.getElementById('rule-basic-sm')?.value) || 65000,
+        'asm': Number(document.getElementById('rule-basic-asm')?.value) || 50000,
+        'supervisor': Number(document.getElementById('rule-basic-supervisor')?.value) || 42000,
+        'rep': Number(document.getElementById('rule-basic-rep')?.value) || 35000,
+        'delivery': Number(document.getElementById('rule-basic-delivery')?.value) || 35000,
+        'stores': Number(document.getElementById('rule-basic-stores')?.value) || 30000,
+        'hr': Number(document.getElementById('rule-basic-hr')?.value) || 40000
+      },
+      attendanceMinDays: Number(document.getElementById('rule-attendance-days')?.value) || 25,
+      attendanceBonus: Number(document.getElementById('rule-attendance-bonus')?.value) || 5000,
+      dailyBillMinAvg: Number(document.getElementById('rule-bill-target')?.value) || 20,
+      dailyBillBonus: Number(document.getElementById('rule-bill-bonus')?.value) || 3000,
+      storesRatePerCard: Number(document.getElementById('rule-stores-rate')?.value) || 2.00,
+      storesEnableBasic: Boolean(document.getElementById('rule-stores-basic-toggle')?.checked),
+      smCommissionPct: Number(document.getElementById('rule-sm-comm')?.value) || 1.0,
+      asmCommissionPct: Number(document.getElementById('rule-asm-comm')?.value) || 0.5,
+      cardTargetSlabs: slabs
+    };
+
+    await this.savePayrollRules(newRules);
+    UI.closeModal('modal-payroll-rules');
+    await this.recalculateMonth();
+  }
+};
+
+window.Payroll = Payroll;
+
+// --- users.js ---
 /**
  * User & Staff Management Module
  * Supports 7 Specialized Roles:
@@ -30211,6 +31411,11 @@ const Users = {
             icon: '🏬',
             badge: '<span class="px-2.5 py-1 rounded-xl text-[10px] font-black bg-teal-100 text-teal-700 border border-teal-200">🏬 Production Stores Keeper (තොග)</span>',
             iconBg: 'bg-teal-600 shadow-teal-600/30'
+          },
+          'hr': {
+            icon: '👥',
+            badge: '<span class="px-2.5 py-1 rounded-xl text-[10px] font-black bg-pink-100 text-pink-700 border border-pink-200">👥 HR & Payroll Officer (මානව සම්පත්)</span>',
+            iconBg: 'bg-pink-600 shadow-pink-600/30'
           }
         }[role] || {
           icon: '👤',
@@ -30456,9 +31661,7 @@ const Users = {
 
 window.Users = Users;
 
-// --- END: users.js ---
-
-// --- BEGIN: app.js ---
+// --- app.js ---
 /**
  * Main Application Bootstrap & Lifecycle
  */
@@ -30560,9 +31763,227 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// --- END: app.js ---
-
 </script>
+
+
+  <!-- =========================================================================
+       MODAL: PAYROLL EMPLOYEE SALARY ADJUSTMENT (තනි සේවක වැටුප් සංශෝධනය)
+       ========================================================================= -->
+  <div id="modal-payroll-adjust" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-3xl p-5 space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚙️</span>
+          <div>
+            <h3 class="font-black text-sm text-slate-900">Adjust Salary Details</h3>
+            <p id="payroll-adj-name" class="text-[11px] text-pink-700 font-bold">-</p>
+          </div>
+        </div>
+        <button onclick="UI.closeModal('modal-payroll-adjust')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 text-xs">
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Basic Salary (මූලික)</label>
+          <input type="number" id="payroll-adj-basic" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Attendance Bonus (දින 25+)</label>
+          <input type="number" id="payroll-adj-attendance" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Card Target Bonus</label>
+          <input type="number" id="payroll-adj-card-bonus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-purple-700" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Daily Bill Target Bonus</label>
+          <input type="number" id="payroll-adj-bill-bonus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-blue-700" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Stores Card Dispatch Bonus</label>
+          <input type="number" id="payroll-adj-stores-bonus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-teal-700" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Team Turnover Commission</label>
+          <input type="number" id="payroll-adj-team-bonus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-amber-700" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Fuel / Bike Allowance</label>
+          <input type="number" id="payroll-adj-fuel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-500 block mb-1">Other Allowances</label>
+          <input type="number" id="payroll-adj-other-allow" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-rose-700 block mb-1">Salary Advance (අත්තිකාරම්)</label>
+          <input type="number" id="payroll-adj-advance" class="w-full bg-rose-50 border border-rose-200 rounded-xl px-2.5 py-1.5 font-bold text-rose-700" />
+        </div>
+        <div>
+          <label class="font-bold text-rose-700 block mb-1">Other Deductions</label>
+          <input type="number" id="payroll-adj-other-deduct" class="w-full bg-rose-50 border border-rose-200 rounded-xl px-2.5 py-1.5 font-bold text-rose-700" />
+        </div>
+      </div>
+
+      <div>
+        <label class="text-[11px] font-bold text-slate-500 block mb-1">Adjustment Note / Reason</label>
+        <input type="text" id="payroll-adj-notes" placeholder="Special incentive / Advance note..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-100">
+        <button onclick="Payroll.saveAdjustModal()" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95">
+          💾 Apply Adjustments
+        </button>
+        <button onclick="UI.closeModal('modal-payroll-adjust')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       MODAL: PAYROLL RULES & CARD TARGET SLABS (වැටුප් & කාඩ්පත් ටාගට් නීති)
+       ========================================================================= -->
+  <div id="modal-payroll-rules" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-5 space-y-3.5 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚙️</span>
+          <div>
+            <h3 class="font-black text-sm text-slate-900">Salary & Card Target Rules</h3>
+            <p class="text-[11px] text-slate-500">Configure default basic salaries, attendance targets & card bonus slabs</p>
+          </div>
+        </div>
+        <button onclick="UI.closeModal('modal-payroll-rules')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+
+      <div class="overflow-y-auto space-y-4 pr-1 flex-1 text-xs">
+        <!-- 1. Default Basic Salaries -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <h4 class="font-black text-slate-800 uppercase tracking-wider text-[11px]">Default Basic Salaries by Role (මූලික වැටුප්)</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">👑 Owner Salary</label>
+              <input type="number" id="rule-basic-owner" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">👔 Sales Manager (SM)</label>
+              <input type="number" id="rule-basic-sm" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">💼 Area Sales Mgr (ASM)</label>
+              <input type="number" id="rule-basic-asm" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">📋 Field Supervisor</label>
+              <input type="number" id="rule-basic-supervisor" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">🚚 Sales Rep</label>
+              <input type="number" id="rule-basic-rep" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">📦 Delivery Driver</label>
+              <input type="number" id="rule-basic-delivery" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">🏬 Stores Keeper</label>
+              <input type="number" id="rule-basic-stores" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">👥 HR Officer</label>
+              <input type="number" id="rule-basic-hr" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Attendance & Daily Bill Target Rules -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <h4 class="font-black text-slate-800 uppercase tracking-wider text-[11px]">Attendance & Daily Bill Target Incentives</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">Min Days for Attendance Bonus</label>
+              <input type="number" id="rule-attendance-days" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">Attendance Bonus (LKR)</label>
+              <input type="number" id="rule-attendance-bonus" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold text-emerald-700" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">Daily Target Bills / Day</label>
+              <input type="number" id="rule-bill-target" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">Daily Bill Bonus (LKR)</label>
+              <input type="number" id="rule-bill-bonus" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 font-bold text-blue-700" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Stores Keeper Per-Card Commission & Basic Toggle -->
+        <div class="bg-teal-50/70 p-3 rounded-2xl border border-teal-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-black text-teal-950 uppercase tracking-wider text-[11px]">Stores Keeper Card Dispatch Commission</h4>
+            <div class="flex items-center gap-1.5">
+              <input type="checkbox" id="rule-stores-basic-toggle" class="w-3.5 h-3.5 text-teal-600 rounded" />
+              <label for="rule-stores-basic-toggle" class="text-[10px] font-bold text-teal-900 cursor-pointer">Enable Basic Salary</label>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-teal-800 block">Rate Per Dispatched Card (LKR)</label>
+              <input type="number" step="0.5" id="rule-stores-rate" class="w-full bg-white border border-teal-200 rounded-xl px-2 py-1 font-bold text-teal-900" />
+            </div>
+            <div>
+              <span class="text-[10px] text-teal-700 block mt-3">💡 Auto-multiplied by total cards dispatched from Stores</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Management Turnover Commission -->
+        <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-200 space-y-2">
+          <h4 class="font-black text-amber-950 uppercase tracking-wider text-[11px]">Management Team Turnover Overrides</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-amber-800 block">SM Commission %</label>
+              <input type="number" step="0.1" id="rule-sm-comm" class="w-full bg-white border border-amber-200 rounded-xl px-2 py-1 font-bold text-amber-900" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-amber-800 block">ASM Commission %</label>
+              <input type="number" step="0.1" id="rule-asm-comm" class="w-full bg-white border border-amber-200 rounded-xl px-2 py-1 font-bold text-amber-900" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Product Category Card Target Slabs -->
+        <div class="bg-purple-50/70 p-3 rounded-2xl border border-purple-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-black text-purple-950 uppercase tracking-wider text-[11px]">Rep Product Card Target Slabs (කාඩ්පත් ටාගට්)</h4>
+              <p class="text-[9.5px] text-purple-700">Set slab bonuses (e.g. Chilli 100 cards -> +1000, 200 cards -> +2000)</p>
+            </div>
+            <button type="button" onclick="Payroll.addNewCardSlabRow()" class="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-bold shadow-xs">
+              + Add Slab
+            </button>
+          </div>
+
+          <div id="payroll-card-slabs-list" class="space-y-1.5">
+            <!-- Populated by payroll.js -->
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-100">
+        <button onclick="Payroll.saveRulesModal()" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95">
+          💾 Save Rules & Apply
+        </button>
+        <button onclick="UI.closeModal('modal-payroll-rules')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
