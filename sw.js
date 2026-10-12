@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'spice-pos-v4.5.1';
+﻿const CACHE_NAME = 'spice-pos-v4.6.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
