@@ -141,7 +141,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
   </script>
 
   <!-- Custom & Thermal Print Stylesheet -->
-  <link rel="stylesheet" href="css/leaflet.css" />
+  
   <style>
 /* required styles */
 
@@ -1680,6 +1680,45 @@ button:active, .btn-touch:active {
           ========================================== -->
     <section id="tab-dashboard" class="app-tab-page hidden space-y-4 management-or-admin">
       
+      <!-- Expiry Warning Notice & Cloud-Synced Bank Details Banner -->
+      <div id="dash-subscription-warning-banner" class="hidden bg-gradient-to-r from-amber-950 via-slate-900 to-red-950 border-2 border-amber-500/80 rounded-3xl p-4 sm:p-5 text-white shadow-2xl space-y-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center text-xl font-black flex-shrink-0 animate-pulse">⚠️</span>
+            <div>
+              <span id="dash-subscription-warning-badge" class="text-[9px] font-black uppercase tracking-widest text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/40 inline-block">Subscription Notice</span>
+              <h3 id="dash-subscription-warning-title" class="text-sm font-black text-white mt-0.5">Software Service Expiry Notice</h3>
+            </div>
+          </div>
+          <span id="dash-subscription-warning-days" class="text-xs font-black px-2.5 py-1 rounded-xl bg-red-600/90 text-white border border-red-400 flex-shrink-0">7 Days Left</span>
+        </div>
+
+        <p id="dash-subscription-warning-text" class="text-xs text-amber-100 font-medium leading-relaxed">
+          ඔබගේ මෘදුකාංග සේවා කාලය ළඟදීම අවසන් වේ. කරුණාකර පහත බැංකු ගිණුමට ගෙවීම් සිදුකර සේවාව අඛණ්ඩව පවත්වා ගන්න.
+        </p>
+
+        <!-- Cloud-Synced Bank Details & Hotline Box -->
+        <div class="bg-black/50 border border-amber-500/30 rounded-2xl p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-[10px] text-amber-300/80 uppercase font-black block">Bank Account (බැංකු ගිණුම):</span>
+            <div id="dash-subscription-warning-bank" class="text-white font-bold text-xs mt-0.5 font-mono select-all">-</div>
+          </div>
+          <div>
+            <span class="text-[10px] text-amber-300/80 uppercase font-black block">Hotline / WhatsApp Support:</span>
+            <div id="dash-subscription-warning-hotline" class="text-white font-bold text-xs mt-0.5">-</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <a id="dash-subscription-warning-wa-btn" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 rounded-xl text-center text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md">
+            <span>💬 WhatsApp Slip</span>
+          </a>
+          <a id="dash-subscription-warning-call-btn" href="#" class="flex-1 bg-slate-800 hover:bg-slate-700 text-amber-300 font-black py-2.5 rounded-xl text-center text-xs flex items-center justify-center gap-1.5 border border-slate-700 active:scale-95 transition-all">
+            <span>📞 Call Support</span>
+          </a>
+        </div>
+      </div>
+
       <!-- Top Hero Banner with Glowing Sapphire Border -->
       <div class="glow-border-rainbow">
         <div class="hero-dashboard rounded-3xl p-5 text-white relative overflow-hidden">
@@ -2078,7 +2117,7 @@ button:active, .btn-touch:active {
       </div>
 
       <!-- Floating Bottom Order Bar for POS -->
-      <div class="fixed bottom-16 left-0 right-0 max-w-4xl mx-auto px-4 z-20 pointer-events-none">
+      <div class="fixed bottom-[72px] sm:bottom-6 left-0 right-0 max-w-4xl mx-auto px-4 z-40 pointer-events-none">
         <div class="bg-slate-900 text-white p-3.5 rounded-2xl shadow-2xl flex items-center justify-between pointer-events-auto border border-slate-700">
           <div class="flex items-center gap-2.5">
             <span id="pos-cart-badge" class="w-7 h-7 rounded-full bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center">0</span>
@@ -3637,6 +3676,79 @@ button:active, .btn-touch:active {
 
 
   <!-- =========================================================================
+       MODAL: PWA INSTALL GUIDE (Phone / PC එකට Install කරගැනීමේ මාර්ගෝපදේශය)
+       ========================================================================= -->
+  <div id="modal-pwa-install-guide" class="modal-overlay hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="modal-content bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl p-5 space-y-4 text-white shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-lg font-black">📲</span>
+          <div>
+            <h3 class="font-black text-sm text-white">Install App (පද්ධතිය ස්ථාපනය කරන්න)</h3>
+            <p class="text-[10px] text-slate-400">Phone හෝ PC එකේ Home Screen / Desktop එකට</p>
+          </div>
+        </div>
+        <button onclick="UI.closeModal('modal-pwa-install-guide')" class="p-1.5 text-slate-400 hover:text-slate-200 text-lg rounded-xl hover:bg-slate-800 cursor-pointer">✕</button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        මෙම POS පද්ධතිය සාමාන්‍ය Web Browser එකකින් තොරව Phone එකේ හෝ පරිගණකයේ Native App එකක් ලෙස Offline ක්‍රියා කරයි. ඔබගේ Device එක අනුව පහත පියවර අනුගමනය කරන්න:
+      </p>
+
+      <div class="space-y-3">
+        <!-- Android Guide -->
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center gap-2 text-emerald-400 font-black text-xs">
+            <span>🤖</span>
+            <span>Android Phone (Chrome / Brave / Samsung)</span>
+          </div>
+          <ol class="text-[11px] text-slate-300 space-y-1 list-decimal list-inside leading-relaxed">
+            <li>Chrome බ්‍රවුසරයේ ඉහළ දකුණු කෙළවරේ ඇති <strong>තිත් තුන (⋮)</strong> ඔබන්න.</li>
+            <li>ලැයිස්තුවෙන් <strong>"Install app"</strong> හෝ <strong>"Add to Home screen"</strong> (මුල් තිරයට එක් කරන්න) තෝරන්න.</li>
+            <li>පොප්-අප් එකේ <strong>"Install"</strong> හෝ <strong>"Add"</strong> ඔබන්න.</li>
+            <li>මොහොතකින් ඔබගේ Phone එකේ Home Screen එකේ POS Icon එක දිස්වේ!</li>
+          </ol>
+        </div>
+
+        <!-- iPhone / iPad Guide -->
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center gap-2 text-sky-400 font-black text-xs">
+            <span>🍏</span>
+            <span>iPhone / iPad (Apple Safari)</span>
+          </div>
+          <ol class="text-[11px] text-slate-300 space-y-1 list-decimal list-inside leading-relaxed">
+            <li>මෙම පිටුව <strong>Safari</strong> බ්‍රවුසරයෙන් විවෘත කරන්න.</li>
+            <li>පහළ මැද ඇති <strong>Share බොත්තම (📤 හෝ ⎋)</strong> ඔබන්න.</li>
+            <li>මෙනුව පහළට Scroll කර <strong>"Add to Home Screen ➕"</strong> තෝරන්න.</li>
+            <li>ඉහළ දකුණු කෙළවරේ ඇති <strong>"Add"</strong> ඔබන්න.</li>
+            <li>iPhone මුල් තිරයේ App එකක් ලෙස විවෘත කළ හැක!</li>
+          </ol>
+        </div>
+
+        <!-- PC / Laptop Guide -->
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center gap-2 text-purple-400 font-black text-xs">
+            <span>💻</span>
+            <span>PC / Laptop (Chrome / Edge)</span>
+          </div>
+          <ol class="text-[11px] text-slate-300 space-y-1 list-decimal list-inside leading-relaxed">
+            <li>Address Bar එකේ දකුණු කෙළවරේ ඇති <strong>Install Icon එක (⬇️ හෝ 💻)</strong> ඔබන්න.</li>
+            <li>නැතහොත් බ්‍රවුසරයේ <strong>(⋮) -> Cast, save and share -> Install POS</strong> තෝරන්න.</li>
+            <li>Desktop එකේ App Shortcut එකක් ලෙස ක්‍රියා කරයි.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="pt-1">
+        <button onclick="UI.closeModal('modal-pwa-install-guide')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-2.5 rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer">
+          ✓ තේරුණා (Got it)
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
        MODAL: POS CHECKOUT & PAYMENT MODE
        ========================================================================= -->
   <div id="modal-pos-checkout" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -3735,7 +3847,7 @@ button:active, .btn-touch:active {
        MODAL: ADD SALES RETURN / REPLACEMENT (සේල්ස් රිටන්ස් & භාණ්ඩ මාරු)
        ========================================================================= -->
   <div id="modal-add-return" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 shadow-2xl">
+    <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <div>
           <h3 class="font-black text-sm text-slate-900">Add Return / Replacement 🔄</h3>
@@ -3866,18 +3978,18 @@ button:active, .btn-touch:active {
        MODAL: ON-THE-SPOT EDIT ORDER ITEMS (භාණ්ඩ ගණන වෙනස් කිරීම & අලුත් භාණ්ඩ එකතු කිරීම)
        ========================================================================= -->
   <div id="modal-edit-order-items" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-4 sm:p-5 space-y-3.5 max-h-[88vh] flex flex-col shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-4 sm:p-5 space-y-3.5 max-h-[92vh] overflow-y-auto flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 flex-shrink-0">
         <div>
           <h3 class="font-black text-sm sm:text-base text-slate-900">Adjust / Add Order Items (භාණ්ඩ වෙනස් කිරීම)</h3>
           <p class="text-[11px] text-slate-500">Order #<span id="edit-order-inv" class="font-bold">-</span></p>
         </div>
-        <button onclick="UI.closeModal('modal-edit-order-items')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg rounded-xl hover:bg-slate-100">✕</button>
+        <button onclick="UI.closeModal('modal-edit-order-items')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg rounded-xl hover:bg-slate-100 cursor-pointer">✕</button>
       </div>
       <input type="hidden" id="edit-order-id" />
 
       <!-- Live Order Total Banner -->
-      <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-3 rounded-2xl flex items-center justify-between shadow-md">
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-3 rounded-2xl flex items-center justify-between shadow-md flex-shrink-0">
         <div>
           <span class="text-[10px] text-emerald-200 uppercase font-black tracking-wider block">Updated Order Total (සංශෝධිත මුළු බිල):</span>
           <div id="edit-order-live-total" class="text-base sm:text-lg font-black text-emerald-300">Rs. 0.00</div>
@@ -3886,18 +3998,18 @@ button:active, .btn-touch:active {
       </div>
 
       <!-- Current items in order -->
-      <div id="edit-order-items-list" class="space-y-2 overflow-y-auto flex-1 max-h-[36vh] pr-1">
+      <div id="edit-order-items-list" class="space-y-2 overflow-y-auto max-h-48 flex-shrink-0 pr-1">
         <!-- Populated dynamically by production.js -->
       </div>
 
       <!-- Item addition / substitution section -->
-      <div id="edit-order-add-item-section"></div>
+      <div id="edit-order-add-item-section" class="flex-shrink-0"></div>
 
-      <div class="pt-2 border-t border-slate-100 flex gap-2">
-        <button onclick="Production.saveEditedOrderItems()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95">
+      <div class="pt-2 border-t border-slate-100 flex gap-2 flex-shrink-0">
+        <button onclick="Production.saveEditedOrderItems()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95 cursor-pointer">
           💾 Save & Apply Changes (සුරකින්න)
         </button>
-        <button onclick="UI.closeModal('modal-edit-order-items')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
+        <button onclick="UI.closeModal('modal-edit-order-items')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl cursor-pointer">
           Cancel
         </button>
       </div>
@@ -4517,7 +4629,7 @@ button:active, .btn-touch:active {
        MODAL: PRODUCTION STORES - ADD WAREHOUSE STOCK (තොග ඇතුලත් කිරීම)
        ========================================================================= -->
   <div id="modal-add-stock" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 shadow-2xl">
+    <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <span class="text-xl">🏬</span>
@@ -16002,7 +16114,8 @@ const db = {
   training: new FirestoreCollection('training'),
   performance: new FirestoreCollection('performance'),
   fieldPhotos: new FirestoreCollection('fieldPhotos'),
-  gpsVisits: new FirestoreCollection('gpsVisits')
+  gpsVisits: new FirestoreCollection('gpsVisits'),
+  systemSettings: new FirestoreCollection('systemSettings')
 };
 
 window.db = db;
@@ -16209,6 +16322,24 @@ async function initDatabaseDefaults() {
 
     // Guarantee that HR user exists even on pre-existing databases
     await ensureHrUserExists();
+
+    // Synchronize SaaS Master Controller & Bank Details with Firestore Cloud across all devices
+    if (db.systemSettings) {
+      try {
+        let cloudSaaS = await db.systemSettings.get('saas_config');
+        const localRaw = localStorage.getItem('spice_pos_saas_settings');
+        if (!cloudSaaS && localRaw) {
+          // Push local settings from Super Admin device to Firestore Cloud
+          const parsed = JSON.parse(localRaw);
+          await db.systemSettings.put(Object.assign({ id: 'saas_config' }, parsed));
+        } else if (cloudSaaS) {
+          // Cloud settings exist: sync into this device's localStorage
+          localStorage.setItem('spice_pos_saas_settings', JSON.stringify(cloudSaaS));
+        }
+      } catch (sErr) {
+        console.warn('SaaS cloud settings sync warning:', sErr);
+      }
+    }
   } catch (err) {
     console.error('Error init defaults:', err);
   }
@@ -16783,7 +16914,7 @@ const Auth = {
             localStorage.removeItem('spice_pos_saved_user');
             this.currentUser = null;
             this.showLockScreen();
-            this.showSubscriptionExpiredScreen(tenant || { companyName: 'Business Client', validTo: 'N/A' }, isPastDue);
+            await this.showSubscriptionExpiredScreen(tenant || { companyName: 'Business Client', validTo: 'N/A' }, isPastDue);
             return;
           }
         }
@@ -17044,7 +17175,7 @@ const Auth = {
           const isInactive = Boolean((targetTenant && (targetTenant.isActive === false || targetTenant.status === 'suspended')) || (matchedUser.isActive === false));
 
           if (isInactive || isPastDue) {
-            this.showSubscriptionExpiredScreen(targetTenant || { companyName: matchedUser.fullName || 'Business Client', validTo: 'N/A', isActive: false }, isPastDue);
+            await this.showSubscriptionExpiredScreen(targetTenant || { companyName: matchedUser.fullName || 'Business Client', validTo: 'N/A', isActive: false }, isPastDue);
             this.currentPinInput = '';
             this.updatePinDots();
             return;
@@ -17247,7 +17378,7 @@ const Auth = {
   },
 
   // Display Subscription Expired or Inactive Lockout Screen
-  showSubscriptionExpiredScreen(tenant, isPastDue) {
+  async showSubscriptionExpiredScreen(tenant, isPastDue) {
     if (this.currentUser?.role === 'superadmin') return;
 
     const compName = tenant?.companyName || 'Business Client';
@@ -17262,7 +17393,7 @@ const Auth = {
     if (compEl) compEl.textContent = compName;
     if (dateEl) dateEl.textContent = validTo;
 
-    const saasConf = (typeof CompanyControl !== 'undefined' && CompanyControl.getSaaSSettings)
+    let saasConf = (typeof CompanyControl !== 'undefined' && CompanyControl.getSaaSSettings)
       ? CompanyControl.getSaaSSettings()
       : {
           hotlineNumbers: '077 123 4567 / 071 987 6543',
@@ -17274,6 +17405,19 @@ const Auth = {
           bankBranch: 'Main Branch',
           paymentNote: 'මුදල් තැන්පත් කර රිසිට්පත (Slip) WhatsApp කරන්න.'
         };
+
+    // Real-Time Cross-Device Sync: fetch latest cloud SaaS settings from Firestore
+    if (typeof db !== 'undefined' && db.systemSettings) {
+      try {
+        const cloudConf = await db.systemSettings.get('saas_config');
+        if (cloudConf) {
+          saasConf = Object.assign({}, saasConf, cloudConf);
+          try { localStorage.setItem('spice_pos_saas_settings', JSON.stringify(saasConf)); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('Cross-device SaaS cloud settings fetch notice:', e);
+      }
+    }
 
     const hotlineEl = document.getElementById('subscription-expired-hotline');
     if (hotlineEl) hotlineEl.textContent = saasConf.hotlineNumbers || '077 123 4567 / 071 987 6543';
@@ -17841,7 +17985,7 @@ const Auth = {
           (matchedUser.isActive === false)
         );
         if (isInactive || isPastDue) {
-          this.showSubscriptionExpiredScreen(targetTenant || { companyName: matchedUser.fullName || 'Business Client', validTo: 'N/A', isActive: false }, isPastDue);
+          await this.showSubscriptionExpiredScreen(targetTenant || { companyName: matchedUser.fullName || 'Business Client', validTo: 'N/A', isActive: false }, isPastDue);
           if (passwordEl) passwordEl.value = '';
           return;
         }
@@ -18041,6 +18185,7 @@ const CompanyControl = {
   activeSearch: '',
 
   async init() {
+    await this.loadSaaSSettingsFromCloud();
     await this.autoCheckAllSubscriptions();
     await this.loadTenants();
   },
@@ -18674,6 +18819,21 @@ const CompanyControl = {
   },
 
   // 10. SaaS Master Controller Settings (Support Numbers, Branding, Bank Details, Custom Long PIN)
+  async loadSaaSSettingsFromCloud() {
+    if (typeof db !== 'undefined' && db.systemSettings) {
+      try {
+        const cloudConf = await db.systemSettings.get('saas_config');
+        if (cloudConf) {
+          localStorage.setItem('spice_pos_saas_settings', JSON.stringify(cloudConf));
+          return cloudConf;
+        }
+      } catch (e) {
+        console.warn('Error loading cloud SaaS settings:', e);
+      }
+    }
+    return this.getSaaSSettings();
+  },
+
   getSaaSSettings() {
     try {
       const stored = localStorage.getItem('spice_pos_saas_settings');
@@ -18707,7 +18867,8 @@ const CompanyControl = {
     };
   },
 
-  openSaaSSettingsModal() {
+  async openSaaSSettingsModal() {
+    await this.loadSaaSSettingsFromCloud();
     const conf = this.getSaaSSettings();
     const brandEl = document.getElementById('saas-sett-brand');
     const hotlineEl = document.getElementById('saas-sett-hotline');
@@ -18792,10 +18953,19 @@ const CompanyControl = {
       bankName: bankName,
       accountNumber: bankAcc,
       accountName: bankHolder,
-      bankBranch: bankBranch,
-      paymentNote: bankNote
+      paymentNote: bankNote,
+      updatedAt: new Date().toISOString()
     };
     localStorage.setItem('spice_pos_saas_settings', JSON.stringify(newSettings));
+
+    // Save to Firestore Cloud for real-time synchronization across all devices
+    if (typeof db !== 'undefined' && db.systemSettings) {
+      try {
+        await db.systemSettings.put(Object.assign({ id: 'saas_config' }, newSettings));
+      } catch (cloudErr) {
+        console.warn('Error saving SaaS settings to Firestore:', cloudErr);
+      }
+    }
 
     // Sync display elements in expired modal
     const hotlineDisplay = document.getElementById('subscription-expired-hotline');
@@ -19238,20 +19408,27 @@ const UI = {
         window.deferredInstallPrompt.prompt();
         const choice = await window.deferredInstallPrompt.userChoice;
         if (choice && choice.outcome === 'accepted') {
-          this.showToast('🎉 App එක Install වෙමින් පවතී... Home Screen / Desktop බලන්න.', 'success');
+          this.showToast('🎉 App එක සාර්ථකව Install වෙමින් පවතී... Home Screen / Desktop බලන්න.', 'success');
         } else {
           this.showToast('Install කිරීම අවලංගු කරන ලදී.', 'info');
         }
         window.deferredInstallPrompt = null;
+        return;
       } catch (err) {
         console.warn('Install prompt error:', err);
       }
+    }
+
+    // Fallback: Open friendly, device-tailored visual Install Guide Modal
+    const guideModal = document.getElementById('modal-pwa-install-guide');
+    if (guideModal) {
+      this.openModal('modal-pwa-install-guide');
     } else {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       if (isIOS) {
         alert("📲 iPhone / iPad වල App එකක් ලෙස ස්ථාපනය කිරීමට:\n\n1. Safari බ්‍රවුසරයේ පහළ ඇති Share (📤) බොත්තම ඔබන්න.\n2. පහළට ගොස් 'Add to Home Screen ➕' (මුල් තිරයට එක් කරන්න) තෝරන්න.\n3. 'Add' ඔබන්න.\n\nඑවිට මුල් තිරයේ App Icon එක දිස්වේ!");
       } else {
-        alert("📲 මෙම පද්ධතිය App එකක් ලෙස Install කිරීමට:\n\nChrome / Edge බ්‍රවුසරයේ ඉහළ දකුණු කෙළවරේ ඇති තිත් 3 (⋮) හෝ Address bar හි ඇති Install (⬇️) Icon එක ඔබා 'Install App' තෝරන්න.\n\nඑවිට Browser එක නැතිව කෙළින්ම Native App එකක් ලෙස Home Screen / Desktop එකෙන් Open කළ හැක!");
+        alert("📲 මෙම පද්ධතිය App එකක් ලෙස Install කිරීමට:\n\nChrome / Edge බ්‍රවුසරයේ ඉහළ දකුණු කෙළවරේ ඇති තිත් 3 (⋮) හෝ Address bar හි ඇති Install (⬇️) Icon එක ඔබා 'Install App' (හෝ 'Add to Home screen') තෝරන්න.\n\nඑවිට Browser එක නැතිව කෙළින්ම Native App එකක් ලෙස Home Screen / Desktop එකෙන් Open කළ හැක!");
       }
     }
   }
@@ -19348,8 +19525,132 @@ const Dashboard = {
 
       // 7. Render Admin Analytics Charts
       await this.renderCharts(activeSalesToday, paymentsToday);
+
+      // 8. Check and Display SaaS Subscription Expiry Warning with Bank & Hotline Details
+      await this.checkSubscriptionWarning();
     } catch (err) {
       console.error('Error loading dashboard:', err);
+    }
+  },
+
+  // Subscription Expiry Warning & Cloud-Synced Bank Details Check
+  async checkSubscriptionWarning() {
+    try {
+      const banner = document.getElementById('dash-subscription-warning-banner');
+      if (!banner) return;
+
+      const user = (typeof Auth !== 'undefined' && Auth.currentUser) ? Auth.currentUser : null;
+      if (!user || user.role === 'superadmin') {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      // Determine tenant
+      let tenantId = user.tenantId;
+      if (!tenantId || tenantId === 'default') {
+        tenantId = localStorage.getItem('spice_pos_active_tenant') || 'default';
+      }
+
+      let tenant = null;
+      if (typeof db !== 'undefined' && db.tenants) {
+        tenant = await db.tenants.get(tenantId);
+        if (!tenant) {
+          const allTenants = await db.tenants.toArray();
+          tenant = allTenants.find(t => t.id === tenantId || t.tenantId === tenantId) || allTenants[0];
+        }
+      }
+
+      if (!tenant) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const validToStr = tenant.validTo || '';
+
+      if (!validToStr) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const todayTime = new Date(todayStr).getTime();
+      const validTime = new Date(validToStr).getTime();
+      const diffDays = Math.ceil((validTime - todayTime) / (1000 * 60 * 60 * 24));
+
+      // Show warning if expiring within 7 days or expired
+      if (diffDays <= 7 || tenant.status === 'expired' || tenant.status === 'suspended') {
+        let saasConf = (typeof CompanyControl !== 'undefined' && CompanyControl.getSaaSSettings)
+          ? CompanyControl.getSaaSSettings()
+          : {};
+
+        if (typeof db !== 'undefined' && db.systemSettings) {
+          try {
+            const cloudConf = await db.systemSettings.get('saas_config');
+            if (cloudConf) {
+              saasConf = Object.assign({}, saasConf, cloudConf);
+            }
+          } catch (e) {
+            console.warn('Dashboard SaaS cloud settings fetch error:', e);
+          }
+        }
+
+        const daysBadge = document.getElementById('dash-subscription-warning-days');
+        const titleEl = document.getElementById('dash-subscription-warning-title');
+        const textEl = document.getElementById('dash-subscription-warning-text');
+        const bankEl = document.getElementById('dash-subscription-warning-bank');
+        const hotlineEl = document.getElementById('dash-subscription-warning-hotline');
+        const waBtn = document.getElementById('dash-subscription-warning-wa-btn');
+        const callBtn = document.getElementById('dash-subscription-warning-call-btn');
+
+        if (diffDays <= 0) {
+          if (daysBadge) {
+            daysBadge.textContent = 'Expired (කල් ඉකුත් විය)';
+            daysBadge.className = 'text-xs font-black px-2.5 py-1 rounded-xl bg-red-600 text-white border border-red-400 flex-shrink-0';
+          }
+          if (titleEl) titleEl.textContent = 'Software Subscription Expired! (සේවා කාලය අවසන්)';
+        } else {
+          if (daysBadge) {
+            daysBadge.textContent = `Expires in ${diffDays} Day${diffDays === 1 ? '' : 's'} (${diffDays} දිනකින්)`;
+            daysBadge.className = 'text-xs font-black px-2.5 py-1 rounded-xl bg-amber-500 text-slate-950 border border-amber-300 flex-shrink-0';
+          }
+          if (titleEl) titleEl.textContent = `Software Service Renewal Notice (අවසන් වීමට තව දින ${diffDays}යි)`;
+        }
+
+        if (textEl) {
+          textEl.textContent = saasConf.lockoutNoticeText ||
+            `ඔබගේ මෘදුකාංග සේවා කාලය ${validToStr} දිනෙන් අවසන් වේ. සේවාව අඛණ්ඩව පවත්වා ගැනීමට කරුණාකර පහත බැංකු ගිණුමට ගෙවීම් සිදුකර WhatsApp කරන්න.`;
+        }
+
+        if (bankEl) {
+          const bName = saasConf.bankName || 'Commercial Bank / BOC';
+          const bAcc = saasConf.accountNumber || '1234 5678 9012';
+          const bHolder = saasConf.accountName ? ` (${saasConf.accountName})` : '';
+          const bBranch = saasConf.bankBranch ? ` • ${saasConf.bankBranch}` : '';
+          bankEl.textContent = `${bName} — Acc: ${bAcc}${bHolder}${bBranch}`;
+        }
+
+        if (hotlineEl) {
+          hotlineEl.textContent = saasConf.hotlineNumbers || '077 123 4567 / 071 987 6543';
+        }
+
+        if (waBtn) {
+          const rawWa = (saasConf.whatsappNumber || saasConf.hotlineNumbers || '0771234567').split('/')[0].replace(/[^0-9]/g, '');
+          const cleanWa = rawWa.startsWith('0') ? '94' + rawWa.substring(1) : (rawWa.startsWith('94') ? rawWa : '94' + rawWa);
+          const msg = encodeURIComponent(`Renewal Request for ${tenant.companyName || 'Business'} (Expiring: ${validToStr})`);
+          waBtn.href = `https://wa.me/${cleanWa}?text=${msg}`;
+        }
+
+        if (callBtn) {
+          const firstNum = (saasConf.hotlineNumbers || '0771234567').split('/')[0].trim().replace(/[^0-9+]/g, '');
+          callBtn.href = `tel:${firstNum}`;
+        }
+
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    } catch (err) {
+      console.warn('checkSubscriptionWarning error:', err);
     }
   },
 
@@ -26369,14 +26670,18 @@ const Production = {
           <div class="flex items-center justify-between">
             <span class="text-xs font-black text-slate-800 flex items-center gap-1">➕ Add More Items (අමතර භාණ්ඩ එකතු කිරීම):</span>
           </div>
-          <div class="flex gap-2">
-            <select id="edit-order-new-product" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-800">
-              ${prodOpts}
-            </select>
-            <input type="number" id="edit-order-new-qty" min="1" value="1" placeholder="Qty" class="w-16 bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
-            <button type="button" onclick="Production.addSubstituteItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md active:scale-95 flex items-center gap-1">
-              <span>+ Add</span>
-            </button>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="flex-1 min-w-0">
+              <select id="edit-order-new-product" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 sm:py-2 text-xs font-bold text-slate-800">
+                ${prodOpts}
+              </select>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <input type="number" id="edit-order-new-qty" min="1" value="1" placeholder="Qty" class="w-20 bg-slate-50 border border-slate-200 rounded-xl px-2 py-2.5 sm:py-2 text-xs font-bold text-center" />
+              <button type="button" onclick="Production.addSubstituteItem()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 sm:py-2 rounded-xl shadow-md active:scale-95 flex items-center justify-center gap-1 cursor-pointer flex-shrink-0 whitespace-nowrap">
+                <span>➕ Add Item</span>
+              </button>
+            </div>
           </div>
         </div>
       `;

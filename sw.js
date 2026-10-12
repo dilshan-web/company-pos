@@ -1,10 +1,11 @@
-﻿const CACHE_NAME = 'spice-pos-v4.5.0';
+﻿const CACHE_NAME = 'spice-pos-v4.5.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon.png',
   './icons/apple-touch-icon.png',
   './icons/favicon.png',
   './icons/icon.svg'
@@ -13,7 +14,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching app shell v3.5.0');
+      console.log('[SW] Caching app shell v4.5.1');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
@@ -61,7 +62,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => caches.match('./index.html'));
+      });
     })
   );
 });
