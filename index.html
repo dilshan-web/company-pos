@@ -18294,41 +18294,41 @@ const Auth = {
     let targetTenant = null;
 
     try {
-      // Proactively refresh fresh credentials from Firestore server to prevent stale password issues across devices
-      if (typeof db !== 'undefined') {
-        const syncJobs = [];
-        if (db.systemSettings) syncJobs.push(db.systemSettings.refreshFromServer());
-        if (db.tenants) syncJobs.push(db.tenants.refreshFromServer());
-        if (db.users) syncJobs.push(db.users.refreshFromServer());
-        if (db.company) syncJobs.push(db.company.refreshFromServer());
-        await Promise.allSettled(syncJobs);
-      }
-      if (typeof firestore !== 'undefined' && firestore && username) {
+      // Background sync (non-blocking) — login uses local DB immediately, server sync happens in background
+      // This prevents login from hanging when internet is slow or unavailable
+      (async () => {
         try {
-          // Direct real-time fetch for this specific username to guarantee instant cross-device password sync
-          const [uSnap, tSnap] = await Promise.allSettled([
-            firestore.collection('users').where('username', '==', username).limit(1).get({ source: 'server' }),
-            firestore.collection('tenants').where('adminUsername', '==', username).limit(1).get({ source: 'server' })
-          ]);
-          if (uSnap.status === 'fulfilled' && !uSnap.value.empty) {
-            const uDoc = uSnap.value.docs[0];
-            const uData = uDoc.data();
-            const uId = uData.id !== undefined ? uData.id : uDoc.id;
-            if (db && db.users) db.users._cache.set(String(uId), Object.assign({}, uData, { id: uId }));
+          if (typeof db !== 'undefined') {
+            const syncJobs = [];
+            if (db.systemSettings) syncJobs.push(db.systemSettings.refreshFromServer());
+            if (db.tenants) syncJobs.push(db.tenants.refreshFromServer());
+            if (db.users) syncJobs.push(db.users.refreshFromServer());
+            if (db.company) syncJobs.push(db.company.refreshFromServer());
+            await Promise.allSettled(syncJobs);
           }
-          if (tSnap.status === 'fulfilled' && !tSnap.value.empty) {
-            const tDoc = tSnap.value.docs[0];
-            const tData = tDoc.data();
-            const tId = tData.id !== undefined ? tData.id : tDoc.id;
-            if (db && db.tenants) db.tenants._cache.set(String(tId), Object.assign({}, tData, { id: tId }));
+          if (typeof firestore !== 'undefined' && firestore && username) {
+            const [uSnap, tSnap] = await Promise.allSettled([
+              firestore.collection('users').where('username', '==', username).limit(1).get({ source: 'server' }),
+              firestore.collection('tenants').where('adminUsername', '==', username).limit(1).get({ source: 'server' })
+            ]);
+            if (uSnap.status === 'fulfilled' && !uSnap.value.empty) {
+              const uDoc = uSnap.value.docs[0];
+              const uData = uDoc.data();
+              const uId = uData.id !== undefined ? uData.id : uDoc.id;
+              if (db && db.users) db.users._cache.set(String(uId), Object.assign({}, uData, { id: uId }));
+            }
+            if (tSnap.status === 'fulfilled' && !tSnap.value.empty) {
+              const tDoc = tSnap.value.docs[0];
+              const tData = tDoc.data();
+              const tId = tData.id !== undefined ? tData.id : tDoc.id;
+              if (db && db.tenants) db.tenants._cache.set(String(tId), Object.assign({}, tData, { id: tId }));
+            }
           }
-        } catch (dirErr) {
-          console.warn('Direct credential fetch notice:', dirErr);
-        }
-      }
-      if (typeof CompanyControl !== 'undefined' && CompanyControl.loadSaaSSettingsFromCloud) {
-        try { await CompanyControl.loadSaaSSettingsFromCloud(); } catch (e) {}
-      }
+          if (typeof CompanyControl !== 'undefined' && CompanyControl.loadSaaSSettingsFromCloud) {
+            try { await CompanyControl.loadSaaSSettingsFromCloud(); } catch (e) {}
+          }
+        } catch (bgErr) { console.warn('Background sync notice:', bgErr); }
+      })(); // fire and forget — do NOT await this
 
       const allTenants = (typeof db !== 'undefined' && db.tenants) ? await db.tenants.toArray() : [];
       const allUsers   = (typeof db !== 'undefined' && db.users)   ? await db.users.toArray()   : [];
