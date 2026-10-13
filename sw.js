@@ -1,21 +1,66 @@
-﻿const CACHE_NAME = 'spice-pos-v4.6.0';
+const CACHE_NAME = 'spice-pos-v4.7.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  'index.html',
   './manifest.json',
+  'manifest.json',
+  './css/styles.css',
+  './css/leaflet.css',
+  './icons/icon.svg',
+  './icons/icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon.png',
   './icons/apple-touch-icon.png',
   './icons/favicon.png',
-  './icons/icon.svg'
+  './js/libs/tailwind.js',
+  './js/libs/dexie.min.js',
+  './js/libs/firebase-app-compat.js',
+  './js/libs/firebase-firestore-compat.js',
+  './js/libs/leaflet.js',
+  './js/libs/qrcode.min.js',
+  './js/libs/jsqr.min.js',
+  './js/sounds.js',
+  './js/db.js',
+  './js/auth.js',
+  './js/companyControl.js',
+  './js/state.js',
+  './js/ui.js',
+  './js/dashboard.js',
+  './js/bestShops.js',
+  './js/pos.js',
+  './js/repbills.js',
+  './js/collections.js',
+  './js/gps.js',
+  './js/map.js',
+  './js/routeSession.js',
+  './js/routes.js',
+  './js/shops.js',
+  './js/products.js',
+  './js/production.js',
+  './js/stores.js',
+  './js/lorry.js',
+  './js/print.js',
+  './js/reports.js',
+  './js/settings.js',
+  './js/hr.js',
+  './js/payroll.js',
+  './js/users.js',
+  './js/app.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching app shell v4.5.1');
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('[ServiceWorker] Caching complete offline app shell v4.7.0');
+      // Cache files individually with error handling so one missing file won't break offline mode
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[ServiceWorker] Asset cache notice:', url, err?.message || err);
+          })
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -23,12 +68,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          console.log('[SW] Deleting old cache:', key);
-          return caches.delete(key);
-        }
-      }));
+      return Promise.all(
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('[ServiceWorker] Purging old cache:', key);
+            return caches.delete(key);
+          }
+        })
+      );
     }).then(() => self.clients.claim())
   );
 });
@@ -36,32 +83,63 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Network-First for HTML navigation so users ALWAYS get the latest deployed version when online
+  const url = new URL(event.request.url);
+
+  // Exclude external third-party streaming APIs / websockets / firestore live endpoints
+  if (url.origin.includes('firestore.googleapis.com') || url.origin.includes('identitytoolkit')) {
+    return;
+  }
+
+  // Navigation requests: HTML document navigation
   if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request).then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+      caches.match(event.request).then((cached) => {
+        if (cached) {
+          // Stale-while-revalidate for faster offline startup
+          fetch(event.request).then((res) => {
+            if (res && res.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res));
+            }
+          }).catch(() => {});
+          return cached;
         }
-        return response;
-      }).catch(() => {
-        return caches.match('./index.html') || caches.match('./');
+        return fetch(event.request).then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return res;
+        }).catch(async () => {
+          return (await caches.match('./index.html')) ||
+                 (await caches.match('index.html')) ||
+                 (await caches.match('./'));
+        });
       })
     );
     return;
   }
 
-  // Cache-first with network fallback for other static assets
+  // Static Assets: Cache-First with Network fallback & cache update
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Return cached instantly
+        return cachedResponse;
+      }
       return fetch(event.request).then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        if (response && (response.status === 200 || response.type === 'opaque')) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone).catch(() => {});
+          });
         }
         return response;
+      }).catch(async () => {
+        // If image failed while offline, fallback to icon
+        if (event.request.destination === 'image') {
+          return (await caches.match('./icons/icon-192.png')) ||
+                 (await caches.match('icons/icon-192.png'));
+        }
       });
     })
   );

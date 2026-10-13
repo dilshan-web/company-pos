@@ -3069,9 +3069,9 @@ button:active, .btn-touch:active {
         <p class="text-xs text-slate-500">Change master numeric 4-8 digit PIN</p>
         
         <div class="grid grid-cols-3 gap-2">
-          <input type="password" maxlength="12" id="sett-old-pin" placeholder="Current PIN" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
-          <input type="password" maxlength="12" id="sett-new-pin" placeholder="New PIN" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
-          <input type="password" maxlength="12" id="sett-confirm-pin" placeholder="Confirm" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <input type="password" maxlength="12" id="sett-old-pin" placeholder="Current PIN" autocomplete="off" data-lpignore="true" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <input type="password" maxlength="12" id="sett-new-pin" placeholder="New PIN" autocomplete="off" data-lpignore="true" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <input type="password" maxlength="12" id="sett-confirm-pin" placeholder="Confirm" autocomplete="off" data-lpignore="true" class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
         </div>
 
         <button onclick="Settings.handleChangePin()" class="w-full bg-slate-900 text-white text-xs font-bold py-2.5 rounded-2xl hover:bg-slate-800 active:scale-95">
@@ -3656,7 +3656,7 @@ button:active, .btn-touch:active {
       </div>
 
       <!-- Login Form -->
-      <form onsubmit="event.preventDefault(); Auth.handleTextLogin();" class="space-y-4">
+      <form onsubmit="event.preventDefault(); Auth.handleTextLogin();" class="space-y-4" autocomplete="off">
         
         <!-- Username Field -->
         <div class="space-y-1.5 text-left">
@@ -3666,10 +3666,12 @@ button:active, .btn-touch:active {
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">👤</span>
             <input type="text" id="lock-username-input"
+              name="pos_user"
               placeholder="e.g. admin or rep1"
-              autocomplete="username"
+              autocomplete="off"
               autocapitalize="none"
               spellcheck="false"
+              data-lpignore="true"
               oninput="Auth._lockUsernameChanged(this.value)"
               class="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold" />
           </div>
@@ -3683,8 +3685,10 @@ button:active, .btn-touch:active {
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">🔑</span>
             <input type="password" id="lock-password-input"
+              name="pos_pin"
               placeholder="Enter password or PIN"
-              autocomplete="current-password"
+              autocomplete="new-password"
+              data-lpignore="true"
               class="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-mono font-bold" />
             <button type="button" onclick="Auth.togglePasswordVisibility()" id="btn-toggle-password"
               class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 text-sm transition-colors"
@@ -15908,7 +15912,32 @@ class FirestoreCollection {
     this._cache = new Map();
     this._isInitialized = false;
     this._initPromise = null;
+    this._loadLocal(); // Load local storage cache immediately for zero-latency offline start
     this.initSnapshotListener();
+  }
+
+  _persistLocal() {
+    try {
+      const items = Array.from(this._cache.values());
+      localStorage.setItem('sp_db_' + this.name, JSON.stringify(items));
+    } catch (e) {}
+  }
+
+  _loadLocal() {
+    try {
+      const raw = localStorage.getItem('sp_db_' + this.name);
+      if (raw) {
+        const items = JSON.parse(raw);
+        if (Array.isArray(items) && items.length > 0) {
+          items.forEach(item => {
+            if (item && item.id !== undefined) {
+              this._cache.set(String(item.id), item);
+            }
+          });
+          this._isInitialized = true;
+        }
+      }
+    } catch (e) {}
   }
 
   initSnapshotListener() {
@@ -15918,15 +15947,16 @@ class FirestoreCollection {
       this._initPromise = new Promise((resolve) => {
         let firstLoad = true;
 
-        // Timeout fallback: if offline and no persistence, resolve after 5s with current cache
+        // Timeout fallback: if offline and no persistence, resolve after 1s if cache has data, else 3s
+        const timeoutMs = this._cache.size > 0 ? 1000 : 3500;
         const timeoutId = setTimeout(() => {
           if (firstLoad) {
             firstLoad = false;
             this._isInitialized = true;
-            console.warn(`[DB] '${this.name}' snapshot timed out (offline?) - using cache`);
+            console.log(`[DB] '${this.name}' ready with cached data (${this._cache.size} items)`);
             resolve(this._cache);
           }
-        }, 5000);
+        }, timeoutMs);
 
         firestore.collection(this.name).onSnapshot(
           (snapshot) => {
@@ -15943,6 +15973,7 @@ class FirestoreCollection {
               }
             });
 
+            this._persistLocal();
             this._isInitialized = true;
             if (firstLoad) {
               firstLoad = false;
@@ -15967,6 +15998,10 @@ class FirestoreCollection {
 
   async _ensureLoaded() {
     if (this._isInitialized) return;
+    if (this._cache.size > 0) {
+      this._isInitialized = true;
+      return;
+    }
     if (this._initPromise) {
       await this._initPromise;
       return;
@@ -15977,7 +16012,7 @@ class FirestoreCollection {
         // Add timeout to avoid hanging when offline without persistence
         const fetchPromise = firestore.collection(this.name).get();
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('offline timeout')), 5000)
+          setTimeout(() => reject(new Error('offline timeout')), 3000)
         );
         const snap = await Promise.race([fetchPromise, timeoutPromise]);
         snap.forEach((doc) => {
@@ -15985,6 +16020,7 @@ class FirestoreCollection {
           const docId = data.id !== undefined ? data.id : doc.id;
           this._cache.set(String(docId), Object.assign({}, data, { id: docId }));
         });
+        this._persistLocal();
         this._isInitialized = true;
       } catch (err) {
         console.warn(`Fallback fetch error on '${this.name}' (possibly offline):`, err);
@@ -16019,6 +16055,7 @@ class FirestoreCollection {
 
     // Update memory cache immediately for zero-latency UI
     this._cache.set(String(id), record);
+    this._persistLocal();
 
     if (firestore) {
       try {
@@ -16046,6 +16083,7 @@ class FirestoreCollection {
     });
 
     this._cache.set(String(id), updated);
+    this._persistLocal();
 
     if (firestore) {
       try {
@@ -16060,6 +16098,7 @@ class FirestoreCollection {
     if (id === undefined || id === null) return;
     this._cache.delete(String(id));
     this._cache.delete(Number(id));
+    this._persistLocal();
 
     if (firestore) {
       try {
@@ -16083,6 +16122,7 @@ class FirestoreCollection {
           const docId = data.id !== undefined ? data.id : doc.id;
           this._cache.set(String(docId), Object.assign({}, data, { id: docId }));
         });
+        this._persistLocal();
         this._isInitialized = true;
       }
     } catch (e) {
@@ -16094,6 +16134,7 @@ class FirestoreCollection {
   async clear() {
     const allIds = Array.from(this._cache.keys());
     this._cache.clear();
+    this._persistLocal();
 
     if (firestore && allIds.length > 0) {
       const CHUNK_SIZE = 400;
@@ -16151,6 +16192,7 @@ class FirestoreCollection {
         }
       }
     }
+    this._persistLocal();
     return addedIds;
   }
 
@@ -16184,6 +16226,7 @@ class FirestoreCollection {
         }
       }
     }
+    this._persistLocal();
   }
 
   where(fieldName) {
@@ -16426,12 +16469,20 @@ async function initDatabaseDefaults() {
           adminPin: ownerPin,
           phone: '077 123 4567',
           validFrom: now.toISOString().split('T')[0],
-          validTo: nextYear.toISOString().split('T')[0],
+          validTo: '2099-12-31',
           isActive: true,
           status: 'active',
           createdAt: now.toISOString(),
           updatedAt: now.toISOString()
         });
+      } else {
+        // Ensure existing tenant validity is never expired by default
+        const allT = await db.tenants.toArray();
+        for (const t of allT) {
+          if (!t.validTo || t.validTo < '2030-01-01') {
+            await db.tenants.update(t.id, { validTo: '2099-12-31', status: 'active', isActive: true });
+          }
+        }
       }
     }
 
@@ -16573,6 +16624,72 @@ async function initDatabaseDefaults() {
         }
       } catch (sErr) {
         console.warn('SaaS cloud settings sync warning:', sErr);
+      }
+    }
+
+    // Guarantee active Product Targets exist for the current month
+    if (db.productTargets) {
+      try {
+        const curMonth = new Date().toISOString().substring(0, 7);
+        const existingTargets = await db.productTargets.toArray();
+        const monthTargets = existingTargets.filter(t => t.targetMonth === curMonth);
+        if (monthTargets.length === 0) {
+          const prods = await db.products.toArray();
+          const p1 = prods[0] || { id: 1, name: 'Chilli Powder Card - 20s (මිරිස් කුඩු කාඩ්)', unit: 'Card' };
+          const p2 = prods[1] || { id: 2, name: 'Chilli Pieces Card - 20s (කෑලි මිරිස් කාඩ්)', unit: 'Card' };
+          const p3 = prods[2] || { id: 3, name: 'Curry Powder Card - 20s (තුනපහ කුඩු කාඩ්)', unit: 'Card' };
+
+          await db.productTargets.bulkAdd([
+            {
+              id: 'pt_' + curMonth + '_1',
+              tenantId: 1,
+              empNo: 'EMP-005',
+              repName: 'Sales Rep (Order Booker)',
+              productId: String(p1.id),
+              productName: p1.name,
+              targetQty: 50,
+              unit: p1.unit || 'Card',
+              period: 'Monthly',
+              targetMonth: curMonth,
+              bonus: 1500,
+              notes: 'Monthly route target',
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: 'pt_' + curMonth + '_2',
+              tenantId: 1,
+              empNo: 'EMP-005',
+              repName: 'Sales Rep (Order Booker)',
+              productId: String(p2.id),
+              productName: p2.name,
+              targetQty: 40,
+              unit: p2.unit || 'Card',
+              period: 'Monthly',
+              targetMonth: curMonth,
+              bonus: 1200,
+              notes: 'Monthly route target',
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: 'pt_' + curMonth + '_3',
+              tenantId: 1,
+              empNo: 'EMP-005',
+              repName: 'Sales Rep (Order Booker)',
+              productId: String(p3.id),
+              productName: p3.name,
+              targetQty: 30,
+              unit: p3.unit || 'Card',
+              period: 'Monthly',
+              targetMonth: curMonth,
+              bonus: 1000,
+              notes: 'Monthly route target',
+              createdAt: new Date().toISOString()
+            }
+          ]);
+          console.log(`[DB] Auto-seeded 3 active product targets for month ${curMonth}`);
+        }
+      } catch (ptErr) {
+        console.warn('Product target auto-seed notice:', ptErr);
       }
     }
   } catch (err) {
@@ -19422,6 +19539,17 @@ const UI = {
   init() {
     this.initLiveClock();
     this.updateCompanyBranding();
+    this.checkPwaInstallState();
+  },
+
+  checkPwaInstallState() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+      document.querySelectorAll('.pwa-install-btn, #pwa-install-container, #header-install-btn').forEach(el => {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+      });
+    }
   },
 
   async updateCompanyBranding() {
@@ -21067,6 +21195,52 @@ const POS = {
         const remainingCards = Math.max(0, targetCards - totalCardsCount);
         const cardPct = Math.min(100, Math.round((totalCardsCount / targetCards) * 100));
 
+        // ── Fetch & calculate individual Product Item Targets for this Rep ──
+        const curMonth = new Date().toISOString().substring(0, 7);
+        let assignedTargets = [];
+        if (db.productTargets) {
+          const allT = filterByTenant(await db.productTargets.toArray());
+          assignedTargets = allT.filter(t => !t.targetMonth || t.targetMonth === curMonth);
+        }
+
+        // Fetch monthly sales for calculating live item targets
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+
+        const rawMonthSales = await db.sales.filter(s => new Date(s.date) >= monthStart).toArray();
+        const monthSales = filterByTenant(rawMonthSales);
+        const activeMonthSales = monthSales.filter(s => s.status !== 'Cancelled');
+
+        const repMonthSales = isRep
+          ? activeMonthSales.filter(s => {
+              if (s.repId && (String(s.repId) === String(user.id) || s.repId == user.id)) return true;
+              const repNameLower = (s.repName || '').toLowerCase().trim();
+              const uName = (user.username || '').toLowerCase().trim();
+              const fName = (user.fullName || '').toLowerCase().trim();
+              return (uName && repNameLower.includes(uName)) || (fName && repNameLower.includes(fName));
+            })
+          : activeMonthSales;
+
+        const repMonthSaleIds = repMonthSales.map(s => s.id);
+        let repMonthItems = [];
+        if (repMonthSaleIds.length > 0) {
+          const rawMItems = await db.saleItems.where('saleId').anyOf(repMonthSaleIds).toArray();
+          repMonthItems = filterByTenant(rawMItems);
+        }
+
+        // Calculate progress & countdown for each item target
+        const itemTargetsData = assignedTargets.map(t => {
+          const soldQty = repMonthItems
+            .filter(si => String(si.productId) === String(t.productId))
+            .reduce((sum, si) => sum + (Number(si.qty) || 0), 0);
+          const targetQty = Number(t.targetQty) || 0;
+          const remainingQty = Math.max(0, targetQty - soldQty); // Countdown decreases with every completed sale!
+          const pct = targetQty > 0 ? Math.min(100, Math.round((soldQty / targetQty) * 100)) : 0;
+          const isWon = targetQty > 0 && soldQty >= targetQty;
+          return { ...t, soldQty, targetQty, remainingQty, pct, isWon };
+        });
+
         trackerEl.innerHTML = `
           <div class="flex items-center justify-between border-b border-purple-800/40 pb-2">
             <div class="flex items-center gap-1.5">
@@ -21111,6 +21285,56 @@ const POS = {
               </div>
             </div>
           </div>
+
+          <!-- Product Item Targets Countdown (නිෂ්පාදන අනුව ඉලක්ක Countdown) -->
+          ${itemTargetsData.length > 0 ? `
+            <div class="pt-3 border-t border-purple-800/40 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs">📦</span>
+                  <h5 class="text-[11px] font-black uppercase text-purple-200">
+                    Product Item Targets (නිෂ්පාදන අනුව ඉලක්ක Countdown)
+                  </h5>
+                </div>
+                <span class="text-[9.5px] font-black px-2 py-0.5 rounded-full bg-pink-900/60 text-pink-300 border border-pink-700/50">
+                  Bill දැමූ පසු ඉතිරි ගණන අඩු වේ
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                ${itemTargetsData.map(item => `
+                  <div class="p-2.5 rounded-2xl border transition-all ${item.isWon ? 'bg-emerald-950/40 border-emerald-500/70' : 'bg-black/30 border-purple-800/50 hover:border-purple-600'} space-y-1.5">
+                    <div class="flex items-start justify-between gap-1.5">
+                      <span class="font-extrabold text-white text-[11px] truncate flex-1" title="${item.productName}">
+                        ${item.productName}
+                      </span>
+                      <span class="text-[10px] font-black px-2 py-0.5 rounded-lg shrink-0 ${item.isWon ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}">
+                        ${item.isWon ? '🏆 WON!' : item.remainingQty + ' ' + (item.unit || 'Cards') + ' Left'}
+                      </span>
+                    </div>
+
+                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                      <div class="h-2 rounded-full transition-all duration-500 ${item.isWon ? 'bg-emerald-400' : 'bg-gradient-to-r from-pink-500 via-purple-400 to-amber-400'}" style="width: ${item.pct}%"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[10px]">
+                      <span class="text-slate-300">Sold: <strong class="text-white">${item.soldQty}</strong> / ${item.targetQty} ${item.unit || 'Cards'}</span>
+                      <span class="font-bold ${item.isWon ? 'text-emerald-400 font-black' : 'text-amber-400'}">
+                        ${item.isWon ? '🎉 සම්පූර්ණයි!' : '⏳ ඉතිරි: ' + item.remainingQty}
+                      </span>
+                    </div>
+
+                    ${Number(item.bonus) > 0 ? `
+                      <div class="text-[9.5px] font-bold flex justify-between pt-1 border-t border-purple-900/30">
+                        <span class="text-slate-400">Bonus Reward:</span>
+                        <span class="${item.isWon ? 'text-emerald-400' : 'text-pink-300'} font-black">+Rs. ${Number(item.bonus).toLocaleString()}</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
         `;
       }
     } catch (err) {
@@ -33209,20 +33433,25 @@ const HR = {
                     </div>
 
                     <!-- Progress Bar -->
-                    <div class="space-y-1">
+                    <div class="space-y-1.5">
                       <div class="flex justify-between text-[11px] font-bold">
-                        <span class="text-slate-600">Sold: <span class="${achieved ? 'text-emerald-700' : 'text-blue-700'}">${soldQty}</span> / Target: <span class="text-pink-700">${targetQty}</span> ${t.unit || 'Cards'}</span>
-                        <span class="${achieved ? 'text-emerald-700' : 'text-slate-600'}">${pct}%</span>
+                        <span class="text-slate-600">Sold: <span class="${achieved ? 'text-emerald-700 font-black' : 'text-blue-700 font-black'}">${soldQty}</span> / Target: <span class="text-pink-700">${targetQty}</span> ${t.unit || 'Cards'}</span>
+                        <span class="${achieved ? 'text-emerald-700 font-black' : 'text-slate-600'}">${pct}%</span>
                       </div>
                       <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div class="h-full rounded-full transition-all ${achieved ? 'bg-emerald-500' : pct >= 75 ? 'bg-blue-500' : pct >= 50 ? 'bg-amber-500' : 'bg-pink-400'}"
                           style="width:${pct}%"></div>
                       </div>
-                      ${Number(t.bonus) > 0 ? `
-                        <div class="text-[10px] font-bold ${achieved ? 'text-emerald-700' : 'text-slate-400'}">
-                          💰 Incentive: Rs.${Number(t.bonus).toLocaleString()} ${achieved ? '— EARNED! 🎉' : '(on achieving target)'}
-                        </div>
-                      ` : ''}
+                      <div class="flex items-center justify-between text-[10.5px]">
+                        <span class="${achieved ? 'text-emerald-700 font-black' : 'text-amber-700 font-extrabold'}">
+                          ${achieved ? '🎉 ඉලක්කය සම්පූර්ණයි (Target Achieved)!' : '⏳ ඉතිරි ප්‍රමාණය: <strong>' + Math.max(0, targetQty - soldQty) + ' ' + (t.unit || 'Cards') + ' Left</strong>'}
+                        </span>
+                        ${Number(t.bonus) > 0 ? `
+                          <span class="font-bold ${achieved ? 'text-emerald-700' : 'text-slate-500'}">
+                            💰 +Rs.${Number(t.bonus).toLocaleString()}
+                          </span>
+                        ` : ''}
+                      </div>
                     </div>
                   </div>
                 `;
@@ -33310,14 +33539,28 @@ const HR = {
   // Helper: calculate actual sold qty for a target record
   _calcSoldQty(target, allSales, allSaleItems) {
     try {
-      // Find sales belonging to this rep in the target month
       const monthStr = target.targetMonth || ''; // e.g. '2026-10'
       const repSales = allSales.filter(s => {
         if (!s) return false;
+        if (s.status === 'Cancelled') return false;
         const saleDate = (s.date || s.createdAt || '').substring(0, 7);
         const matchMonth = !monthStr || saleDate === monthStr;
-        const matchRep = (String(s.repId) === String(target.empNo)) ||
-          (s.repName && s.repName.toLowerCase() === (target.repName || '').toLowerCase());
+
+        const targetEmp = String(target.empNo || '').toLowerCase().trim();
+        const targetName = String(target.repName || '').toLowerCase().trim();
+        const sId = String(s.repId || '').toLowerCase().trim();
+        const sName = String(s.repName || '').toLowerCase().trim();
+
+        // Match rep ID, empNo, or name
+        let matchRep = false;
+        if (sId && targetEmp && (sId === targetEmp || targetEmp.includes(sId) || sId.includes(targetEmp))) {
+          matchRep = true;
+        } else if (sName && targetName && (sName === targetName || sName.includes(targetName) || targetName.includes(sName))) {
+          matchRep = true;
+        } else if (!targetEmp || targetEmp === 'all') {
+          matchRep = true;
+        }
+
         return matchMonth && matchRep;
       });
       const saleIds = repSales.map(s => String(s.id));
@@ -37635,6 +37878,22 @@ window.addEventListener('appinstalled', () => {
       </div>
     </div>
   </div>
+
+
+<!-- PWA Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js')
+        .then(function(reg) {
+          console.log('[PWA] Service Worker registered:', reg.scope);
+        })
+        .catch(function(err) {
+          console.warn('[PWA] Service Worker registration failed:', err);
+        });
+    });
+  }
+</script>
 
 </body>
 </html>
