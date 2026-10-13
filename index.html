@@ -1289,6 +1289,16 @@ button:active, .btn-touch:active {
 @keyframes pulseRed   { 0%,100%{ box-shadow:0 0 0 0 rgba(239,68,68,0.4); } 50%{ box-shadow:0 0 0 6px rgba(239,68,68,0); } }
 
 /* ── Essential CSS Fallbacks & Lock Screen Keypad ─────── */
+input, textarea, select {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.modal-overlay {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
 .modal-overlay.hidden,
 .app-tab-page.hidden {
   display: none !important;
@@ -33041,6 +33051,10 @@ const HR = {
     }
 
     UI.openModal('modal-hr-add-employee');
+    setTimeout(() => {
+      const nameElFocus = document.getElementById('hr-new-emp-name');
+      if (nameElFocus) nameElFocus.focus();
+    }, 150);
   },
 
   onRoleChange(role, mode = 'new') {
@@ -37328,9 +37342,9 @@ window.addEventListener('appinstalled', () => {
   <!-- =========================================================================
        MODAL: ADD NEW EMPLOYEE (නව සේවකයෙකු ලියාපදිංචි කිරීම)
        ========================================================================= -->
-  <div id="modal-hr-add-employee" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-5 space-y-3.5 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+  <div id="modal-hr-add-employee" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col my-auto border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-shrink-0">
         <div class="flex items-center gap-2">
           <span class="text-xl">➕</span>
           <div>
@@ -37338,28 +37352,28 @@ window.addEventListener('appinstalled', () => {
             <p class="text-[11px] text-slate-500">Register employee profile, department, designation & salary</p>
           </div>
         </div>
-        <button onclick="UI.closeModal('modal-hr-add-employee')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button onclick="UI.closeModal('modal-hr-add-employee')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg rounded-xl hover:bg-slate-100 cursor-pointer">✕</button>
       </div>
 
-      <div class="space-y-3 text-xs">
+      <div class="overflow-y-auto flex-1 space-y-3.5 pr-1 py-3 text-xs">
         <div>
           <label class="font-bold text-slate-700 block mb-1">Full Name (සම්පූර්ණ නම) *</label>
-          <input type="text" id="hr-new-emp-name" placeholder="e.g. Sunil Shantha" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+          <input type="text" id="hr-new-emp-name" placeholder="නම ඇතුළත් කරන්න (e.g. Sunil Shantha)" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 placeholder-slate-400 placeholder:font-normal select-text transition-all" />
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-700 block mb-1">Mobile Phone *</label>
-            <input type="tel" id="hr-new-emp-phone" placeholder="077 123 4567" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+            <input type="tel" id="hr-new-emp-phone" placeholder="077 123 4567" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 placeholder-slate-400 placeholder:font-normal select-text transition-all" />
           </div>
           <div>
             <label class="font-bold text-slate-700 block mb-1">NIC Number</label>
-            <input type="text" id="hr-new-emp-nic" placeholder="951234567V" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+            <input type="text" id="hr-new-emp-nic" placeholder="951234567V" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 placeholder-slate-400 placeholder:font-normal select-text transition-all" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-700 block mb-1">Department</label>
-            <select id="hr-new-emp-dept" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold text-slate-800">
+            <select id="hr-new-emp-dept" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2.5 font-bold text-slate-800 select-text transition-all">
               <option value="Sales & Field Distribution">Sales & Field Distribution</option>
               <option value="Delivery & Logistics">Delivery & Logistics</option>
               <option value="Warehouse & Stores">Warehouse & Stores</option>
@@ -37369,17 +37383,17 @@ window.addEventListener('appinstalled', () => {
           </div>
           <div>
             <label class="font-bold text-slate-700 block mb-1">Designation</label>
-            <input type="text" id="hr-new-emp-desig" value="Sales Representative" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+            <input type="text" id="hr-new-emp-desig" value="Sales Representative" onfocus="this.select()" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 select-text transition-all" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-700 block mb-1">Basic Monthly Salary (Rs.)</label>
-            <input type="number" id="hr-new-emp-salary" value="35000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-black text-emerald-700" />
+            <input type="number" id="hr-new-emp-salary" value="35000" onfocus="this.select()" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2.5 font-black text-emerald-700 select-text transition-all" />
           </div>
           <div>
             <label class="font-bold text-slate-700 block mb-1">System Role (පද්ධති කාර්යභාරය)</label>
-            <select id="hr-new-emp-role" onchange="HR.onRoleChange(this.value, 'new')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold text-slate-800">
+            <select id="hr-new-emp-role" onchange="HR.onRoleChange(this.value, 'new')" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2.5 font-bold text-slate-800 select-text transition-all">
               <option value="rep">Sales Rep (ක්ෂේත්‍ර නියෝජිත)</option>
               <option value="asm">Area Sales Manager (ASM)</option>
               <option value="sm">Sales Manager (SM)</option>
@@ -37396,7 +37410,7 @@ window.addEventListener('appinstalled', () => {
         <div class="p-3 bg-pink-50/70 rounded-2xl border border-pink-100 space-y-2">
           <div class="flex items-center justify-between">
             <label class="font-black text-pink-900 text-xs flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" id="hr-new-emp-create-login" checked onchange="document.getElementById('hr-new-login-fields').classList.toggle('hidden', !this.checked)" class="rounded text-pink-600 focus:ring-pink-500 w-4 h-4" />
+              <input type="checkbox" id="hr-new-emp-create-login" checked onchange="document.getElementById('hr-new-login-fields').classList.toggle('hidden', !this.checked)" class="rounded text-pink-600 focus:ring-pink-500 w-4 h-4 cursor-pointer" />
               <span>🔐 Create System Login Account (පද්ධතියට Log වීමට ගිණුමක් සාදන්න)</span>
             </label>
           </div>
@@ -37404,16 +37418,16 @@ window.addEventListener('appinstalled', () => {
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="font-bold text-slate-700 block mb-1">Username (Login ID) *</label>
-                <input type="text" id="hr-new-emp-username" placeholder="e.g. rep1" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+                <input type="text" id="hr-new-emp-username" placeholder="e.g. rep1" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-bold text-slate-800 placeholder-slate-400 placeholder:font-normal select-text transition-all" />
               </div>
               <div>
                 <label class="font-bold text-slate-700 block mb-1">Password / PIN *</label>
-                <input type="text" id="hr-new-emp-pin" placeholder="e.g. 1234" value="1234" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+                <input type="text" id="hr-new-emp-pin" placeholder="e.g. 1234" value="1234" onfocus="this.select()" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-800 select-text transition-all" />
               </div>
             </div>
             <div>
               <label class="font-bold text-slate-700 block mb-1">Assigned Route (නියෝජිතයාට අදාළ මාර්ගය)</label>
-              <select id="hr-new-emp-route" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 font-bold text-slate-800">
+              <select id="hr-new-emp-route" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2 font-bold text-slate-800 select-text transition-all">
                 <option value="">-- No Route Assigned --</option>
               </select>
             </div>
@@ -37421,11 +37435,11 @@ window.addEventListener('appinstalled', () => {
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2 border-t border-slate-100">
-        <button onclick="HR.saveNewEmployee()" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95">
-          💾 Register Employee
+      <div class="flex gap-2 pt-3 border-t border-slate-100 flex-shrink-0 bg-white">
+        <button type="button" onclick="HR.saveNewEmployee()" class="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-pink-600/30 active:scale-95 cursor-pointer transition-all">
+          💾 Register Employee (සේවකයා ලියාපදිංචි කරන්න)
         </button>
-        <button onclick="UI.closeModal('modal-hr-add-employee')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
+        <button type="button" onclick="UI.closeModal('modal-hr-add-employee')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl cursor-pointer transition-all">
           Cancel
         </button>
       </div>
@@ -37484,9 +37498,9 @@ window.addEventListener('appinstalled', () => {
   <!-- =========================================================================
        MODAL: HR EDIT EMPLOYEE (සේවක තොරතුරු සංශෝධනය)
        ========================================================================= -->
-  <div id="modal-hr-edit-employee" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+  <div id="modal-hr-edit-employee" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="modal-content bg-white w-full max-w-lg rounded-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col my-auto border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 flex-shrink-0">
         <div class="flex items-center gap-2">
           <span class="text-xl">✏️</span>
           <div>
@@ -37494,41 +37508,41 @@ window.addEventListener('appinstalled', () => {
             <p class="text-[11px] text-pink-700 font-bold">සේවක තොරතුරු යාවත්කාලීන කිරීම</p>
           </div>
         </div>
-        <button onclick="UI.closeModal('modal-hr-edit-employee')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button onclick="UI.closeModal('modal-hr-edit-employee')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg rounded-xl hover:bg-slate-100 cursor-pointer">✕</button>
       </div>
 
-      <div class="space-y-2.5 text-xs">
+      <div class="overflow-y-auto flex-1 space-y-3.5 pr-1 py-3 text-xs">
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="font-bold text-slate-500 block mb-1">Staff ID</label>
-            <input type="text" id="hr-edit-emp-empno" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-2 font-mono font-bold text-slate-600" />
+            <label class="font-bold text-slate-700 block mb-1">Staff ID</label>
+            <input type="text" id="hr-edit-emp-empno" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-600" />
           </div>
           <div>
-            <label class="font-bold text-slate-500 block mb-1">NIC Number</label>
-            <input type="text" id="hr-edit-emp-nic" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold" />
+            <label class="font-bold text-slate-700 block mb-1">NIC Number</label>
+            <input type="text" id="hr-edit-emp-nic" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-bold text-slate-800 select-text transition-all" />
           </div>
         </div>
 
         <div>
-          <label class="font-bold text-slate-500 block mb-1">Full Name</label>
-          <input type="text" id="hr-edit-emp-name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold" />
+          <label class="font-bold text-slate-700 block mb-1">Full Name *</label>
+          <input type="text" id="hr-edit-emp-name" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2.5 font-bold text-slate-800 select-text transition-all" />
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="font-bold text-slate-500 block mb-1">Mobile Phone</label>
-            <input type="tel" id="hr-edit-emp-phone" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold" />
+            <label class="font-bold text-slate-700 block mb-1">Mobile Phone *</label>
+            <input type="tel" id="hr-edit-emp-phone" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-bold text-slate-800 select-text transition-all" />
           </div>
           <div>
-            <label class="font-bold text-slate-500 block mb-1">Basic Salary (LKR)</label>
-            <input type="number" id="hr-edit-emp-salary" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold" />
+            <label class="font-bold text-slate-700 block mb-1">Basic Salary (LKR)</label>
+            <input type="number" id="hr-edit-emp-salary" onfocus="this.select()" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-black text-emerald-700 select-text transition-all" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="font-bold text-slate-500 block mb-1">Department</label>
-            <select id="hr-edit-emp-dept" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold">
+            <label class="font-bold text-slate-700 block mb-1">Department</label>
+            <select id="hr-edit-emp-dept" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2 font-bold text-slate-800 select-text transition-all">
               <option value="Sales & Field Distribution">Sales & Field Distribution</option>
               <option value="Delivery & Logistics">Delivery & Logistics</option>
               <option value="Warehouse & Stores">Warehouse & Stores</option>
@@ -37538,15 +37552,15 @@ window.addEventListener('appinstalled', () => {
             </select>
           </div>
           <div>
-            <label class="font-bold text-slate-500 block mb-1">Designation</label>
-            <input type="text" id="hr-edit-emp-desig" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold" />
+            <label class="font-bold text-slate-700 block mb-1">Designation</label>
+            <input type="text" id="hr-edit-emp-desig" onfocus="this.select()" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-bold text-slate-800 select-text transition-all" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="font-bold text-slate-500 block mb-1">Employment Status</label>
-            <select id="hr-edit-emp-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold">
+            <label class="font-bold text-slate-700 block mb-1">Employment Status</label>
+            <select id="hr-edit-emp-status" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2 font-bold text-slate-800 select-text transition-all">
               <option value="Active">Active (ක්‍රියාකාරී)</option>
               <option value="On Leave">On Leave (නිවාඩු මත)</option>
               <option value="Inactive">Inactive (අක්‍රිය)</option>
@@ -37555,8 +37569,8 @@ window.addEventListener('appinstalled', () => {
             </select>
           </div>
           <div>
-            <label class="font-bold text-slate-500 block mb-1">System Role (භූමිකාව)</label>
-            <select id="hr-edit-emp-role" onchange="HR.onRoleChange(this.value, 'edit')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 font-bold">
+            <label class="font-bold text-slate-700 block mb-1">System Role (භූමිකාව)</label>
+            <select id="hr-edit-emp-role" onchange="HR.onRoleChange(this.value, 'edit')" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2 font-bold text-slate-800 select-text transition-all">
               <option value="rep">Sales Rep</option>
               <option value="asm">Area Sales Manager (ASM)</option>
               <option value="sm">Sales Manager (SM)</option>
@@ -37577,15 +37591,15 @@ window.addEventListener('appinstalled', () => {
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
               <label class="font-bold text-slate-700 block mb-1">Username (Login ID)</label>
-              <input type="text" id="hr-edit-emp-username" placeholder="e.g. rep1" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+              <input type="text" id="hr-edit-emp-username" placeholder="e.g. rep1" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-bold text-slate-800 select-text transition-all" />
             </div>
             <div>
               <label class="font-bold text-slate-700 block mb-1">New PIN / Password</label>
-              <input type="text" id="hr-edit-emp-pin" placeholder="Leave blank to keep" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800" />
+              <input type="text" id="hr-edit-emp-pin" placeholder="Leave blank to keep" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-3 py-2 font-bold text-slate-800 select-text transition-all" />
             </div>
             <div class="col-span-2">
               <label class="font-bold text-slate-700 block mb-1">Assigned Route</label>
-              <select id="hr-edit-emp-route" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 font-bold text-slate-800">
+              <select id="hr-edit-emp-route" class="w-full bg-white border border-slate-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl px-2.5 py-2 font-bold text-slate-800 select-text transition-all">
                 <option value="">-- No Route Assigned --</option>
               </select>
             </div>
@@ -37593,11 +37607,11 @@ window.addEventListener('appinstalled', () => {
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2 border-t border-slate-100">
-        <button onclick="HR.saveEditEmployee()" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95">
-          💾 Update Employee
+      <div class="flex gap-2 pt-3 border-t border-slate-100 flex-shrink-0 bg-white">
+        <button type="button" onclick="HR.saveEditEmployee()" class="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-pink-600/30 active:scale-95 cursor-pointer transition-all">
+          💾 Update Employee (තොරතුරු යාවත්කාලීන කරන්න)
         </button>
-        <button onclick="UI.closeModal('modal-hr-edit-employee')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
+        <button type="button" onclick="UI.closeModal('modal-hr-edit-employee')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl cursor-pointer transition-all">
           Cancel
         </button>
       </div>
@@ -38475,7 +38489,7 @@ window.addEventListener('appinstalled', () => {
 
   // Automatic One-Time Cache Purge on Version Bump
   (function() {
-    var APP_VERSION = '6.0.1';
+    var APP_VERSION = '6.1.0';
     var savedVer = localStorage.getItem('spice_pos_bundle_ver');
     if (savedVer !== APP_VERSION) {
       localStorage.setItem('spice_pos_bundle_ver', APP_VERSION);
@@ -38489,7 +38503,7 @@ window.addEventListener('appinstalled', () => {
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=6.0.1')
+      navigator.serviceWorker.register('./sw.js?v=6.1.0')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered v6.0.1:', reg.scope);
           reg.update();
