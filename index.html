@@ -4358,7 +4358,7 @@ button:active, .btn-touch:active {
         </div>
         <div>
           <label class="text-[11px] font-bold text-slate-500 block mb-1">Security PIN (4-8 Digits) *</label>
-          <input type="password" maxlength="12" id="user-form-pin" placeholder="5555" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-mono font-black text-slate-800 tracking-widest text-center" required />
+          <input type="password" maxlength="12" id="user-form-pin" placeholder="5555" autocomplete="new-password" data-lpignore="true" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-mono font-black text-slate-800 tracking-widest text-center" required />
         </div>
       </div>
 
@@ -5294,15 +5294,15 @@ button:active, .btn-touch:active {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
               <span class="text-[9px] uppercase font-bold text-indigo-900 block mb-0.5">Current Master PIN</span>
-              <input type="password" id="saas-sett-current-pin" placeholder="Current PIN" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center text-slate-800" />
+              <input type="password" id="saas-sett-current-pin" placeholder="Current PIN" autocomplete="new-password" data-lpignore="true" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center text-slate-800" />
             </div>
             <div>
               <span class="text-[9px] uppercase font-bold text-indigo-900 block mb-0.5">New Master PIN</span>
-              <input type="password" id="saas-sett-new-pin" placeholder="New PIN (4-12 digits)" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center text-indigo-950" />
+              <input type="password" id="saas-sett-new-pin" placeholder="New PIN (4-12 digits)" autocomplete="new-password" data-lpignore="true" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center text-indigo-950" />
             </div>
             <div>
               <span class="text-[9px] uppercase font-bold text-indigo-900 block mb-0.5">Confirm New PIN</span>
-              <input type="password" id="saas-sett-confirm-pin" placeholder="Confirm" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center text-indigo-950" />
+              <input type="password" id="saas-sett-confirm-pin" placeholder="Confirm" autocomplete="new-password" data-lpignore="true" class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs font-mono font-black text-center text-indigo-950" />
             </div>
           </div>
         </div>
@@ -21097,8 +21097,16 @@ const POS = {
       const isRep = user && user.role === 'rep';
 
       // Filter by rep if logged in as rep
+      const uName = (user?.username || '').toLowerCase().trim();
+      const fName = (user?.fullName || '').toLowerCase().trim();
       const repSales = isRep
-        ? sales.filter(s => s.repId === user.id || s.repName === user.fullName || s.repName === user.username)
+        ? sales.filter(s => {
+            if (s.repId && (String(s.repId) === String(user.id) || s.repId == user.id)) return true;
+            const rName = (s.repName || '').toLowerCase().trim();
+            if (uName && (rName.includes(uName) || uName.includes(rName))) return true;
+            if (fName && (rName.includes(fName) || fName.includes(rName))) return true;
+            return false;
+          })
         : sales;
 
       const deliveredOrPending = repSales.filter(s => s.status !== 'Cancelled');
@@ -21200,7 +21208,20 @@ const POS = {
         let assignedTargets = [];
         if (db.productTargets) {
           const allT = filterByTenant(await db.productTargets.toArray());
-          assignedTargets = allT.filter(t => !t.targetMonth || t.targetMonth === curMonth);
+          const curMonthTargets = allT.filter(t => !t.targetMonth || t.targetMonth === curMonth);
+          if (isRep && curMonthTargets.length > 0) {
+            const repSpecific = curMonthTargets.filter(t => {
+              if (t.empNo && user.empNo && String(t.empNo) === String(user.empNo)) return true;
+              if (t.repId && (String(t.repId) === String(user.id) || t.repId == user.id)) return true;
+              const tRep = (t.repName || '').toLowerCase().trim();
+              if (uName && (tRep.includes(uName) || uName.includes(tRep))) return true;
+              if (fName && (tRep.includes(fName) || fName.includes(tRep))) return true;
+              return false;
+            });
+            assignedTargets = repSpecific.length > 0 ? repSpecific : curMonthTargets;
+          } else {
+            assignedTargets = curMonthTargets;
+          }
         }
 
         // Fetch monthly sales for calculating live item targets

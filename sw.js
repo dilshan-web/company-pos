@@ -1,18 +1,30 @@
-const CACHE_NAME = 'spice-pos-v4.7.0';
+const CACHE_NAME = 'spice-pos-v4.8.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   'index.html',
   './manifest.json',
   'manifest.json',
-  './css/styles.css',
-  './css/leaflet.css',
+  './icon-192.png',
+  'icon-192.png',
+  './icon-512.png',
+  'icon-512.png',
+  './icon.png',
+  'icon.png',
+  './icon.svg',
+  'icon.svg',
+  './apple-touch-icon.png',
+  'apple-touch-icon.png',
+  './favicon.png',
+  'favicon.png',
   './icons/icon.svg',
   './icons/icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
   './icons/favicon.png',
+  './css/styles.css',
+  './css/leaflet.css',
   './js/libs/tailwind.js',
   './js/libs/dexie.min.js',
   './js/libs/firebase-app-compat.js',
@@ -52,11 +64,11 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Caching complete offline app shell v4.7.0');
-      // Cache files individually with error handling so one missing file won't break offline mode
+      console.log('[ServiceWorker] Caching complete offline app shell v4.8.0');
       return Promise.all(
         ASSETS_TO_CACHE.map((url) =>
           cache.add(url).catch((err) => {
+            // Non-blocking: one missing asset won't abort caching of the rest
             console.warn('[ServiceWorker] Asset cache notice:', url, err?.message || err);
           })
         )
@@ -123,7 +135,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Return cached instantly
         return cachedResponse;
       }
       return fetch(event.request).then((response) => {
@@ -137,7 +148,9 @@ self.addEventListener('fetch', (event) => {
       }).catch(async () => {
         // If image failed while offline, fallback to icon
         if (event.request.destination === 'image') {
-          return (await caches.match('./icons/icon-192.png')) ||
+          return (await caches.match('./icon-192.png')) ||
+                 (await caches.match('icon-192.png')) ||
+                 (await caches.match('./icons/icon-192.png')) ||
                  (await caches.match('icons/icon-192.png'));
         }
       });
