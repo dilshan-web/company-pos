@@ -17282,8 +17282,9 @@ const Auth = {
           }
 
           const todayStr = new Date().toISOString().split('T')[0];
-          const isPastDue = Boolean(tenant && (tenant.status === 'expired' || (tenant.validTo && todayStr > tenant.validTo)));
-          const isInactive = Boolean((tenant && (tenant.isActive === false || tenant.status === 'suspended')) || (this.currentUser.isActive === false));
+          // Only block if EXPLICITLY expired/suspended — missing validTo = allow (offline-first)
+          const isPastDue = Boolean(tenant && tenant.validTo && todayStr > tenant.validTo && tenant.status === 'expired');
+          const isInactive = Boolean((tenant && tenant.status === 'suspended') || (this.currentUser.isActive === false));
 
           if (isInactive || isPastDue) {
             sessionStorage.removeItem('spice_pos_unlocked');
@@ -18415,7 +18416,8 @@ const Auth = {
     }
 
     // Validate subscription & account status for non-SuperAdmin users
-    if (matchedUser.role !== 'superadmin') {
+    // Only block if EXPLICITLY expired or suspended — don't block if tenant data is missing
+    if (matchedUser.role !== 'superadmin' && matchedUser.role !== 'admin') {
       try {
         if (!targetTenant && typeof db !== 'undefined' && db.tenants) {
           targetTenant = matchedUser.tenantId
@@ -18424,9 +18426,10 @@ const Auth = {
               await db.tenants.toCollection().first();
         }
         const todayStr = new Date().toISOString().split('T')[0];
-        const isPastDue = Boolean(targetTenant && (targetTenant.status === 'expired' || (targetTenant.validTo && todayStr > targetTenant.validTo)));
+        // Only block if EXPLICITLY expired/suspended — missing validTo = allow login
+        const isPastDue = Boolean(targetTenant && targetTenant.validTo && todayStr > targetTenant.validTo && targetTenant.status === 'expired');
         const isInactive = Boolean(
-          (targetTenant && (targetTenant.isActive === false || targetTenant.status === 'suspended')) ||
+          (targetTenant && targetTenant.status === 'suspended') ||
           (matchedUser.isActive === false)
         );
         if (isInactive || isPastDue) {
