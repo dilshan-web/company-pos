@@ -3743,10 +3743,15 @@ button:active, .btn-touch:active {
       </div>
 
       <!-- Security / Help Footer -->
-      <div class="pt-2 border-t border-slate-800/80 text-center">
+      <div class="pt-2 border-t border-slate-800/80 text-center space-y-1">
         <p class="text-[10px] text-slate-500 font-semibold tracking-wide">
-          🔒 Encrypted Session • Fast POS Cloud Sync
+          🔒 Encrypted Session • Fast POS Cloud Sync (v6.0.1)
         </p>
+        <div>
+          <button type="button" onclick="forceAppUpdateAndReload()" class="text-[10px] text-slate-400 hover:text-emerald-400 underline cursor-pointer transition-colors">
+            🔄 Force Update (අලුත් version එකට මාරු වන්න)
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -38450,13 +38455,44 @@ window.addEventListener('appinstalled', () => {
   </div>
 
 
-<!-- PWA Service Worker Registration -->
+<!-- PWA Service Worker Registration & Cache Auto-Buster -->
 <script>
+  async function forceAppUpdateAndReload() {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (let r of regs) await r.unregister();
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (let k of keys) await caches.delete(k);
+      }
+    } catch(e) {}
+    const u = new URL(window.location.href);
+    u.searchParams.set('t', Date.now());
+    window.location.href = u.toString();
+  }
+
+  // Automatic One-Time Cache Purge on Version Bump
+  (function() {
+    var APP_VERSION = '6.0.1';
+    var savedVer = localStorage.getItem('spice_pos_bundle_ver');
+    if (savedVer !== APP_VERSION) {
+      localStorage.setItem('spice_pos_bundle_ver', APP_VERSION);
+      if ('caches' in window && savedVer) {
+        caches.keys().then(function(keys) {
+          keys.forEach(function(k) { caches.delete(k); });
+        });
+      }
+    }
+  })();
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('./sw.js?v=6.0.1')
         .then(function(reg) {
-          console.log('[PWA] Service Worker registered:', reg.scope);
+          console.log('[PWA] Service Worker registered v6.0.1:', reg.scope);
+          reg.update();
         })
         .catch(function(err) {
           console.warn('[PWA] Service Worker registration failed:', err);

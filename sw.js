@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spice-pos-v5.0.0';
+const CACHE_NAME = 'spice-pos-v6.0.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -22,7 +22,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Caching complete offline app shell v5.0.0');
+      console.log('[ServiceWorker] Caching complete offline app shell v6.0.1');
       return Promise.all(
         ASSETS_TO_CACHE.map((url) =>
           cache.add(url).catch((err) => {
@@ -59,30 +59,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests: HTML document navigation
+  // Navigation requests: NETWORK-FIRST to guarantee instant live updates, fallback to cache when offline
   if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) {
-          // Stale-while-revalidate for faster offline startup
-          fetch(event.request).then((res) => {
-            if (res && res.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res));
-            }
-          }).catch(() => {});
-          return cached;
+      fetch(event.request).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
-        return fetch(event.request).then((res) => {
-          if (res && res.status === 200) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return res;
-        }).catch(async () => {
-          return (await caches.match('./index.html')) ||
-                 (await caches.match('index.html')) ||
-                 (await caches.match('./'));
-        });
+        return res;
+      }).catch(async () => {
+        return (await caches.match('./index.html')) ||
+               (await caches.match('index.html')) ||
+               (await caches.match('./'));
       })
     );
     return;
