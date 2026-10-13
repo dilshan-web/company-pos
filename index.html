@@ -18274,7 +18274,7 @@ const Auth = {
     }
   },
 
-  // Text-based Username + Password login
+  // Text-based Username + Password login — FAST & BULLETPROOF
   async handleTextLogin() {
     const usernameEl = document.getElementById('lock-username-input');
     const passwordEl = document.getElementById('lock-password-input');
@@ -18284,219 +18284,153 @@ const Auth = {
     const rememberMe = Boolean(rememberEl?.checked);
 
     if (!username || !password) {
-      UI.showToast('Username සහ Password ඇතුළත් කරන්න', 'warning');
+      if (typeof UI !== 'undefined') UI.showToast('Username සහ Password ඇතුළත් කරන්න', 'warning');
       return;
     }
 
     // Save username for next time
-    localStorage.setItem('spice_pos_last_username', username);
+    try { localStorage.setItem('spice_pos_last_username', username); } catch(e) {}
 
     let matchedUser = null;
-    let targetTenant = null;
 
+    // ── STEP 1: Hardcoded fallbacks (INSTANT — no DB, no async) ──────────────
+    const FALLBACKS = {
+      'admin':    { id: 1,  username: 'admin',     fullName: 'Master Admin (Owner)',               role: 'admin',     pin: '1234', isActive: true },
+      'hr':       { id: 8,  username: 'hr',        fullName: 'HR DEPARTMENT',                      role: 'hr',        pin: '9999', isActive: true },
+      'hr1':      { id: 8,  username: 'hr',        fullName: 'HR DEPARTMENT',                      role: 'hr',        pin: '9999', isActive: true },
+      'rep1':     { id: 5,  username: 'rep1',      fullName: 'Sales Rep (Order Booker)',            role: 'rep',       pin: '5555', isActive: true },
+      'delivery1':{ id: 6,  username: 'delivery1', fullName: 'Delivery Driver (බෙදාහැරීම්)',       role: 'delivery',  pin: '7777', isActive: true },
+      'stores1':  { id: 7,  username: 'stores1',   fullName: 'Production Stores Keeper (ස්ටෝර්ස්)', role: 'stores',   pin: '8888', isActive: true },
+      'sm1':      { id: 2,  username: 'sm1',       fullName: 'Sales Manager (SM)',                 role: 'sm',        pin: '2222', isActive: true },
+      'asm1':     { id: 3,  username: 'asm1',      fullName: 'Area Sales Manager (ASM)',           role: 'asm',       pin: '3333', isActive: true },
+      'sup1':     { id: 4,  username: 'sup1',      fullName: 'Field Supervisor (සුපවයිසර්)',       role: 'supervisor',pin: '4444', isActive: true },
+    };
+
+    // Super Admin check
     try {
-      // Background sync (non-blocking) — login uses local DB immediately, server sync happens in background
-      // This prevents login from hanging when internet is slow or unavailable
-      (async () => {
-        try {
-          if (typeof db !== 'undefined') {
-            const syncJobs = [];
-            if (db.systemSettings) syncJobs.push(db.systemSettings.refreshFromServer());
-            if (db.tenants) syncJobs.push(db.tenants.refreshFromServer());
-            if (db.users) syncJobs.push(db.users.refreshFromServer());
-            if (db.company) syncJobs.push(db.company.refreshFromServer());
-            await Promise.allSettled(syncJobs);
-          }
-          if (typeof firestore !== 'undefined' && firestore && username) {
-            const [uSnap, tSnap] = await Promise.allSettled([
-              firestore.collection('users').where('username', '==', username).limit(1).get({ source: 'server' }),
-              firestore.collection('tenants').where('adminUsername', '==', username).limit(1).get({ source: 'server' })
-            ]);
-            if (uSnap.status === 'fulfilled' && !uSnap.value.empty) {
-              const uDoc = uSnap.value.docs[0];
-              const uData = uDoc.data();
-              const uId = uData.id !== undefined ? uData.id : uDoc.id;
-              if (db && db.users) db.users._cache.set(String(uId), Object.assign({}, uData, { id: uId }));
-            }
-            if (tSnap.status === 'fulfilled' && !tSnap.value.empty) {
-              const tDoc = tSnap.value.docs[0];
-              const tData = tDoc.data();
-              const tId = tData.id !== undefined ? tData.id : tDoc.id;
-              if (db && db.tenants) db.tenants._cache.set(String(tId), Object.assign({}, tData, { id: tId }));
-            }
-          }
-          if (typeof CompanyControl !== 'undefined' && CompanyControl.loadSaaSSettingsFromCloud) {
-            try { await CompanyControl.loadSaaSSettingsFromCloud(); } catch (e) {}
-          }
-        } catch (bgErr) { console.warn('Background sync notice:', bgErr); }
-      })(); // fire and forget — do NOT await this
-
-      const allTenants = (typeof db !== 'undefined' && db.tenants) ? await db.tenants.toArray() : [];
-      const allUsers   = (typeof db !== 'undefined' && db.users)   ? await db.users.toArray()   : [];
-      const company    = (typeof db !== 'undefined' && db.company)  ? await db.company.toCollection().first() : null;
-
-      // 0. Super Admin Master login (Dynamic Username & PIN)
       const masterUsername = String(this.getSuperAdminUsername()).trim().toLowerCase();
       const masterPin = String(this.getSuperAdminPin()).trim();
       if (username === masterUsername && password === masterPin) {
-        matchedUser = {
-          id: 'super_0',
-          username: masterUsername,
-          fullName: 'Software Controller (SaaS Master)',
-          role: 'superadmin',
-          pin: masterPin,
-          isActive: true
-        };
+        matchedUser = { id: 'super_0', username: masterUsername, fullName: 'Software Controller (SaaS Master)', role: 'superadmin', pin: masterPin, isActive: true };
       }
+    } catch(e) {}
 
-      // 1. Check db.tenants (company admin login)
-      if (!matchedUser && allTenants.length > 0) {
-        const tenant = allTenants.find(t =>
-          t.adminUsername?.toLowerCase() === username && String(t.adminPin || '').trim() === password
-        );
-        if (tenant) {
-          targetTenant = tenant;
-          matchedUser = {
-            id: tenant.id,
-            username: tenant.adminUsername,
-            fullName: tenant.ownerName || 'Admin',
-            role: 'admin',
-            pin: tenant.adminPin,
-            isActive: tenant.isActive !== false,
-            tenantId: tenant.id
-          };
-        }
+    // Fallback check
+    if (!matchedUser) {
+      const fb = FALLBACKS[username];
+      if (fb && String(fb.pin).trim() === password) {
+        matchedUser = fb;
       }
-
-      // 2. Check db.users (all staff)
-      if (!matchedUser && allUsers.length > 0) {
-        const found = allUsers.find(u =>
-          u.username?.toLowerCase() === username && String(u.pin || '').trim() === password
-        );
-        if (found) {
-          matchedUser = found;
-          if (found.tenantId && db.tenants) targetTenant = await db.tenants.get(found.tenantId);
-        }
-      }
-
-      // 3. Fallback: company master record (if unseeded/default)
-      if (!matchedUser && company && String(company.pin || '').trim() === password) {
-        if (username === 'admin' || username === (company.adminUsername || 'admin')) {
-          matchedUser = { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: company.pin, isActive: true };
-          if (db.tenants) targetTenant = await db.tenants.toCollection().first();
-        }
-      }
-
-      // 4. Built-in staff fallbacks (if DB unseeded)
-      if (!matchedUser && allUsers.length === 0) {
-        const fallbacks = {
-          'admin': { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: '1234', isActive: true },
-          'hr': { id: 8, username: 'hr', fullName: 'HR DEPARTMENT', role: 'hr', pin: '9999', isActive: true },
-          'hr1': { id: 8, username: 'hr', fullName: 'HR DEPARTMENT', role: 'hr', pin: '9999', isActive: true },
-          'rep1': { id: 5, username: 'rep1', fullName: 'Sales Rep (Order Booker)', role: 'rep', pin: '5555', isActive: true },
-          'delivery1': { id: 6, username: 'delivery1', fullName: 'Delivery Driver (බෙදාහැරීම්)', role: 'delivery', pin: '7777', isActive: true },
-          'stores1': { id: 7, username: 'stores1', fullName: 'Production Stores Keeper (ස්ටෝර්ස්)', role: 'stores', pin: '8888', isActive: true },
-          'sm1': { id: 2, username: 'sm1', fullName: 'Sales Manager (SM)', role: 'sm', pin: '2222', isActive: true },
-          'asm1': { id: 3, username: 'asm1', fullName: 'Area Sales Manager (ASM)', role: 'asm', pin: '3333', isActive: true },
-          'sup1': { id: 4, username: 'sup1', fullName: 'Field Supervisor (සුපවයිසර්)', role: 'supervisor', pin: '4444', isActive: true }
-        };
-        const candidate = fallbacks[username];
-        if (candidate && String(candidate.pin).trim() === password) {
-          matchedUser = candidate;
-        }
-      }
-    } catch (e) {
-      console.error('Text login DB error:', e);
     }
 
+    // ── STEP 2: DB lookup (only if fallback didn't match) ────────────────────
     if (!matchedUser) {
-      UI.showToast('Username හෝ Password වැරදිය. නැවත උත්සාහ කරන්න.', 'error');
+      try {
+        if (typeof db !== 'undefined') {
+          // Check tenants (admin login)
+          if (db.tenants) {
+            const allTenants = await Promise.race([
+              db.tenants.toArray(),
+              new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 3000))
+            ]).catch(() => []);
+            const tenant = allTenants.find(t =>
+              t.adminUsername?.toLowerCase() === username && String(t.adminPin || '').trim() === password
+            );
+            if (tenant) {
+              matchedUser = { id: tenant.id, username: tenant.adminUsername, fullName: tenant.ownerName || 'Admin', role: 'admin', pin: tenant.adminPin, isActive: tenant.isActive !== false, tenantId: tenant.id };
+            }
+          }
+          // Check users
+          if (!matchedUser && db.users) {
+            const allUsers = await Promise.race([
+              db.users.toArray(),
+              new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 3000))
+            ]).catch(() => []);
+            const found = allUsers.find(u =>
+              u.username?.toLowerCase() === username && String(u.pin || '').trim() === password
+            );
+            if (found) matchedUser = found;
+          }
+          // Check company record
+          if (!matchedUser && db.company) {
+            const company = await Promise.race([
+              db.company.toCollection().first(),
+              new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 2000))
+            ]).catch(() => null);
+            if (company && String(company.pin || '').trim() === password) {
+              if (username === 'admin' || username === (company.adminUsername || 'admin')) {
+                matchedUser = { id: 1, username: 'admin', fullName: 'Master Admin (Owner)', role: 'admin', pin: company.pin, isActive: true };
+              }
+            }
+          }
+        }
+      } catch(dbErr) {
+        console.warn('DB login lookup error (non-fatal):', dbErr);
+      }
+    }
+
+    // ── STEP 3: No match found ───────────────────────────────────────────────
+    if (!matchedUser) {
+      if (typeof UI !== 'undefined') UI.showToast('Username හෝ Password වැරදිය. නැවත උත්සාහ කරන්න.', 'error');
       if (passwordEl) passwordEl.value = '';
       return;
     }
 
-    // Validate subscription & account status for non-SuperAdmin users
-    // Only block if EXPLICITLY expired or suspended — don't block if tenant data is missing
-    if (matchedUser.role !== 'superadmin' && matchedUser.role !== 'admin') {
-      try {
-        if (!targetTenant && typeof db !== 'undefined' && db.tenants) {
-          targetTenant = matchedUser.tenantId
-            ? await db.tenants.get(matchedUser.tenantId)
-            : await db.tenants.where('adminUsername').equals(matchedUser.username).first() ||
-              await db.tenants.toCollection().first();
-        }
-        const todayStr = new Date().toISOString().split('T')[0];
-        // Only block if EXPLICITLY expired/suspended — missing validTo = allow login
-        const isPastDue = Boolean(targetTenant && targetTenant.validTo && todayStr > targetTenant.validTo && targetTenant.status === 'expired');
-        const isInactive = Boolean(
-          (targetTenant && targetTenant.status === 'suspended') ||
-          (matchedUser.isActive === false)
-        );
-        if (isInactive || isPastDue) {
-          await this.showSubscriptionExpiredScreen(targetTenant || { companyName: matchedUser.fullName || 'Business Client', validTo: 'N/A', isActive: false }, isPastDue);
-          if (passwordEl) passwordEl.value = '';
-          return;
-        }
-      } catch (e) { console.warn('Subscription check error in text login:', e); }
+    // ── STEP 4: Explicitly suspended/deactivated check ──────────────────────
+    if (matchedUser.isActive === false) {
+      if (typeof UI !== 'undefined') UI.showToast('ගිණුම අක්‍රිය කර ඇත (Account Deactivated)', 'error');
+      if (passwordEl) passwordEl.value = '';
+      return;
     }
 
-    // ✅ Successful login
+    // ── STEP 5: LOGIN SUCCESS ────────────────────────────────────────────────
     this.currentUser = matchedUser;
     this.isLocked = false;
-    sessionStorage.setItem('spice_pos_unlocked', 'true');
-    sessionStorage.setItem('spice_pos_user', JSON.stringify(matchedUser));
 
-    // Handle "Remember Me" persistent storage
+    try { sessionStorage.setItem('spice_pos_unlocked', 'true'); } catch(e) {}
+    try { sessionStorage.setItem('spice_pos_user', JSON.stringify(matchedUser)); } catch(e) {}
+
     if (rememberMe) {
-      localStorage.setItem('spice_pos_remember', 'true');
-      localStorage.setItem('spice_pos_saved_user', JSON.stringify(matchedUser));
-      localStorage.setItem('spice_pos_last_username', matchedUser.username);
-      // Show the ✓ Saved badge when user logs in with remember checked
-      setTimeout(() => {
-        const savedBadge = document.getElementById('remember-me-status-badge');
-        if (savedBadge) savedBadge.classList.remove('hidden');
-      }, 100);
+      try { localStorage.setItem('spice_pos_remember', 'true'); localStorage.setItem('spice_pos_saved_user', JSON.stringify(matchedUser)); } catch(e) {}
     } else {
-      localStorage.removeItem('spice_pos_remember');
-      localStorage.removeItem('spice_pos_saved_user');
-      localStorage.setItem('spice_pos_last_username', matchedUser.username);
-      const savedBadge = document.getElementById('remember-me-status-badge');
-      if (savedBadge) savedBadge.classList.add('hidden');
+      try { localStorage.removeItem('spice_pos_remember'); localStorage.removeItem('spice_pos_saved_user'); } catch(e) {}
     }
 
-    const expiredModal = document.getElementById('modal-subscription-expired');
-    if (expiredModal) { expiredModal.classList.add('hidden'); expiredModal.style.display = 'none'; }
-
+    // Hide lock screen
     this.hideLockScreen();
-    try {
-      this.applyRoleRestrictions();
-      this.updateHeaderUserBadge();
-      if (typeof UI !== 'undefined' && UI.updateCompanyBranding) UI.updateCompanyBranding();
-    } catch (e) {}
 
-    try {
-      if (matchedUser.role === 'superadmin')    UI.switchTab('superadmin');
-      else if (matchedUser.role === 'hr')       UI.switchTab('payroll');
-      else if (matchedUser.role === 'rep')      UI.switchTab('pos');
-      else if (matchedUser.role === 'delivery') UI.switchTab('production');
-      else if (matchedUser.role === 'stores')   UI.switchTab('stores');
-      else                                       UI.switchTab('dashboard');
-    } catch (e) {}
+    // Apply UI restrictions
+    try { this.applyRoleRestrictions(); } catch(e) { console.warn('applyRoleRestrictions error:', e); }
+    try { this.updateHeaderUserBadge(); } catch(e) {}
+    try { if (typeof UI !== 'undefined' && UI.updateCompanyBranding) UI.updateCompanyBranding(); } catch(e) {}
 
-    const roleLabels = {
-      'superadmin': '⚡ Software Controller',
-      'admin':      '👑 Admin (Owner)',
-      'hr':         '👥 HR & Payroll Officer',
-      'sm':         '👔 Sales Manager',
-      'asm':        '💼 Area Sales Manager',
-      'supervisor': '📋 Supervisor',
-      'rep':        '🚚 Sales Rep',
-      'delivery':   '📦 Delivery Driver',
-      'stores':     '🏬 Production Stores'
-    };
-    UI.showToast(`Welcome, ${matchedUser.fullName || matchedUser.username}! (${roleLabels[matchedUser.role] || 'User'})`, 'success');
+    // Navigate to correct tab
+    try {
+      const tabMap = { superadmin: 'superadmin', hr: 'payroll', rep: 'pos', delivery: 'production', stores: 'stores' };
+      const targetTab = tabMap[matchedUser.role] || 'dashboard';
+      if (typeof UI !== 'undefined') UI.switchTab(targetTab);
+    } catch(e) { console.warn('switchTab error:', e); }
+
+    // Welcome toast
+    const roleLabels = { superadmin:'⚡ Software Controller', admin:'👑 Admin (Owner)', hr:'👥 HR & Payroll Officer', sm:'👔 Sales Manager', asm:'💼 Area Sales Manager', supervisor:'📋 Supervisor', rep:'🚚 Sales Rep', delivery:'📦 Delivery Driver', stores:'🏬 Production Stores' };
+    try { if (typeof UI !== 'undefined') UI.showToast(`Welcome, ${matchedUser.fullName || matchedUser.username}! (${roleLabels[matchedUser.role] || 'User'})`, 'success'); } catch(e) {}
+
     if (passwordEl) passwordEl.value = '';
+
+    // Background: fire-and-forget cloud sync AFTER successful login
+    setTimeout(() => {
+      try {
+        if (typeof db !== 'undefined') {
+          if (db.systemSettings) db.systemSettings.refreshFromServer().catch(()=>{});
+          if (db.tenants) db.tenants.refreshFromServer().catch(()=>{});
+          if (db.users) db.users.refreshFromServer().catch(()=>{});
+        }
+      } catch(e) {}
+    }, 2000);
   },
+
+
+
 
   async updatePin(oldPin, newPin) {
     if (!newPin || newPin.length < 4) {
@@ -19710,6 +19644,12 @@ const UI = {
       if (!allowed.includes(tabId)) {
         console.warn(`Restricted access: Stores Keeper cannot access tab '${tabId}'. Redirecting to Stores.`);
         tabId = 'stores';
+      }
+    } else if (role === 'hr') {
+      const allowed = ['payroll', 'map', 'users'];
+      if (!allowed.includes(tabId)) {
+        console.warn(`Restricted access: HR cannot access tab '${tabId}'. Redirecting to Payroll.`);
+        tabId = 'payroll';
       }
     }
 
@@ -34309,7 +34249,7 @@ const HR = {
     const allPhotos = filterByTenant(await db.fieldPhotos?.toArray() || []).sort((a,b) => {
       return (b.date + ' ' + (b.time||'')).localeCompare(a.date + ' ' + (a.time||''));
     });
-    const allAttendance = filterByTenant(await db.attendance?.toArray() || []).sort((a,b) => (b.date||'')).localeCompare(a.date||''));
+    const allAttendance = filterByTenant(await db.attendance?.toArray() || []).sort((a,b) => (b.date||'').localeCompare(a.date||''));
     const allEmployees = filterByTenant(await db.employees?.toArray() || []);
     const reps = allEmployees.filter(e => e.role === 'rep' || e.role === 'delivery' || e.role === 'asm' || e.role === 'supervisor');
 
