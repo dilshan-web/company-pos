@@ -17929,7 +17929,7 @@ const Auth = {
     const isDelivery = role === 'delivery';
     const isStores = role === 'stores';
     const isHR = role === 'hr';
-    const isManagement = isSuperAdmin || isAdmin || isSM || isASM || isSupervisor || isHR;
+    const isManagement = isSuperAdmin || isAdmin || isSM || isASM || isSupervisor;
     const isHROrAdmin = isSuperAdmin || isAdmin || isHR;
 
     // 0. SuperAdmin-Only elements
@@ -18143,12 +18143,20 @@ const Auth = {
           </button>
         `;
       } else if (isHR) {
-        // HR Officer Navigation: Payroll, GPS Map, Users, Dashboard, Logout
-        navInner.className = 'max-w-lg mx-auto grid grid-cols-5 py-1.5 px-1';
+        // HR Officer Navigation: HR Home, Daily Attendance, Rep Photos, GPS Map, Staff Users, Logout
+        navInner.className = 'max-w-lg mx-auto grid grid-cols-6 py-1.5 px-1';
         navInner.innerHTML = `
-          <button onclick="UI.switchTab('payroll')" data-tab="payroll" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-pink-600 font-black text-[10px]">
+          <button onclick="UI.switchTab('payroll'); if (typeof HR !== 'undefined') HR.switchModule('dashboard');" data-tab="payroll" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-pink-600 font-black text-[10px]">
             <div class="nav-icon-wrap w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-700 text-white flex items-center justify-center text-sm shadow-md shadow-pink-500/30">👥</div>
-            <span class="mt-0.5 truncate font-extrabold">HR & Payroll</span>
+            <span class="mt-0.5 truncate font-extrabold">HR Home</span>
+          </button>
+          <button onclick="UI.switchTab('payroll'); if (typeof HR !== 'undefined') HR.switchModule('attendance');" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
+            <div class="nav-icon-wrap w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center text-sm shadow-md shadow-emerald-500/30">⏱️</div>
+            <span class="mt-0.5 truncate font-bold">Attendance</span>
+          </button>
+          <button onclick="UI.switchTab('payroll'); if (typeof HR !== 'undefined') HR.switchModule('fieldAttendance');" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
+            <div class="nav-icon-wrap w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-sm shadow-md shadow-amber-500/30">📸</div>
+            <span class="mt-0.5 truncate font-bold">Rep Photos</span>
           </button>
           <button onclick="UI.switchTab('map')" data-tab="map" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
             <div class="nav-icon-wrap w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-500/30">🗺️</div>
@@ -18156,11 +18164,7 @@ const Auth = {
           </button>
           <button onclick="UI.switchTab('users')" data-tab="users" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
             <div class="nav-icon-wrap w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-purple-500/30">👤</div>
-            <span class="mt-0.5 truncate">Staff Users</span>
-          </button>
-          <button onclick="UI.switchTab('dashboard')" data-tab="dashboard" class="nav-tab-btn flex flex-col items-center justify-center py-1 text-slate-500 text-[10px]">
-            <div class="nav-icon-wrap w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-violet-500/30">📊</div>
-            <span class="mt-0.5 truncate">Dashboard</span>
+            <span class="mt-0.5 truncate font-bold">Staff Users</span>
           </button>
           <button onclick="Auth.lockApp()" class="flex flex-col items-center justify-center py-1 text-red-500 text-[10px]">
             <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-rose-700 text-white flex items-center justify-center text-sm shadow-md shadow-red-500/30">🔒</div>
@@ -20001,6 +20005,10 @@ const UI = {
 const Dashboard = {
   async loadDashboard() {
     try {
+      if (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role === 'hr') {
+        if (typeof UI !== 'undefined') UI.switchTab('payroll');
+        return;
+      }
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -28753,6 +28761,132 @@ const Stores = {
     }
   },
 
+  async quickAttendanceAction(empNo, actionType) {
+    const todayStr = document.getElementById('stores-att-date')?.value || new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const nowTime = `${hours}:${minutes}`;
+    const tenantId = getActiveTenantId() || 1;
+
+    const rawEmps = await db.employees?.toArray() || [];
+    const emp = filterByTenant(rawEmps).find(e => e.empNo === empNo);
+    const empName = emp ? emp.fullName : empNo;
+
+    const existing = await db.attendance?.where('date').equals(todayStr).toArray() || [];
+    const myAtt = filterByTenant(existing).find(a => a.empNo === empNo || a.employeeName === empName);
+
+    if (actionType === 'IN') {
+      if (myAtt) {
+        await db.attendance.update(myAtt.id, {
+          checkIn: nowTime,
+          status: 'Present',
+          recordedBy: 'Stores Keeper',
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await db.attendance.add({
+          tenantId,
+          empNo,
+          employeeName: empName,
+          date: todayStr,
+          checkIn: nowTime,
+          checkOut: '--',
+          status: 'Present',
+          recordedBy: 'Stores Keeper',
+          createdAt: new Date().toISOString()
+        });
+      }
+      if (typeof SoundFX !== 'undefined') SoundFX.play('beep');
+      UI.showToast(`✅ ${empName} - IN (${nowTime}) පැමිණීම සටහන් විය!`, 'success');
+    } else if (actionType === 'HALF_DAY') {
+      if (myAtt) {
+        await db.attendance.update(myAtt.id, {
+          status: 'Half Day',
+          checkIn: myAtt.checkIn && myAtt.checkIn !== '--' ? myAtt.checkIn : nowTime,
+          recordedBy: 'Stores Keeper',
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await db.attendance.add({
+          tenantId,
+          empNo,
+          employeeName: empName,
+          date: todayStr,
+          checkIn: nowTime,
+          checkOut: '--',
+          status: 'Half Day',
+          recordedBy: 'Stores Keeper',
+          createdAt: new Date().toISOString()
+        });
+      }
+      if (db.leaves) {
+        await db.leaves.add({
+          tenantId,
+          empNo,
+          employeeName: empName,
+          leaveType: 'Half-Day Leave',
+          fromDate: todayStr,
+          toDate: todayStr,
+          days: 0.5,
+          reason: 'Half Day logged by Stores Keeper',
+          status: 'Approved',
+          recordedBy: 'Stores Keeper',
+          createdAt: new Date().toISOString()
+        });
+      }
+      if (typeof SoundFX !== 'undefined') SoundFX.play('save');
+      UI.showToast(`🟡 ${empName} - Half Day (වරු නිවාඩු) සටහන් විය!`, 'warning');
+    } else if (actionType === 'OUT') {
+      if (myAtt) {
+        await db.attendance.update(myAtt.id, {
+          checkOut: nowTime,
+          recordedBy: 'Stores Keeper',
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await db.attendance.add({
+          tenantId,
+          empNo,
+          employeeName: empName,
+          date: todayStr,
+          checkIn: '--',
+          checkOut: nowTime,
+          status: 'Present',
+          recordedBy: 'Stores Keeper',
+          createdAt: new Date().toISOString()
+        });
+      }
+      if (typeof SoundFX !== 'undefined') SoundFX.play('beep');
+      UI.showToast(`⏹️ ${empName} - OUT (${nowTime}) පිටවීම සටහන් විය!`, 'info');
+    } else if (actionType === 'LEAVE') {
+      if (myAtt) {
+        await db.attendance.update(myAtt.id, {
+          status: 'On Leave',
+          checkIn: '--',
+          checkOut: '--',
+          recordedBy: 'Stores Keeper',
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        await db.attendance.add({
+          tenantId,
+          empNo,
+          employeeName: empName,
+          date: todayStr,
+          checkIn: '--',
+          checkOut: '--',
+          status: 'On Leave',
+          recordedBy: 'Stores Keeper',
+          createdAt: new Date().toISOString()
+        });
+      }
+      UI.showToast(`🟣 ${empName} - On Leave (නිවාඩු) සටහන් විය!`, 'info');
+    }
+
+    await this.loadStaffAttendanceLogs();
+  },
+
   async loadStaffAttendanceLogs() {
     const container = document.getElementById('stores-att-today-log');
     if (!container) return;
@@ -28762,40 +28896,93 @@ const Stores = {
       const rawAtt = await db.attendance?.where('date').equals(todayStr).toArray() || [];
       const atts = filterByTenant(rawAtt);
 
-      if (atts.length === 0) {
-        container.innerHTML = `
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
-            අද දිනය (${todayStr}) සඳහා සටහන් කළ පැමිණීම් නොමැත.
-          </div>
-        `;
-        return;
-      }
+      const rawEmps = await db.employees?.toArray() || [];
+      const emps = filterByTenant(rawEmps).filter(e => e.status !== 'Inactive' && e.status !== 'Terminated');
 
       let html = '';
-      atts.forEach(a => {
-        let badgeColor = 'bg-emerald-100 text-emerald-800';
-        if (a.status === 'On Leave') badgeColor = 'bg-amber-100 text-amber-800';
-        else if (a.status === 'Half Day') badgeColor = 'bg-orange-100 text-orange-800';
 
+      // 1. One-Tap Staff Roster Table for Quick Marking
+      html += `
+        <div class="space-y-2 mb-3">
+          <div class="text-[11px] font-black uppercase text-teal-800 tracking-wider flex items-center justify-between">
+            <span>⚡ ක්ෂණික පැමිණීම් ලකුණු කිරීම (One-Tap Attendance)</span>
+            <span class="text-[10px] text-slate-500 font-mono">${todayStr}</span>
+          </div>
+          <div class="divide-y divide-slate-100 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+            ${emps.map(emp => {
+              const myAtt = atts.find(a => a.empNo === emp.empNo || a.employeeName === emp.fullName);
+              const status = myAtt ? (myAtt.status || 'Present') : 'Pending';
+              let badgeColor = 'bg-slate-100 text-slate-600';
+              if (status === 'Present') badgeColor = 'bg-emerald-100 text-emerald-800 font-black';
+              else if (status === 'Half Day') badgeColor = 'bg-amber-100 text-amber-800 font-black';
+              else if (status === 'On Leave' || status === 'Leave') badgeColor = 'bg-purple-100 text-purple-800 font-black';
+
+              const inTime = myAtt?.checkIn && myAtt.checkIn !== '--' ? myAtt.checkIn : null;
+              const outTime = myAtt?.checkOut && myAtt.checkOut !== '--' ? myAtt.checkOut : null;
+
+              return `
+                <div class="p-2 sm:p-2.5 flex items-center justify-between flex-wrap gap-1.5 hover:bg-slate-50 transition-colors">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-slate-900 text-xs">${emp.fullName}</span>
+                      <span class="px-2 py-0.5 rounded-full text-[9px] ${badgeColor}">${status}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-mono">
+                      IN: <strong class="text-emerald-700">${inTime || '--:--'}</strong> · OUT: <strong class="text-rose-700">${outTime || '--:--'}</strong>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button onclick="Stores.quickAttendanceAction('${emp.empNo}', 'IN')" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-2xs active:scale-95 cursor-pointer" title="Record Morning Check-In with current time">
+                      🟢 IN
+                    </button>
+                    <button onclick="Stores.quickAttendanceAction('${emp.empNo}', 'HALF_DAY')" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] shadow-2xs active:scale-95 cursor-pointer" title="Mark Half Day">
+                      🟡 Half Day
+                    </button>
+                    <button onclick="Stores.quickAttendanceAction('${emp.empNo}', 'OUT')" class="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] shadow-2xs active:scale-95 cursor-pointer" title="Record Evening Check-Out with current time">
+                      ⏹️ End
+                    </button>
+                    <button onclick="Stores.quickAttendanceAction('${emp.empNo}', 'LEAVE')" class="px-1.5 py-1 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-[10px] cursor-pointer" title="Mark Leave">
+                      🟣 Leave
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      if (atts.length > 0) {
         html += `
-          <div class="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs hover:border-teal-300 transition-colors">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-black text-slate-800">${a.employeeName}</span>
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-black ${badgeColor}">${a.status || 'Present'}</span>
-              </div>
-              <div class="text-[10px] text-slate-500 mt-0.5">
-                IN: <strong>${a.checkIn || '--'}</strong> · OUT: <strong>${a.checkOut || '--'}</strong>
-                ${a.notes ? ` · <span class="italic text-slate-600">${a.notes}</span>` : ''}
-              </div>
-            </div>
-            <div class="text-right flex items-center gap-2">
-              <span class="text-[9px] text-slate-400 font-mono">By: ${a.recordedBy || 'Stores'}</span>
-              <button onclick="Stores.deleteAttendanceLog(${a.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs" title="Delete">🗑️</button>
-            </div>
+          <div class="space-y-1.5 pt-2">
+            <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block">දවසේ සටහන් වූ ලඝු-ලේඛන (Logged Records)</span>
+            ${atts.map(a => {
+              let badgeColor = 'bg-emerald-100 text-emerald-800';
+              if (a.status === 'On Leave') badgeColor = 'bg-amber-100 text-amber-800';
+              else if (a.status === 'Half Day') badgeColor = 'bg-orange-100 text-orange-800';
+
+              return `
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs hover:border-teal-300 transition-colors">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-black text-slate-800">${a.employeeName}</span>
+                      <span class="px-2 py-0.5 rounded-full text-[9px] font-black ${badgeColor}">${a.status || 'Present'}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">
+                      IN: <strong>${a.checkIn || '--'}</strong> · OUT: <strong>${a.checkOut || '--'}</strong>
+                      ${a.notes ? ` · <span class="italic text-slate-600">${a.notes}</span>` : ''}
+                    </div>
+                  </div>
+                  <div class="text-right flex items-center gap-2">
+                    <span class="text-[9px] text-slate-400 font-mono">By: ${a.recordedBy || 'Stores'}</span>
+                    <button onclick="Stores.deleteAttendanceLog(${a.id})" class="text-rose-500 hover:text-rose-700 font-bold text-xs cursor-pointer" title="Delete">🗑️</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         `;
-      });
+      }
 
       container.innerHTML = html;
     } catch (e) {
@@ -28803,7 +28990,8 @@ const Stores = {
     }
   },
 
-  async deleteAttendanceLog(id) {
+
+    async deleteAttendanceLog(id) {
     if (!confirm('මෙම පැමිණීම් සටහන ඉවත් කිරීමට අවශ්‍යද? (Remove this attendance record?)')) return;
     try {
       await db.attendance?.delete(id);
@@ -33742,62 +33930,168 @@ const HR = {
   },
 
   // =========================================================================
-  // MODULE 5: ATTENDANCE MANAGEMENT
+  // MODULE 5: ATTENDANCE MANAGEMENT (Daily Register, Auto-Time & End Check-Out)
   // =========================================================================
+  attendanceFilterDate: null,
+
+  getCurrentTimeFormatted() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  },
+
+  setAttendanceDate(dateStr) {
+    this.attendanceFilterDate = dateStr;
+    const container = document.getElementById('hr-module-content');
+    if (container) this.renderAttendance(container);
+  },
+
+  changeAttendanceDate(offsetDays) {
+    if (!this.attendanceFilterDate) this.attendanceFilterDate = new Date().toISOString().split('T')[0];
+    const d = new Date(this.attendanceFilterDate);
+    d.setDate(d.getDate() + offsetDays);
+    this.attendanceFilterDate = d.toISOString().split('T')[0];
+    const container = document.getElementById('hr-module-content');
+    if (container) this.renderAttendance(container);
+  },
+
   async renderAttendance(container) {
-    const today = new Date().toISOString().split('T')[0];
-    const attendance = filterByTenant(await db.attendance?.where('date').equals(today).toArray() || []);
-    const employees = filterByTenant(await db.employees?.toArray() || []);
+    if (!this.attendanceFilterDate) {
+      this.attendanceFilterDate = new Date().toISOString().split('T')[0];
+    }
+    const selectedDate = this.attendanceFilterDate;
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const rawAttendance = await db.attendance?.where('date').equals(selectedDate).toArray() || [];
+    const attendance = filterByTenant(rawAttendance);
+    const employees = filterByTenant(await db.employees?.toArray() || []).filter(e => e.status !== 'Inactive' && e.status !== 'Terminated');
+
+    const presentCount = attendance.filter(a => a.status === 'Present').length;
+    const halfDayCount = attendance.filter(a => a.status === 'Half Day').length;
+    const leaveCount = attendance.filter(a => a.status === 'Leave' || a.status === 'On Leave').length;
+    const checkedOutCount = attendance.filter(a => a.checkOut && a.checkOut !== '--').length;
+    const recordedEmpNos = new Set(attendance.map(a => a.empNo));
+    const pendingCount = employees.filter(e => !recordedEmpNos.has(e.empNo)).length;
 
     container.innerHTML = `
-      <div class="card-3d-white p-4 rounded-3xl border border-slate-200 space-y-3 max-w-full overflow-hidden">
+      <div class="card-3d-white p-4 rounded-3xl border border-slate-200 space-y-4 max-w-full overflow-hidden">
+        <!-- Header & Date Controls -->
         <div class="flex items-center justify-between pb-2 border-b border-slate-100 flex-wrap gap-2">
           <div>
-            <h3 class="font-black text-sm text-slate-800 uppercase tracking-wider">Daily Attendance Register (දෛනික පැමිණීම්)</h3>
-            <p class="text-[11px] text-slate-400">Date: ${today} · Auto-synchronized with Morning & Evening Bike Meter Check-ins</p>
+            <h3 class="font-black text-sm text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>⏱️</span> Daily Attendance Register (දෛනික පැමිණීම් ලේඛනය)
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              ${selectedDate === todayStr ? '📅 අද දිනය (Today)' : `📅 දිනය: ${selectedDate}`} · Auto Time Stamp & End Check-Out
+            </p>
           </div>
-          <button onclick="HR.markAllPresent()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
-            ✓ Mark All Present
-          </button>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button onclick="HR.changeAttendanceDate(-1)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer" title="පෙර දිනය">
+              ◀ ඊයේ
+            </button>
+            <input type="date" value="${selectedDate}" onchange="HR.setAttendanceDate(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800" />
+            <button onclick="HR.setAttendanceDate('${todayStr}')" class="px-2.5 py-1.5 ${selectedDate === todayStr ? 'bg-pink-600 text-white font-black' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold'} rounded-xl text-xs transition-all cursor-pointer">
+              අද
+            </button>
+            <button onclick="HR.changeAttendanceDate(1)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer" title="ඊළඟ දිනය">
+              හෙට ▶
+            </button>
+            <button onclick="HR.markAllPresent()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer">
+              ✓ Mark All Present
+            </button>
+          </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse min-w-[650px]">
+        <!-- KPI Metrics Summary for this Date -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+          <div class="p-2.5 bg-indigo-50 border border-indigo-100 rounded-2xl">
+            <span class="text-[10px] text-indigo-500 font-bold uppercase block">මුළු සේවකයින්</span>
+            <span class="text-base font-black text-indigo-900">${employees.length}</span>
+          </div>
+          <div class="p-2.5 bg-emerald-50 border border-emerald-100 rounded-2xl">
+            <span class="text-[10px] text-emerald-600 font-bold uppercase block">🟢 පැමිණි (Present)</span>
+            <span class="text-base font-black text-emerald-900">${presentCount}</span>
+          </div>
+          <div class="p-2.5 bg-amber-50 border border-amber-100 rounded-2xl">
+            <span class="text-[10px] text-amber-600 font-bold uppercase block">🟡 වරු නිවාඩු (Half Day)</span>
+            <span class="text-base font-black text-amber-900">${halfDayCount}</span>
+          </div>
+          <div class="p-2.5 bg-purple-50 border border-purple-100 rounded-2xl">
+            <span class="text-[10px] text-purple-600 font-bold uppercase block">🟣 නිවාඩු (Leave)</span>
+            <span class="text-base font-black text-purple-900">${leaveCount}</span>
+          </div>
+          <div class="p-2.5 bg-slate-100 border border-slate-200 rounded-2xl col-span-2 sm:col-span-1">
+            <span class="text-[10px] text-slate-500 font-bold uppercase block">⏹️ පිටවූ (End OUT)</span>
+            <span class="text-base font-black text-slate-800">${checkedOutCount}</span>
+          </div>
+        </div>
+
+        <!-- Staff Attendance Roster Table -->
+        <div class="overflow-x-auto rounded-2xl border border-slate-200">
+          <table class="w-full text-left text-xs border-collapse min-w-[700px]">
             <thead>
-              <tr class="bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
-                <th class="p-2.5">Staff</th>
-                <th class="p-2.5 text-center">Status</th>
-                <th class="p-2.5 text-center">Check-In</th>
-                <th class="p-2.5 text-center">Check-Out</th>
-                <th class="p-2.5 text-center">Start / End KM</th>
-                <th class="p-2.5 text-center">Quick Action</th>
+              <tr class="bg-slate-100 text-slate-600 text-[10.5px] font-black uppercase tracking-wider border-b border-slate-200">
+                <th class="p-2.5">සේවකයා (Staff Member)</th>
+                <th class="p-2.5 text-center">තත්ත්වය (Status)</th>
+                <th class="p-2.5 text-center">පැමිණි වේලාව (IN)</th>
+                <th class="p-2.5 text-center">පිටවූ වේලාව (OUT)</th>
+                <th class="p-2.5 text-center">මීටර් KM (Reps)</th>
+                <th class="p-2.5 text-center">ක්ෂණික ක්‍රියාමාර්ග (Quick Action)</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-slate-100 bg-white">
               ${employees.map(emp => {
                 const att = attendance.find(a => a.empNo === emp.empNo);
-                const status = att ? att.status : 'Present';
+                const status = att ? (att.status || 'Present') : 'Pending';
+
+                let badgeClass = 'bg-slate-100 text-slate-600';
+                if (status === 'Present') badgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+                else if (status === 'Half Day') badgeClass = 'bg-amber-100 text-amber-800 border border-amber-300';
+                else if (status === 'Leave' || status === 'On Leave') badgeClass = 'bg-purple-100 text-purple-800 border border-purple-300';
+                else if (status === 'Late') badgeClass = 'bg-orange-100 text-orange-800 border border-orange-300';
+
+                const inTime = att?.checkIn && att.checkIn !== '--' ? att.checkIn : null;
+                const outTime = att?.checkOut && att.checkOut !== '--' ? att.checkOut : null;
+
                 return `
                   <tr class="hover:bg-slate-50 transition-colors">
                     <td class="p-2.5">
                       <div class="font-bold text-slate-900">${emp.fullName}</div>
-                      <span class="text-[10px] text-slate-400 font-mono">${emp.empNo}</span>
+                      <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1.5">
+                        <span>${emp.empNo}</span>
+                        <span>·</span>
+                        <span class="text-slate-600 font-sans">${emp.department || emp.designation || 'Staff'}</span>
+                      </div>
                     </td>
                     <td class="p-2.5 text-center">
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${status === 'Present' ? 'bg-emerald-100 text-emerald-700' : (status === 'Leave' ? 'bg-purple-100 text-purple-700' : 'bg-rose-100 text-rose-700')}">
-                        ${status}
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${badgeClass}">
+                        ${status === 'Pending' ? '⚪ Pending' : status}
                       </span>
                     </td>
-                    <td class="p-2.5 text-center font-mono text-[11px]">${att?.checkIn || '08:15'}</td>
-                    <td class="p-2.5 text-center font-mono text-[11px]">${att?.checkOut || '17:00'}</td>
+                    <td class="p-2.5 text-center font-mono font-bold text-slate-800">
+                      ${inTime ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${inTime}</span>` : '<span class="text-slate-300 font-normal">--:--</span>'}
+                    </td>
+                    <td class="p-2.5 text-center font-mono font-bold text-slate-800">
+                      ${outTime ? `<span class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">${outTime}</span>` : '<span class="text-slate-300 font-normal">--:--</span>'}
+                    </td>
                     <td class="p-2.5 text-center font-mono text-[10px] text-slate-600">
-                      ${att?.startMeterKm ? `${att.startMeterKm} → ${att.endMeterKm || '...'} (${att.totalKm || 0} km)` : 'N/A'}
+                      ${att?.startMeterKm ? `${att.startMeterKm} → ${att.endMeterKm || 'Active'} (${att.totalKm || 0} km)` : '<span class="text-slate-300">--</span>'}
                     </td>
                     <td class="p-2.5 text-center">
-                      <div class="flex items-center justify-center gap-1">
-                        <button onclick="HR.toggleAttendance('${emp.empNo}', 'Present')" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[10px]">🟢 Present</button>
-                        <button onclick="HR.toggleAttendance('${emp.empNo}', 'Late')" class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-[10px]">🟡 Late</button>
-                        <button onclick="HR.toggleAttendance('${emp.empNo}', 'Leave')" class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-[10px]">🟣 Leave</button>
+                      <div class="flex items-center justify-center gap-1 flex-wrap">
+                        <button onclick="HR.markAttendanceIn('${emp.empNo}')" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-0.5 active:scale-95 transition-all shadow-2xs cursor-pointer" title="Auto capture current time as Check-In">
+                          <span>🟢 IN</span>
+                        </button>
+                        <button onclick="HR.markAttendanceHalfDay('${emp.empNo}')" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-0.5 active:scale-95 transition-all shadow-2xs cursor-pointer" title="Mark Half Day">
+                          <span>🟡 Half Day</span>
+                        </button>
+                        <button onclick="HR.markAttendanceEnd('${emp.empNo}')" class="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] flex items-center gap-0.5 active:scale-95 transition-all shadow-2xs cursor-pointer" title="Auto capture current time as End Check-Out">
+                          <span>⏹️ End</span>
+                        </button>
+                        <button onclick="HR.markAttendanceLeave('${emp.empNo}')" class="px-1.5 py-1 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-[10px] cursor-pointer" title="Mark Leave">
+                          <span>🟣 Leave</span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -33810,50 +34104,217 @@ const HR = {
     `;
   },
 
-  async toggleAttendance(empNo, newStatus) {
-    const today = new Date().toISOString().split('T')[0];
-    const existing = await db.attendance?.where('date').equals(today).and(a => a.empNo === empNo).first();
+  async markAttendanceIn(empNo) {
+    const targetDate = this.attendanceFilterDate || new Date().toISOString().split('T')[0];
+    const nowTime = this.getCurrentTimeFormatted();
+    const tenantId = getActiveTenantId() || 1;
+
+    const existing = await db.attendance?.where('date').equals(targetDate).and(a => a.empNo === empNo).first();
+    const emp = await db.employees?.where('empNo').equals(empNo).first();
+    const empName = emp ? emp.fullName : empNo;
+
     if (existing) {
-      await db.attendance.update(existing.id, { status: newStatus });
+      await db.attendance.update(existing.id, {
+        checkIn: nowTime,
+        status: 'Present',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        updatedAt: new Date().toISOString()
+      });
     } else {
-      const emp = await db.employees?.where('empNo').equals(empNo).first();
       await db.attendance?.add({
+        tenantId,
         empNo,
-        employeeName: emp?.fullName || 'Staff',
-        date: today,
-        checkIn: '08:15',
-        checkOut: '17:00',
-        status: newStatus,
-        tenantId: getActiveTenantId() || 1
+        employeeName: empName,
+        date: targetDate,
+        checkIn: nowTime,
+        checkOut: '--',
+        status: 'Present',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        createdAt: new Date().toISOString()
       });
     }
-    UI.showToast(`Updated attendance for ${empNo}: ${newStatus}`, 'info');
+    if (typeof SoundFX !== 'undefined') SoundFX.play('beep');
+    UI.showToast(`✅ ${empName} - IN (${nowTime}) පැමිණීම සටහන් විය!`, 'success');
     this.renderAttendance(document.getElementById('hr-module-content'));
   },
 
-  async markAllPresent() {
-    const emps = await db.employees?.toArray() || [];
-    for (const emp of emps) {
-      await this.toggleAttendance(emp.empNo, 'Present');
+  async markAttendanceHalfDay(empNo) {
+    const targetDate = this.attendanceFilterDate || new Date().toISOString().split('T')[0];
+    const nowTime = this.getCurrentTimeFormatted();
+    const tenantId = getActiveTenantId() || 1;
+
+    const existing = await db.attendance?.where('date').equals(targetDate).and(a => a.empNo === empNo).first();
+    const emp = await db.employees?.where('empNo').equals(empNo).first();
+    const empName = emp ? emp.fullName : empNo;
+
+    if (existing) {
+      await db.attendance.update(existing.id, {
+        status: 'Half Day',
+        checkIn: existing.checkIn && existing.checkIn !== '--' ? existing.checkIn : nowTime,
+        notes: (existing.notes ? existing.notes + ' | ' : '') + 'Half Day',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      await db.attendance?.add({
+        tenantId,
+        empNo,
+        employeeName: empName,
+        date: targetDate,
+        checkIn: nowTime,
+        checkOut: '--',
+        status: 'Half Day',
+        notes: 'Half Day',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        createdAt: new Date().toISOString()
+      });
     }
-    UI.showToast('✅ All staff marked present for today!', 'success');
+
+    if (db.leaves) {
+      await db.leaves.add({
+        tenantId,
+        empNo,
+        employeeName: empName,
+        leaveType: 'Half-Day Leave',
+        fromDate: targetDate,
+        toDate: targetDate,
+        days: 0.5,
+        reason: 'Half Day logged in Attendance',
+        status: 'Approved',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    if (typeof SoundFX !== 'undefined') SoundFX.play('save');
+    UI.showToast(`🟡 ${empName} - Half Day (වරු නිවාඩු) සටහන් විය!`, 'warning');
+    this.renderAttendance(document.getElementById('hr-module-content'));
+  },
+
+  async markAttendanceEnd(empNo) {
+    const targetDate = this.attendanceFilterDate || new Date().toISOString().split('T')[0];
+    const nowTime = this.getCurrentTimeFormatted();
+    const tenantId = getActiveTenantId() || 1;
+
+    const existing = await db.attendance?.where('date').equals(targetDate).and(a => a.empNo === empNo).first();
+    const emp = await db.employees?.where('empNo').equals(empNo).first();
+    const empName = emp ? emp.fullName : empNo;
+
+    if (existing) {
+      await db.attendance.update(existing.id, {
+        checkOut: nowTime,
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      await db.attendance?.add({
+        tenantId,
+        empNo,
+        employeeName: empName,
+        date: targetDate,
+        checkIn: '--',
+        checkOut: nowTime,
+        status: 'Present',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        createdAt: new Date().toISOString()
+      });
+    }
+    if (typeof SoundFX !== 'undefined') SoundFX.play('beep');
+    UI.showToast(`⏹️ ${empName} - OUT (${nowTime}) පිටවීම සටහන් විය!`, 'info');
+    this.renderAttendance(document.getElementById('hr-module-content'));
+  },
+
+  async markAttendanceLeave(empNo) {
+    const targetDate = this.attendanceFilterDate || new Date().toISOString().split('T')[0];
+    const tenantId = getActiveTenantId() || 1;
+
+    const existing = await db.attendance?.where('date').equals(targetDate).and(a => a.empNo === empNo).first();
+    const emp = await db.employees?.where('empNo').equals(empNo).first();
+    const empName = emp ? emp.fullName : empNo;
+
+    if (existing) {
+      await db.attendance.update(existing.id, {
+        status: 'On Leave',
+        checkIn: '--',
+        checkOut: '--',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      await db.attendance?.add({
+        tenantId,
+        empNo,
+        employeeName: empName,
+        date: targetDate,
+        checkIn: '--',
+        checkOut: '--',
+        status: 'On Leave',
+        recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+        createdAt: new Date().toISOString()
+      });
+    }
+    UI.showToast(`🟣 ${empName} - On Leave (නිවාඩු) සටහන් විය!`, 'info');
+    this.renderAttendance(document.getElementById('hr-module-content'));
+  },
+
+  async toggleAttendance(empNo, newStatus) {
+    if (newStatus === 'Present') return this.markAttendanceIn(empNo);
+    if (newStatus === 'Half Day') return this.markAttendanceHalfDay(empNo);
+    if (newStatus === 'Leave' || newStatus === 'On Leave') return this.markAttendanceLeave(empNo);
+    return this.markAttendanceIn(empNo);
+  },
+
+  async markAllPresent() {
+    const targetDate = this.attendanceFilterDate || new Date().toISOString().split('T')[0];
+    const nowTime = this.getCurrentTimeFormatted();
+    const emps = filterByTenant(await db.employees?.toArray() || []).filter(e => e.status !== 'Inactive' && e.status !== 'Terminated');
+    for (const emp of emps) {
+      const existing = await db.attendance?.where('date').equals(targetDate).and(a => a.empNo === emp.empNo).first();
+      if (!existing) {
+        await db.attendance?.add({
+          tenantId: getActiveTenantId() || 1,
+          empNo: emp.empNo,
+          employeeName: emp.fullName,
+          date: targetDate,
+          checkIn: nowTime,
+          checkOut: '--',
+          status: 'Present',
+          recordedBy: Auth.currentUser?.fullName || 'HR Officer',
+          createdAt: new Date().toISOString()
+        });
+      }
+    }
+    UI.showToast(`✅ සියලු සේවකයින්ගේ පැමිණීම (${nowTime}) සටහන් විය!`, 'success');
+    this.renderAttendance(document.getElementById('hr-module-content'));
   },
 
   // =========================================================================
   // MODULE 6: FIELD EMPLOYEE ATTENDANCE & BIKE METER / DISPLAY PHOTOS
+  // (Grouped neatly by Date and by Rep - No clutter!)
   // =========================================================================
+  fieldFilterDate: null,
+  fieldFilterRep: 'ALL',
+  fieldFilterType: 'ALL',
+
   async renderFieldAttendance(container) {
-    const today = new Date().toISOString().split('T')[0];
-    if (this.fieldFilterDate === undefined) this.fieldFilterDate = 'ALL';
-    this.fieldFilterRep = this.fieldFilterRep || 'ALL';
-    this.fieldFilterType = this.fieldFilterType || 'ALL';
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (this.fieldFilterDate === null) {
+      this.fieldFilterDate = todayStr; // Default to Today
+    }
 
     const allPhotos = filterByTenant(await db.fieldPhotos?.toArray() || []).sort((a,b) => {
       return (b.date + ' ' + (b.time||'')).localeCompare(a.date + ' ' + (a.time||''));
     });
-    const allAttendance = filterByTenant(await db.attendance?.toArray() || []).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    const allAttendance = filterByTenant(await db.attendance?.toArray() || []).sort((a,b) => (b.date||'')).localeCompare(a.date||''));
     const allEmployees = filterByTenant(await db.employees?.toArray() || []);
-    const reps = allEmployees.filter(e => e.role === 'rep' || e.role === 'delivery' || e.role === 'asm');
+    const reps = allEmployees.filter(e => e.role === 'rep' || e.role === 'delivery' || e.role === 'asm' || e.role === 'supervisor');
+
+    // Get all available distinct dates for quick picker
+    const availableDatesSet = new Set();
+    allPhotos.forEach(p => { if (p.date) availableDatesSet.add(p.date); });
+    allAttendance.forEach(a => { if (a.date) availableDatesSet.add(a.date); });
+    availableDatesSet.add(todayStr);
+    const availableDates = Array.from(availableDatesSet).sort().reverse();
 
     let photos = allPhotos;
     let attendance = allAttendance;
@@ -33870,113 +34331,244 @@ const HR = {
       photos = photos.filter(p => p.photoType === this.fieldFilterType);
     }
 
+    // Determine active dates to render
+    const datesToRender = this.fieldFilterDate !== 'ALL' ? [this.fieldFilterDate] : availableDates;
+
+    // Build hierarchical grouped map: Date -> Rep -> Data
+    const groupedMap = {};
+    datesToRender.forEach(d => {
+      const dayPhotos = photos.filter(p => p.date === d);
+      const dayAtt = attendance.filter(a => a.date === d);
+
+      if (dayPhotos.length === 0 && dayAtt.length === 0 && this.fieldFilterDate === 'ALL') {
+        return; // skip completely empty days in ALL mode
+      }
+
+      groupedMap[d] = {};
+
+      // Determine active reps for this day
+      const activeRepNames = new Set();
+      dayPhotos.forEach(p => { if (p.repName) activeRepNames.add(p.repName); });
+      dayAtt.forEach(a => { if (a.employeeName) activeRepNames.add(a.employeeName); });
+      
+      // If filtering for today with ALL reps, include defined reps even if photos pending
+      if (this.fieldFilterDate === todayStr && this.fieldFilterRep === 'ALL') {
+        reps.forEach(r => activeRepNames.add(r.fullName));
+      }
+
+      activeRepNames.forEach(repName => {
+        const empObj = reps.find(r => r.fullName === repName || r.callingName === repName);
+        const repPhotos = dayPhotos.filter(p => (p.repName === repName) || (empObj && p.empNo === empObj.empNo));
+        const repAtt = dayAtt.find(a => (a.employeeName === repName) || (empObj && a.empNo === empObj.empNo));
+
+        const startMeterPhoto = repAtt?.startMeterPhoto || repPhotos.find(p => p.photoType === 'BIKE_METER_START')?.photoUrl;
+        const startMeterKm = repAtt?.startMeterKm || repPhotos.find(p => p.photoType === 'BIKE_METER_START')?.meterKm;
+        const startMeterTime = repPhotos.find(p => p.photoType === 'BIKE_METER_START')?.time || repAtt?.checkIn;
+
+        const selfiePhoto = repAtt?.selfiePhoto || repPhotos.find(p => p.photoType === 'REP_SELFIE_START')?.photoUrl;
+        const selfieTime = repPhotos.find(p => p.photoType === 'REP_SELFIE_START')?.time;
+
+        const endMeterPhoto = repAtt?.endMeterPhoto || repPhotos.find(p => p.photoType === 'BIKE_METER_END')?.photoUrl;
+        const endMeterKm = repAtt?.endMeterKm || repPhotos.find(p => p.photoType === 'BIKE_METER_END')?.meterKm;
+        const endMeterTime = repPhotos.find(p => p.photoType === 'BIKE_METER_END')?.time || repAtt?.checkOut;
+        const totalKm = repAtt?.totalKm || (endMeterKm && startMeterKm ? Math.max(0, endMeterKm - startMeterKm) : 0);
+
+        const displayPhotos = repPhotos.filter(p => p.photoType === 'SPICE_DISPLAY' || (!p.photoType?.startsWith('BIKE_') && p.photoType !== 'REP_SELFIE_START'));
+
+        groupedMap[d][repName] = {
+          empObj,
+          repName,
+          repAtt,
+          startMeterPhoto,
+          startMeterKm,
+          startMeterTime,
+          selfiePhoto,
+          selfieTime,
+          endMeterPhoto,
+          endMeterKm,
+          endMeterTime,
+          totalKm,
+          displayPhotos,
+          totalCount: (startMeterPhoto ? 1 : 0) + (selfiePhoto ? 1 : 0) + (endMeterPhoto ? 1 : 0) + displayPhotos.length
+        };
+      });
+    });
+
+    const totalRenderedPhotos = photos.length;
+
     container.innerHTML = `
       <div class="card-3d-white p-4 rounded-3xl border border-slate-200 space-y-4 max-w-full overflow-hidden">
+        <!-- Module Header -->
         <div class="border-b border-slate-100 pb-2 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 class="font-black text-sm text-slate-800 uppercase tracking-wider">Field GPS, Bike Meter & Shop Display Photos (ක්ෂේත්‍ර ඡායාරූප)</h3>
-            <p class="text-[11px] text-slate-400">Total ${allPhotos.length} photos captured · Automated meter readings, selfies & hanging displays</p>
+            <h3 class="font-black text-sm text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📸</span> Rep Field Photos & Bike Meter Audits (ක්ෂේත්‍ර ඡායාරූප)
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              දිනය හා එක් එක් Rep අනුව පිළිවෙළට වර්ග කර ඇත (${totalRenderedPhotos} Photos Filtered)
+            </p>
           </div>
-          <button onclick="RouteSession.openShopPhotoModal()" class="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 active:scale-95">
-            <span>📸 Snap Shop Display</span>
-          </button>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button onclick="RouteSession.openShopPhotoModal()" class="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 active:scale-95 transition-all shadow-xs cursor-pointer">
+              <span>📸 Snap Shop Display</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+        <!-- Filter Controls Bar -->
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
           <div>
-            <label class="font-bold text-slate-700 block mb-1">දිනය (Filter Date)</label>
-            <div class="flex gap-1">
-              <select onchange="HR.onFieldFilterChange('date', this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1.5 font-bold text-slate-800">
+            <label class="font-bold text-slate-700 block mb-1">📅 දිනය තෝරන්න (Select Date)</label>
+            <div class="flex items-center gap-1">
+              <select onchange="HR.onFieldFilterChange('date', this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-slate-800">
+                <option value="${todayStr}" ${this.fieldFilterDate === todayStr ? 'selected' : ''}>📅 අද (Today - ${todayStr})</option>
                 <option value="ALL" ${this.fieldFilterDate === 'ALL' ? 'selected' : ''}>🌐 සියලු දින (All Dates)</option>
-                <option value="${today}" ${this.fieldFilterDate === today ? 'selected' : ''}>📅 අද (Today - ${today})</option>
+                ${availableDates.filter(d => d !== todayStr).map(d => `
+                  <option value="${d}" ${this.fieldFilterDate === d ? 'selected' : ''}>${d}</option>
+                `).join('')}
               </select>
-              <input type="date" value="${this.fieldFilterDate !== 'ALL' ? this.fieldFilterDate : today}" onchange="HR.onFieldFilterChange('date', this.value)" class="bg-white border border-slate-200 rounded-xl px-2 py-1.5 font-bold text-slate-800 text-xs" />
+              <input type="date" value="${this.fieldFilterDate !== 'ALL' ? this.fieldFilterDate : todayStr}" onchange="HR.onFieldFilterChange('date', this.value)" class="bg-white border border-slate-200 rounded-xl px-2 py-1.5 font-bold text-slate-800 text-xs" />
             </div>
           </div>
-          <div>
-            <label class="font-bold text-slate-700 block mb-1">නියෝජිතයා (Filter Rep)</label>
-            <select onchange="HR.onFieldFilterChange('rep', this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1.5 font-bold text-slate-800">
-              <option value="ALL">🌐 සියලු නියෝජිතයින් (All Reps)</option>
-              ${reps.map(r => `<option value="${r.empNo}" ${this.fieldFilterRep === r.empNo ? 'selected' : ''}>${r.fullName} (${r.empNo})</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <label class="font-bold text-slate-700 block mb-1">ඡායාරූප වර්ගය (Photo Type)</label>
-            <select onchange="HR.onFieldFilterChange('type', this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1.5 font-bold text-slate-800">
-              <option value="ALL" ${this.fieldFilterType === 'ALL' ? 'selected' : ''}>🌐 සියලු වර්ග (All Types)</option>
-              <option value="SPICE_DISPLAY" ${this.fieldFilterType === 'SPICE_DISPLAY' ? 'selected' : ''}>🏪 Shop Display Cards (එල්ලූ කාඩ්)</option>
-              <option value="BIKE_METER_START" ${this.fieldFilterType === 'BIKE_METER_START' ? 'selected' : ''}>🛵 Morning Start Bike Meter</option>
-              <option value="REP_SELFIE_START" ${this.fieldFilterType === 'REP_SELFIE_START' ? 'selected' : ''}>🤳 Morning Selfie</option>
-              <option value="BIKE_METER_END" ${this.fieldFilterType === 'BIKE_METER_END' ? 'selected' : ''}>🏁 Evening End Bike Meter</option>
-            </select>
-          </div>
-        </div>
 
-        <!-- Bike Meter & Distance Logs -->
-        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <h4 class="font-black text-xs text-slate-800 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-1.5"><span>🛵</span> Rep Bike Odometer & Daily Distance Travelled</span>
-            <span class="text-[10px] text-slate-400 font-mono">${attendance.length} Logs</span>
-          </h4>
-          ${attendance.length === 0 ? `
-            <div class="p-4 text-center text-slate-400 text-xs">තෝරාගත් දිනයේ මීටර් සටහන් නොමැත (No odometer logs for selected filter).</div>
-          ` : `
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              ${attendance.map(a => `
-                <div class="p-3 bg-white rounded-xl border border-slate-100 space-y-1.5 text-xs shadow-xs">
-                  <div class="flex items-center justify-between">
-                    <span class="font-bold text-slate-900">${a.employeeName}</span>
-                    <span class="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">${a.totalKm || 0} KM Travelled</span>
-                  </div>
-                  <div class="text-[10px] text-slate-400 font-mono">${a.date || today}</div>
-                  <div class="text-[11px] text-slate-600 flex justify-between">
-                    <span>Start: <strong>${a.startMeterKm || 0} km</strong> (${a.checkIn || '--'})</span>
-                    <span>End: <strong>${a.endMeterKm || 'Active'} km</strong> (${a.checkOut || '--'})</span>
-                  </div>
-                  <!-- Photos preview if any -->
-                  <div class="flex gap-2 pt-1">
-                    ${a.startMeterPhoto ? `<img src="${a.startMeterPhoto}" onclick="HR.openPhotoModal(this.src, 'Morning Bike Meter: ${a.startMeterKm || 0} km', '${a.employeeName} · ${a.date}')" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform" title="Morning Meter Photo" />` : ''}
-                    ${a.selfiePhoto ? `<img src="${a.selfiePhoto}" onclick="HR.openPhotoModal(this.src, 'Morning Rep Selfie', '${a.employeeName} · ${a.date}')" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform" title="Morning Selfie Photo" />` : ''}
-                    ${a.endMeterPhoto ? `<img src="${a.endMeterPhoto}" onclick="HR.openPhotoModal(this.src, 'Closing Bike Meter: ${a.endMeterKm || 0} km', '${a.employeeName} · ${a.date}')" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform" title="Closing Meter Photo" />` : ''}
-                  </div>
-                </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">👤 නියෝජිතයා (Filter by Rep)</label>
+            <select onchange="HR.onFieldFilterChange('rep', this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-slate-800">
+              <option value="ALL" ${this.fieldFilterRep === 'ALL' ? 'selected' : ''}>🌐 සියලු නියෝජිතයින් (All Reps)</option>
+              ${reps.map(r => `
+                <option value="${r.fullName}" ${this.fieldFilterRep === r.fullName ? 'selected' : ''}>${r.fullName} (${r.empNo})</option>
               `).join('')}
-            </div>
-          `}
+            </select>
+          </div>
+
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">🏷️ ඡායාරූප වර්ගය (Photo Type)</label>
+            <select onchange="HR.onFieldFilterChange('type', this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-slate-800">
+              <option value="ALL" ${this.fieldFilterType === 'ALL' ? 'selected' : ''}>🌐 සියලු වර්ග (All Photo Types)</option>
+              <option value="BIKE_METER_START" ${this.fieldFilterType === 'BIKE_METER_START' ? 'selected' : ''}>🛵 Morning Start Bike Meter</option>
+              <option value="REP_SELFIE_START" ${this.fieldFilterType === 'REP_SELFIE_START' ? 'selected' : ''}>🤳 Morning Selfie Verification</option>
+              <option value="BIKE_METER_END" ${this.fieldFilterType === 'BIKE_METER_END' ? 'selected' : ''}>🏁 Evening End Bike Meter</option>
+              <option value="SPICE_DISPLAY" ${this.fieldFilterType === 'SPICE_DISPLAY' ? 'selected' : ''}>🏪 Shop Display Cards (එල්ලූ කාඩ්)</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Shop Hanging Display & Promotion Photos Gallery -->
-        <div class="space-y-2">
-          <h4 class="font-black text-xs text-slate-800 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-1.5"><span>🖼️</span> Field Photos Gallery (${photos.length} Photos Displayed)</span>
-          </h4>
-          
-          ${photos.length === 0 ? `
-            <div class="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-xs">
-              තෝරාගත් පෙරහනට අදාළ ඡායාරූප නොමැත (No field photos found for selected filter).
+        <!-- Grouped Photo Sections (By Date -> By Rep) -->
+        <div class="space-y-6">
+          ${Object.keys(groupedMap).length === 0 ? `
+            <div class="p-8 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-slate-400 space-y-2">
+              <div class="text-3xl">📷</div>
+              <p class="font-bold text-xs text-slate-600">තෝරාගත් පෙරහනට අදාළ ඡායාරූප නොමැත (No field photos found).</p>
+              <button onclick="HR.onFieldFilterChange('date', 'ALL')" class="text-pink-600 hover:underline text-xs font-bold cursor-pointer">
+                🌐 සියලු දිනවල ඡායාරූප බලන්න (View All Dates)
+              </button>
             </div>
-          ` : `
-            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-              ${photos.map(p => {
-                let badge = 'Card Display';
-                if (p.photoType === 'BIKE_METER_START') badge = 'Start Meter';
-                else if (p.photoType === 'REP_SELFIE_START') badge = 'Selfie';
-                else if (p.photoType === 'BIKE_METER_END') badge = 'End Meter';
-                const metaText = `${p.repName || ''} · ${p.date || ''} ${p.time || ''}`;
-                const titleText = p.shopName || p.caption || 'Field Verification';
+          ` : Object.entries(groupedMap).map(([dateKey, repMap]) => `
+            <div class="space-y-3 p-4 bg-slate-50/70 rounded-3xl border border-slate-200">
+              <!-- Date Banner -->
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-xl bg-pink-100 text-pink-800 font-black text-xs">
+                    📅 ${dateKey === todayStr ? `අද දිනය (${dateKey})` : dateKey}
+                  </span>
+                  <span class="text-[11px] text-slate-500 font-bold">
+                    ${Object.keys(repMap).length} Active Reps on Duty
+                  </span>
+                </div>
+              </div>
 
-                return `
-                  <div class="p-2 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 text-xs text-center hover:border-pink-300 transition-colors">
-                    <img src="${p.photoUrl}" onclick="HR.openPhotoModal(this.src, '${titleText.replace(/'/g, "\\'")}', '${metaText.replace(/'/g, "\\'")}')" class="w-full h-28 object-cover rounded-xl border border-slate-200 cursor-pointer hover:scale-105 transition-transform shadow-xs" />
-                    <div class="font-bold text-slate-800 text-[10px] truncate" title="${titleText}">${titleText}</div>
-                    <span class="text-[9px] text-pink-700 font-bold bg-pink-50 px-1.5 py-0.5 rounded block truncate">${badge}</span>
-                    <div class="text-[9px] text-slate-400 truncate">${p.time || ''} · ${p.repName || ''}</div>
+              <!-- Rep Cards Grid for this Date -->
+              <div class="space-y-3">
+                ${Object.values(repMap).map(rData => `
+                  <div class="p-3.5 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3 hover:border-pink-300 transition-colors">
+                    <!-- Rep Info Row -->
+                    <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                          ${(rData.repName || 'R').charAt(0)}
+                        </div>
+                        <div>
+                          <h4 class="font-black text-slate-900 text-xs flex items-center gap-1.5">
+                            <span>${rData.repName}</span>
+                            ${rData.empObj?.empNo ? `<span class="text-[10px] text-slate-400 font-mono">(${rData.empObj.empNo})</span>` : ''}
+                          </h4>
+                          <div class="text-[10px] text-slate-500 font-mono">
+                            ${rData.empObj?.designation || 'Sales Representative'} · Total ${rData.totalCount} Photos
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Odometer Km Pill -->
+                      <div class="flex items-center gap-2 text-xs">
+                        <span class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 font-mono font-bold text-[11px] border border-emerald-200">
+                          🛵 ${rData.totalKm > 0 ? `${rData.totalKm} KM Travelled` : 'Odometer Logged'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Rep Photos Gallery: Start Meter, Selfie, End Meter, and Shop Displays -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 text-xs">
+                      <!-- 1. Morning Start Bike Meter -->
+                      <div class="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1">
+                        <span class="text-[9px] font-black uppercase text-indigo-700 block">🛵 Start Meter</span>
+                        ${rData.startMeterPhoto ? `
+                          <img src="${rData.startMeterPhoto}" onclick="HR.openPhotoModal(this.src, 'Morning Bike Meter: ${rData.startMeterKm || 0} km', '${rData.repName} · ${dateKey} ${rData.startMeterTime || ''}')" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shadow-2xs" />
+                          <div class="text-[10px] font-mono font-bold text-slate-800">${rData.startMeterKm || 0} KM</div>
+                          <div class="text-[9px] text-slate-400">${rData.startMeterTime || '--'}</div>
+                        ` : `
+                          <div class="h-24 rounded-lg bg-slate-100 border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 text-[10px] p-1">
+                            <span>No Start Photo</span>
+                          </div>
+                        `}
+                      </div>
+
+                      <!-- 2. Morning Selfie -->
+                      <div class="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1">
+                        <span class="text-[9px] font-black uppercase text-purple-700 block">🤳 Morning Selfie</span>
+                        ${rData.selfiePhoto ? `
+                          <img src="${rData.selfiePhoto}" onclick="HR.openPhotoModal(this.src, 'Morning Rep Selfie Verification', '${rData.repName} · ${dateKey} ${rData.selfieTime || ''}')" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shadow-2xs" />
+                          <div class="text-[10px] font-bold text-slate-800">Verified</div>
+                          <div class="text-[9px] text-slate-400">${rData.selfieTime || '--'}</div>
+                        ` : `
+                          <div class="h-24 rounded-lg bg-slate-100 border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 text-[10px] p-1">
+                            <span>No Selfie</span>
+                          </div>
+                        `}
+                      </div>
+
+                      <!-- 3. Evening End Bike Meter -->
+                      <div class="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1">
+                        <span class="text-[9px] font-black uppercase text-rose-700 block">🏁 End Meter</span>
+                        ${rData.endMeterPhoto ? `
+                          <img src="${rData.endMeterPhoto}" onclick="HR.openPhotoModal(this.src, 'Evening Closing Bike Meter: ${rData.endMeterKm || 0} km', '${rData.repName} · ${dateKey} ${rData.endMeterTime || ''}')" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shadow-2xs" />
+                          <div class="text-[10px] font-mono font-bold text-slate-800">${rData.endMeterKm || 0} KM</div>
+                          <div class="text-[9px] text-slate-400">${rData.endMeterTime || '--'}</div>
+                        ` : `
+                          <div class="h-24 rounded-lg bg-slate-100 border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 text-[10px] p-1">
+                            <span>Duty Active</span>
+                          </div>
+                        `}
+                      </div>
+
+                      <!-- 4. Shop Hanging Display Photos for this Rep -->
+                      ${rData.displayPhotos.map(p => {
+                        const titleText = p.shopName || p.caption || 'Shop Display';
+                        const metaText = `${rData.repName} · ${p.date || dateKey} ${p.time || ''}`;
+                        return `
+                          <div class="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1 hover:border-pink-300 transition-colors">
+                            <span class="text-[9px] font-black uppercase text-pink-700 block truncate" title="${titleText}">🏪 ${titleText}</span>
+                            <img src="${p.photoUrl}" onclick="HR.openPhotoModal(this.src, '${titleText.replace(/'/g, "\\'")}', '${metaText.replace(/'/g, "\\'")}')" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shadow-2xs" />
+                            <div class="text-[9px] text-slate-500 truncate" title="${titleText}">${titleText}</div>
+                            <div class="text-[8.5px] text-slate-400">${p.time || ''}</div>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
                   </div>
-                `;
-              }).join('')}
+                `).join('')}
+              </div>
             </div>
-          `}
+          `).join('')}
         </div>
       </div>
     `;
@@ -33990,7 +34582,8 @@ const HR = {
     if (container) this.renderFieldAttendance(container);
   },
 
-  openPhotoModal(src, title = 'Field Photo', meta = '') {
+
+    openPhotoModal(src, title = 'Field Photo', meta = '') {
     const img = document.getElementById('hr-lightbox-img');
     const titleEl = document.getElementById('hr-lightbox-title');
     const metaEl = document.getElementById('hr-lightbox-meta');
