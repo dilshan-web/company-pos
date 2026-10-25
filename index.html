@@ -3133,6 +3133,9 @@ input, textarea, select {
             <button onclick="UI.refreshCurrentTab()" class="bg-white/20 hover:bg-white/30 text-white px-2.5 py-2 rounded-2xl text-xs font-bold backdrop-blur active:scale-95 flex items-center gap-1">
               <span class="refresh-icon-spin">🔄</span> Refresh
             </button>
+            <button onclick="Users.openTransferModal()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 px-3 py-2 rounded-2xl text-xs font-black shadow-lg active:scale-95 transition-all flex items-center gap-1">
+              🔄 Replace Rep
+            </button>
             <button onclick="Users.openAddModal()" class="bg-white text-purple-900 px-3.5 py-2 rounded-2xl text-xs font-black shadow-lg hover:bg-purple-50 active:scale-95 transition-all">
               + Add User
             </button>
@@ -4396,18 +4399,38 @@ input, textarea, select {
         </select>
       </div>
 
-      <!-- Route Selection Container (for Reps) -->
-      <div id="user-form-route-container">
-        <label class="text-[11px] font-bold text-slate-700 block mb-1">Assigned Route (නියමිත ප්‍රධාන මාර්ගය)</label>
-        <select id="user-form-route" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800">
-          <option value="">-- All Routes (Access Everywhere) --</option>
-        </select>
-      </div>
+      <!-- Territory Routes Selection for Rep & Delivery -->
+      <div id="user-form-rep-routes-container" class="hidden bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200 space-y-2">
+        <!-- Optional Inherit From Previous Rep -->
+        <div id="user-form-inherit-box" class="bg-white/80 p-2.5 rounded-xl border border-emerald-300 space-y-1">
+          <label class="text-[10px] font-black text-emerald-950 block">🔄 Inherit Territory from Past/Existing Rep (විකල්ප)</label>
+          <select id="user-form-inherit-rep" onchange="Users.onInheritRepChanged(this.value)" class="w-full bg-emerald-50/50 border border-emerald-200 rounded-lg px-2 py-1.5 text-[11px] font-bold text-emerald-900">
+            <option value="">-- Manual Selection (අතින් මාර්ග තෝරන්න) --</option>
+          </select>
+          <div id="user-form-inherit-deactivate-row" class="hidden flex items-center gap-1.5 pt-1">
+            <input type="checkbox" id="user-form-deactivate-old-rep" checked class="w-3.5 h-3.5 rounded text-rose-600 focus:ring-0" />
+            <label for="user-form-deactivate-old-rep" class="text-[10px] font-bold text-rose-700 cursor-pointer">🚫 Deactivate previous rep's login (පැරණි Rep ගේ login එක අක්‍රිය කරන්න)</label>
+          </div>
+        </div>
 
-      <!-- Multiple Route Assignment for Reps (Checkboxes) -->
-      <div id="user-form-multi-routes-container" class="hidden bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
-        <label class="text-[11px] font-black text-slate-800 block">🗺️ Assigned Territory Routes (නියමිත මාර්ග තෝරන්න)</label>
+        <div class="flex items-center justify-between">
+          <div>
+            <label class="text-[11px] font-black text-emerald-950 block">🗺️ Assigned Routes (නියමිත මාර්ග තෝරන්න) *</label>
+            <p class="text-[9.5px] text-emerald-800">තෝරන Routes වල සියලු සාප්පු (Shops) ස්වයංක්‍රීයව මෙම Rep හට හිමිවේ</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="Users.toggleAllRoutes(true)" class="text-[10px] font-bold text-emerald-700 hover:underline">Select All</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" onclick="Users.toggleAllRoutes(false)" class="text-[10px] font-bold text-slate-500 hover:underline">Clear</button>
+          </div>
+        </div>
+
         <div id="user-form-multi-routes-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1"></div>
+
+        <div class="flex items-center justify-between text-[10px] font-black text-emerald-900 bg-white/90 px-2.5 py-1 rounded-xl border border-emerald-200">
+          <span id="user-form-route-count-badge">0 Routes Selected</span>
+          <span id="user-form-shop-count-badge">0 Shops Linked</span>
+        </div>
       </div>
 
       <!-- Rep's Supervisor Assignment -->
@@ -4456,6 +4479,106 @@ input, textarea, select {
           Save User 💾
         </button>
         <button onclick="UI.closeModal('modal-user-form')" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl hover:bg-slate-200">
+          Cancel
+        </button>
+      </div>
+  </div>
+  </div>
+
+
+  <!-- =========================================================================
+       MODAL: REASSIGN / REPLACE SALES REP & TRANSFER TERRITORY
+       ========================================================================= -->
+  <div id="modal-transfer-rep" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-3xl p-5 space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <h3 class="font-black text-sm text-slate-900 flex items-center gap-1.5">
+            <span>🔄</span> Replace Rep & Transfer Territory (Rep මාරු කිරීම)
+          </h3>
+          <p class="text-[10.5px] text-slate-500">පැරණි Rep ගේ Routes සහ Shops නව Rep ට ක්ෂණිකව පවරන්න</p>
+        </div>
+        <button onclick="UI.closeModal('modal-transfer-rep')" class="p-1 text-slate-400 text-lg hover:text-slate-600">✕</button>
+      </div>
+
+      <input type="hidden" id="transfer-old-rep-id" />
+
+      <!-- Departing Rep Card -->
+      <div class="bg-rose-50/70 p-3 rounded-2xl border border-rose-200 space-y-1">
+        <span class="text-[10px] font-black uppercase tracking-wider text-rose-800">Departing / Old Rep (ඉවත් වන Rep)</span>
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 id="transfer-old-rep-name" class="font-black text-slate-900 text-sm">--</h4>
+            <p id="transfer-old-rep-username" class="text-xs text-slate-500 font-mono">@--</p>
+          </div>
+          <div class="text-right">
+            <span id="transfer-old-rep-routes-count" class="text-xs font-black text-rose-900 block">0 Routes</span>
+            <span id="transfer-old-rep-shops-count" class="text-[10px] font-bold text-rose-700">0 Shops</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrow Down Icon -->
+      <div class="flex justify-center -my-1 text-slate-400 font-bold text-lg">
+        ⬇️
+      </div>
+
+      <!-- Target / New Rep Options -->
+      <div class="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-200 space-y-2.5">
+        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800">Assign Territory To (නව Rep තෝරන්න)</span>
+        
+        <div>
+          <label class="text-[11px] font-bold text-emerald-950 block mb-1">Select Existing Active Rep:</label>
+          <select id="transfer-target-rep-select" onchange="Users.onTransferTargetSelectChanged(this.value)" class="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-xs font-bold text-emerald-900">
+            <option value="">-- Select Active Rep --</option>
+            <option value="new_rep">+ ➕ Create New Rep Account (අලුත් Rep කෙනෙක් මෙතනින්ම හදන්න)</option>
+          </select>
+        </div>
+
+        <!-- Quick Inline Creation of New Rep -->
+        <div id="transfer-new-rep-fields" class="hidden bg-white p-3 rounded-xl border border-emerald-300 space-y-2">
+          <span class="text-[10px] font-black text-emerald-900 block">➕ Quick New Rep Details:</span>
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 block">Full Name *</label>
+            <input type="text" id="transfer-new-fullname" placeholder="e.g. Nimal Perera" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">New Username *</label>
+              <input type="text" id="transfer-new-username" placeholder="e.g. rep2" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold lowercase" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block">PIN (4 digits) *</label>
+              <input type="password" maxlength="8" id="transfer-new-pin" placeholder="5555" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-mono font-black text-center" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 block">Phone Number</label>
+            <input type="tel" id="transfer-new-phone" placeholder="077 123 4567" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Deactivate Checkbox -->
+      <div class="p-2.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-2">
+        <input type="checkbox" id="transfer-deactivate-old" checked class="w-4 h-4 rounded text-rose-600 focus:ring-0" />
+        <label for="transfer-deactivate-old" class="text-xs font-bold text-slate-700 cursor-pointer">
+          🚫 Deactivate old rep's login (පැරණි Rep ගේ login එක අක්‍රිය කරන්න)
+        </label>
+      </div>
+
+      <!-- Safe Data Guarantee Note -->
+      <div class="text-[9.5px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-0.5">
+        <div class="font-bold text-slate-700">🔒 ආරක්ෂිත දත්ත සහතිකය (Zero Data Loss):</div>
+        <div>• පෙර කරන ලද සියලුම Sales Bills, Invoices සහ Shop Credit Balance සුරක්ෂිතව පවතී.</div>
+        <div>• අදාළ Routes වල සියලුම කඩ සාප්පු (Shops) නව Rep ට හිමිවේ.</div>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-100">
+        <button onclick="Users.executeTransferTerritory()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95 transition-all">
+          🚀 Transfer Routes & Shops (මාරු කරන්න)
+        </button>
+        <button onclick="UI.closeModal('modal-transfer-rep')" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl hover:bg-slate-200">
           Cancel
         </button>
       </div>
@@ -23858,7 +23981,7 @@ const GPS = {
     }
   },
 
-  /** Check if Rep/Driver is Out of Route (> 1.5 km from all shops in their assigned route) */
+  /** Check if Rep/Driver is Out of Route (> 1.5 km from all shops in their assigned routes) */
   async checkOutOfRoute(pos, routeId) {
     if (!pos || !pos.lat || !pos.lng || !routeId || routeId === 'all') {
       return { isOutOfRoute: false, minDistanceKm: 0, statusText: 'Normal' };
@@ -23867,8 +23990,9 @@ const GPS = {
     try {
       if (typeof db === 'undefined' || !db.shops) return { isOutOfRoute: false, minDistanceKm: 0, statusText: 'Normal' };
       const rawShops = await db.shops.toArray();
+      const rIds = (Array.isArray(routeId) ? routeId : [routeId]).map(String);
       const routeShops = filterByTenant(rawShops).filter(s =>
-        String(s.routeId) === String(routeId) && s.lat && s.lng && !isNaN(Number(s.lat)) && Number(s.lat) !== 0
+        rIds.includes(String(s.routeId)) && s.lat && s.lng && !isNaN(Number(s.lat)) && Number(s.lat) !== 0
       );
 
       if (routeShops.length === 0) {
@@ -25246,9 +25370,9 @@ const MapView = {
         const visitedShopsCount = new Set(repSales.map(s => Number(s.shopId))).size;
         const repStats = (typeof GPS !== 'undefined' && GPS.calculateRepTripStats) ? await GPS.calculateRepTripStats(repUser.id, this.activeDate) : { totalKm: 0, currentSpeed: 0, maxSpeed: 0 };
 
-        // ── 🚨 OUT OF ROUTE DETECTION ──
+        const repRouteIds = (Array.isArray(repUser.assignedRouteIds) && repUser.assignedRouteIds.length > 0) ? repUser.assignedRouteIds : (repUser.assignedRouteId ? [repUser.assignedRouteId] : null);
         const outOfRoute = (typeof GPS !== 'undefined' && GPS.checkOutOfRoute)
-          ? await GPS.checkOutOfRoute(repLoc, repUser.assignedRouteId)
+          ? await GPS.checkOutOfRoute(repLoc, repRouteIds)
           : { isOutOfRoute: false, minDistanceKm: 0, statusText: 'Normal' };
         const isAlertOut = outOfRoute.isOutOfRoute;
         const iconBg = isAlertOut ? '#ef4444' : repColor;
@@ -25382,8 +25506,9 @@ const MapView = {
       const repStats = (typeof GPS !== 'undefined' && GPS.calculateRepTripStats) ? await GPS.calculateRepTripStats(rep.id, this.activeDate) : { totalKm: 0, currentSpeed: 0, maxSpeed: 0 };
 
       // Out of Route
+      const repCardRouteIds = (Array.isArray(rep.assignedRouteIds) && rep.assignedRouteIds.length > 0) ? rep.assignedRouteIds : (rep.assignedRouteId ? [rep.assignedRouteId] : null);
       const outOfRoute = (typeof GPS !== 'undefined' && GPS.checkOutOfRoute)
-        ? await GPS.checkOutOfRoute(loc, rep.assignedRouteId)
+        ? await GPS.checkOutOfRoute(loc, repCardRouteIds)
         : { isOutOfRoute: false, minDistanceKm: 0, statusText: 'Normal' };
       const isAlertOut = outOfRoute.isOutOfRoute;
 
@@ -26810,8 +26935,23 @@ const Shops = {
       }
 
       const currentUser = (typeof Auth !== 'undefined' && Auth.currentUser) || null;
-      const repId = currentUser ? currentUser.id : null;
-      const repName = currentUser ? (currentUser.fullName || currentUser.username) : '';
+      let repId = currentUser ? currentUser.id : null;
+      let repName = currentUser ? (currentUser.fullName || currentUser.username) : '';
+
+      // If created/edited by Admin, automatically link to the active Rep assigned to this route
+      if (currentUser && currentUser.role === 'admin' && routeId && typeof db !== 'undefined' && db.users) {
+        try {
+          const allUsers = filterByTenant(await db.users.toArray());
+          const routeRep = allUsers.find(u => u.role === 'rep' && u.isActive !== false && (
+            (Array.isArray(u.assignedRouteIds) && u.assignedRouteIds.includes(Number(routeId))) ||
+            Number(u.assignedRouteId) === Number(routeId)
+          ));
+          if (routeRep) {
+            repId = routeRep.id;
+            repName = routeRep.fullName || routeRep.username;
+          }
+        } catch(e) {}
+      }
 
       let savedShopId = null;
       if (id) {
@@ -37540,30 +37680,26 @@ const Users = {
 
   onRoleChanged() {
     const role = document.getElementById('user-form-role')?.value || 'rep';
-    const routeBox = document.getElementById('user-form-route-container');
-    const multiRoutesBox = document.getElementById('user-form-multi-routes-container');
+    const repRoutesBox = document.getElementById('user-form-rep-routes-container');
     const supBox = document.getElementById('user-form-supervisor-container');
     const repsBox = document.getElementById('user-form-assigned-reps-container');
     const asmBox = document.getElementById('user-form-asm-team-container');
 
     // Hide all first
-    if (routeBox) routeBox.classList.add('hidden');
-    if (multiRoutesBox) multiRoutesBox.classList.add('hidden');
+    if (repRoutesBox) repRoutesBox.classList.add('hidden');
     if (supBox) supBox.classList.add('hidden');
     if (repsBox) repsBox.classList.add('hidden');
     if (asmBox) asmBox.classList.add('hidden');
 
     if (role === 'rep') {
-      if (routeBox) routeBox.classList.remove('hidden');
-      if (multiRoutesBox) multiRoutesBox.classList.remove('hidden');
+      if (repRoutesBox) repRoutesBox.classList.remove('hidden');
       if (supBox) supBox.classList.remove('hidden');
     } else if (role === 'supervisor') {
       if (repsBox) repsBox.classList.remove('hidden');
     } else if (role === 'asm') {
       if (asmBox) asmBox.classList.remove('hidden');
     } else if (role === 'delivery') {
-      if (routeBox) routeBox.classList.remove('hidden');
-      if (multiRoutesBox) multiRoutesBox.classList.remove('hidden');
+      if (repRoutesBox) repRoutesBox.classList.remove('hidden');
     }
   },
 
@@ -37713,7 +37849,12 @@ const Users = {
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-2 self-end sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+            <div class="flex items-center gap-1.5 self-end sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end flex-wrap">
+              ${role === 'rep' ? `
+                <button onclick="Users.openTransferModal(${user.id})" class="px-3 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-black active:scale-95 transition-all flex items-center gap-1 border border-amber-200 shadow-xs">
+                  🔄 Replace Rep
+                </button>
+              ` : ''}
               <button onclick="Users.openEditModal(${user.id})" class="px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold active:scale-95 transition-all flex items-center gap-1">
                 ✏️ Edit
               </button>
@@ -37774,26 +37915,51 @@ const Users = {
     const rawUsers = await db.users.toArray();
     const allUsers = filterByTenant(rawUsers);
 
-    // 1. Primary Route Select
-    const select = document.getElementById('user-form-route');
-    if (select) {
-      select.innerHTML = '<option value="">-- All Routes (Access Everywhere) --</option>' +
-        routes.map(r => `<option value="${r.id}" ${r.id == currentUser?.assignedRouteId ? 'selected' : ''}>${r.name}</option>`).join('');
-    }
+    // 1. Calculate shop counts per route for live counter
+    const rawShops = (typeof db !== 'undefined' && db.shops) ? await db.shops.toArray() : [];
+    const shopsByRoute = {};
+    filterByTenant(rawShops).forEach(s => {
+      shopsByRoute[Number(s.routeId)] = (shopsByRoute[Number(s.routeId)] || 0) + 1;
+    });
 
-    // 2. Multi-Route Checkboxes for Rep
+    // 2. Multi-Route Checkboxes with shop count badge per route
     const multiRoutesList = document.getElementById('user-form-multi-routes-list');
     if (multiRoutesList) {
       const selectedRouteIds = new Set(Array.isArray(currentUser?.assignedRouteIds) ? currentUser.assignedRouteIds.map(Number) : (currentUser?.assignedRouteId ? [Number(currentUser.assignedRouteId)] : []));
-      multiRoutesList.innerHTML = routes.length > 0 ? routes.map(r => `
-        <label class="flex items-center gap-2 p-1.5 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 cursor-pointer hover:bg-slate-50">
-          <input type="checkbox" name="user-multi-route" value="${r.id}" ${selectedRouteIds.has(Number(r.id)) ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600 focus:ring-0" />
-          <span>📍 ${r.name}</span>
-        </label>
-      `).join('') : '<p class="text-xs text-slate-400">No routes available yet.</p>';
+      multiRoutesList.innerHTML = routes.length > 0 ? routes.map(r => {
+        const count = shopsByRoute[Number(r.id)] || 0;
+        const isChecked = selectedRouteIds.has(Number(r.id));
+        return `
+          <label class="flex items-center justify-between p-2 bg-white rounded-xl border border-emerald-200 text-xs font-bold text-slate-800 cursor-pointer hover:bg-emerald-50/50">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" name="user-rep-route" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="Users.onRouteCheckboxChanged()" class="w-4 h-4 rounded text-emerald-600 focus:ring-0" />
+              <span>📍 ${r.name}</span>
+            </div>
+            <span class="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-lg">${count} Shops</span>
+          </label>
+        `;
+      }).join('') : '<p class="text-xs text-slate-400">No routes available yet.</p>';
+      this.onRouteCheckboxChanged();
     }
 
-    // 3. Supervisor Dropdown for Rep
+    // 3. Inherit Territory from Past/Existing Rep Dropdown
+    const inheritSelect = document.getElementById('user-form-inherit-rep');
+    if (inheritSelect) {
+      const otherReps = allUsers.filter(u => u.role === 'rep' && (!currentUser || u.id !== currentUser.id));
+      let inheritOpts = '<option value="">-- Manual Selection (අතින් මාර්ග තෝරන්න) --</option>';
+      for (const rep of otherReps) {
+        const repRoutes = Array.isArray(rep.assignedRouteIds) ? rep.assignedRouteIds.map(Number) : (rep.assignedRouteId ? [Number(rep.assignedRouteId)] : []);
+        const repShopsCount = filterByTenant(rawShops).filter(s => repRoutes.includes(Number(s.routeId)) || Number(s.repId) === rep.id).length;
+        const statusNote = rep.isActive === false ? ' [Inactive/Departed]' : '';
+        inheritOpts += `<option value="${rep.id}">🚚 ${rep.fullName || rep.username}${statusNote} (${repRoutes.length} Routes, ${repShopsCount} Shops)</option>`;
+      }
+      inheritSelect.innerHTML = inheritOpts;
+      inheritSelect.value = '';
+      const deactRow = document.getElementById('user-form-inherit-deactivate-row');
+      if (deactRow) deactRow.classList.add('hidden');
+    }
+
+    // 4. Supervisor Dropdown for Rep
     const supSelect = document.getElementById('user-form-supervisor');
     if (supSelect) {
       const supervisors = allUsers.filter(u => u.role === 'supervisor' && u.isActive !== false);
@@ -37801,7 +37967,7 @@ const Users = {
         supervisors.map(s => `<option value="${s.id}" ${s.id == currentUser?.supervisorId ? 'selected' : ''}>📋 ${s.fullName || s.username}</option>`).join('');
     }
 
-    // 4. Supervisor's Rep Assignment Checkbox List (3 to 5 Reps)
+    // 5. Supervisor's Rep Assignment Checkbox List (3 to 5 Reps)
     const repsList = document.getElementById('user-form-reps-checkbox-list');
     const repCountBadge = document.getElementById('user-form-rep-count-badge');
     if (repsList) {
@@ -37832,7 +37998,7 @@ const Users = {
       updateCountBadge();
     }
 
-    // 5. ASM Team Controls (Supervisors + Reps)
+    // 6. ASM Team Controls (Supervisors + Reps)
     const asmSupsList = document.getElementById('user-form-asm-supervisors-list');
     const asmRepsList = document.getElementById('user-form-asm-reps-list');
     if (asmSupsList) {
@@ -37855,6 +38021,60 @@ const Users = {
         </label>
       `).join('') : '<p class="text-[10px] text-slate-400">No reps found.</p>';
     }
+  },
+
+  toggleAllRoutes(select) {
+    const cbs = document.querySelectorAll('input[name="user-rep-route"]');
+    cbs.forEach(cb => { cb.checked = Boolean(select); });
+    this.onRouteCheckboxChanged();
+  },
+
+  async onRouteCheckboxChanged() {
+    const cbs = document.querySelectorAll('input[name="user-rep-route"]:checked');
+    const routeCountEl = document.getElementById('user-form-route-count-badge');
+    const shopCountEl = document.getElementById('user-form-shop-count-badge');
+    const selectedRouteIds = Array.from(cbs).map(cb => Number(cb.value));
+
+    if (routeCountEl) {
+      routeCountEl.textContent = `${selectedRouteIds.length} Route${selectedRouteIds.length === 1 ? '' : 's'} Selected`;
+    }
+
+    if (shopCountEl && typeof db !== 'undefined' && db.shops) {
+      try {
+        const rawShops = await db.shops.toArray();
+        const totalShops = filterByTenant(rawShops).filter(s => selectedRouteIds.includes(Number(s.routeId))).length;
+        shopCountEl.textContent = `${totalShops} Shop${totalShops === 1 ? '' : 's'} Linked`;
+      } catch (e) {}
+    }
+  },
+
+  async onInheritRepChanged(repId) {
+    const deactRow = document.getElementById('user-form-inherit-deactivate-row');
+    if (!repId) {
+      if (deactRow) deactRow.classList.add('hidden');
+      return;
+    }
+    if (deactRow) deactRow.classList.remove('hidden');
+
+    const rep = await db.users.get(Number(repId));
+    if (!rep) return;
+
+    const repRoutes = new Set(Array.isArray(rep.assignedRouteIds) ? rep.assignedRouteIds.map(Number) : (rep.assignedRouteId ? [Number(rep.assignedRouteId)] : []));
+
+    // Check checkboxes matching old rep's routes
+    const cbs = document.querySelectorAll('input[name="user-rep-route"]');
+    cbs.forEach(cb => {
+      cb.checked = repRoutes.has(Number(cb.value));
+    });
+
+    // Match Supervisor if exists
+    if (rep.supervisorId) {
+      const supSelect = document.getElementById('user-form-supervisor');
+      if (supSelect) supSelect.value = rep.supervisorId;
+    }
+
+    this.onRouteCheckboxChanged();
+    UI.showToast(`Inherited ${repRoutes.size} routes from @${rep.username}`, 'info');
   },
 
   onRepCheckboxChanged() {
@@ -37899,16 +38119,13 @@ const Users = {
     let assignedSupervisorIds = [];
 
     if (role === 'rep') {
-      const primaryRouteVal = document.getElementById('user-form-route')?.value;
-      assignedRouteId = primaryRouteVal ? Number(primaryRouteVal) : null;
-      const routeCheckboxes = document.querySelectorAll('input[name="user-multi-route"]:checked');
+      const routeCheckboxes = document.querySelectorAll('input[name="user-rep-route"]:checked');
       assignedRouteIds = Array.from(routeCheckboxes).map(cb => Number(cb.value));
-      if (assignedRouteId && !assignedRouteIds.includes(assignedRouteId)) {
-        assignedRouteIds.unshift(assignedRouteId);
+      if (assignedRouteIds.length === 0) {
+        UI.showToast('කරුණාකර Rep හට අවම වශයෙන් එක් Route එකක් තෝරන්න (Please select at least 1 Route).', 'warning');
+        return;
       }
-      if (!assignedRouteId && assignedRouteIds.length > 0) {
-        assignedRouteId = assignedRouteIds[0];
-      }
+      assignedRouteId = assignedRouteIds[0];
       const supVal = document.getElementById('user-form-supervisor')?.value;
       supervisorId = supVal ? Number(supVal) : null;
     } else if (role === 'supervisor') {
@@ -37920,10 +38137,9 @@ const Users = {
       const repCheckboxes = document.querySelectorAll('input[name="asm-assigned-rep"]:checked');
       assignedRepIds = Array.from(repCheckboxes).map(cb => Number(cb.value));
     } else if (role === 'delivery') {
-      const primaryRouteVal = document.getElementById('user-form-route')?.value;
-      assignedRouteId = primaryRouteVal ? Number(primaryRouteVal) : null;
-      const routeCheckboxes = document.querySelectorAll('input[name="user-multi-route"]:checked');
+      const routeCheckboxes = document.querySelectorAll('input[name="user-rep-route"]:checked');
       assignedRouteIds = Array.from(routeCheckboxes).map(cb => Number(cb.value));
+      assignedRouteId = assignedRouteIds.length > 0 ? assignedRouteIds[0] : null;
     }
 
     const tenantId = (Auth.currentUser && Auth.currentUser.tenantId) ? Auth.currentUser.tenantId : (getActiveTenantId() || 1);
@@ -37944,8 +38160,10 @@ const Users = {
     };
 
     try {
+      let savedUserId = null;
       if (this.currentEditUserId) {
         // Update Existing User
+        savedUserId = this.currentEditUserId;
         await db.users.update(this.currentEditUserId, userPayload);
 
         // If this is a supervisor, link these reps back to supervisor
@@ -37972,7 +38190,7 @@ const Users = {
           }
         }
 
-        UI.showToast('User & Team Hierarchy updated successfully! ✓', 'success');
+        UI.showToast('User & Territory updated successfully! ✓', 'success');
       } else {
         // Check username uniqueness
         const existing = await db.users.where('username').equals(username).first();
@@ -37982,15 +38200,15 @@ const Users = {
         }
 
         // Add New User
-        const newUserId = await db.users.add(Object.assign({
+        savedUserId = await db.users.add(Object.assign({
           tenantId: tenantId,
           createdAt: new Date().toISOString()
         }, userPayload));
 
         // If this is a supervisor, link these reps back to supervisor
-        if (role === 'supervisor' && assignedRepIds.length > 0 && newUserId) {
+        if (role === 'supervisor' && assignedRepIds.length > 0 && savedUserId) {
           for (const repId of assignedRepIds) {
-            await db.users.update(repId, { supervisorId: newUserId });
+            await db.users.update(repId, { supervisorId: savedUserId });
           }
         }
 
@@ -38018,7 +38236,37 @@ const Users = {
           }
         }
 
-        UI.showToast('New User & Team Hierarchy provisioned successfully! 🎉', 'success');
+        UI.showToast('New User & Territory provisioned successfully! 🎉', 'success');
+      }
+
+      // Auto-assign all shops in these routes to this Rep
+      if (role === 'rep' && assignedRouteIds.length > 0 && savedUserId) {
+        try {
+          const rawShops = await db.shops.toArray();
+          const targetShops = filterByTenant(rawShops).filter(s => assignedRouteIds.includes(Number(s.routeId)));
+          for (const s of targetShops) {
+            await db.shops.update(s.id, {
+              repId: savedUserId,
+              repName: fullName || username,
+              updatedAt: new Date().toISOString()
+            });
+          }
+        } catch (e) {
+          console.warn('Auto-assign shops to rep notice:', e);
+        }
+      }
+
+      // Deactivate inherited old rep if checkbox was checked
+      const inheritRepId = document.getElementById('user-form-inherit-rep')?.value;
+      const deactivateOld = document.getElementById('user-form-deactivate-old-rep')?.checked;
+      if (inheritRepId && deactivateOld) {
+        try {
+          await db.users.update(Number(inheritRepId), {
+            isActive: false,
+            updatedAt: new Date().toISOString()
+          });
+          UI.showToast('Previous rep account marked inactive! 🚫', 'info');
+        } catch (e) {}
       }
 
       UI.closeModal('modal-user-form');
@@ -38027,6 +38275,175 @@ const Users = {
       console.error('Error saving user:', err);
       UI.showToast('Error saving user: ' + err.message, 'error');
     }
+  },
+
+  // ── 🔄 REASSIGN / REPLACE SALES REP MODAL METHODS ─────────────────────────
+  async openTransferModal(departingRepId = null) {
+    const rawUsers = await db.users.toArray();
+    const allUsers = filterByTenant(rawUsers);
+    const reps = allUsers.filter(u => u.role === 'rep');
+
+    if (reps.length === 0) {
+      UI.showToast('No Sales Reps found in the system yet.', 'info');
+      return;
+    }
+
+    const oldRep = departingRepId ? reps.find(r => r.id === Number(departingRepId)) : reps[0];
+    if (!oldRep) return;
+
+    document.getElementById('transfer-old-rep-id').value = oldRep.id;
+    document.getElementById('transfer-old-rep-name').textContent = oldRep.fullName || oldRep.username;
+    document.getElementById('transfer-old-rep-username').textContent = `@${oldRep.username} (PIN: ${oldRep.pin})`;
+
+    const oldRoutes = Array.isArray(oldRep.assignedRouteIds) ? oldRep.assignedRouteIds.map(Number) : (oldRep.assignedRouteId ? [Number(oldRep.assignedRouteId)] : []);
+    document.getElementById('transfer-old-rep-routes-count').textContent = `${oldRoutes.length} Route${oldRoutes.length === 1 ? '' : 's'}`;
+
+    const rawShops = await db.shops.toArray();
+    const shopsCount = filterByTenant(rawShops).filter(s => oldRoutes.includes(Number(s.routeId)) || Number(s.repId) === oldRep.id).length;
+    document.getElementById('transfer-old-rep-shops-count').textContent = `${shopsCount} Shop${shopsCount === 1 ? '' : 's'}`;
+
+    // Target rep dropdown
+    const targetSelect = document.getElementById('transfer-target-rep-select');
+    const otherActiveReps = reps.filter(r => r.id !== oldRep.id && r.isActive !== false);
+
+    let opts = '<option value="">-- Select Target Rep --</option>';
+    opts += '<option value="new_rep">➕ Create & Provision New Rep Right Now</option>';
+    for (const r of otherActiveReps) {
+      opts += `<option value="${r.id}">🚚 ${r.fullName || r.username} (@${r.username})</option>`;
+    }
+    targetSelect.innerHTML = opts;
+    targetSelect.value = otherActiveReps.length > 0 ? otherActiveReps[0].id : 'new_rep';
+    this.onTransferTargetSelectChanged(targetSelect.value);
+
+    // Reset new rep inputs
+    const fn = document.getElementById('transfer-new-fullname');
+    if (fn) fn.value = '';
+    const un = document.getElementById('transfer-new-username');
+    if (un) un.value = '';
+    const pn = document.getElementById('transfer-new-pin');
+    if (pn) pn.value = '';
+    const ph = document.getElementById('transfer-new-phone');
+    if (ph) ph.value = '';
+
+    document.getElementById('transfer-deactivate-old').checked = true;
+
+    UI.openModal('modal-transfer-rep');
+  },
+
+  onTransferTargetSelectChanged(val) {
+    const fields = document.getElementById('transfer-new-rep-fields');
+    if (fields) {
+      if (val === 'new_rep') {
+        fields.classList.remove('hidden');
+      } else {
+        fields.classList.add('hidden');
+      }
+    }
+  },
+
+  async executeTransferTerritory() {
+    const oldRepId = Number(document.getElementById('transfer-old-rep-id').value);
+    const oldRep = await db.users.get(oldRepId);
+    if (!oldRep) {
+      UI.showToast('Departing Rep not found.', 'error');
+      return;
+    }
+
+    const targetVal = document.getElementById('transfer-target-rep-select').value;
+    if (!targetVal) {
+      UI.showToast('Please select a target Rep or choose Create New Rep.', 'warning');
+      return;
+    }
+
+    let targetRepId = null;
+    let targetRepName = '';
+
+    const oldRoutes = Array.isArray(oldRep.assignedRouteIds) ? oldRep.assignedRouteIds.map(Number) : (oldRep.assignedRouteId ? [Number(oldRep.assignedRouteId)] : []);
+
+    if (targetVal === 'new_rep') {
+      const fullName = document.getElementById('transfer-new-fullname')?.value?.trim();
+      const username = document.getElementById('transfer-new-username')?.value?.trim()?.toLowerCase();
+      const pin = document.getElementById('transfer-new-pin')?.value?.trim();
+      const phone = document.getElementById('transfer-new-phone')?.value?.trim() || '';
+
+      if (!fullName || !username || !pin) {
+        UI.showToast('Please enter Name, Username, and 4-digit PIN for the new Rep.', 'warning');
+        return;
+      }
+      if (pin.length < 4) {
+        UI.showToast('PIN must be at least 4 digits.', 'warning');
+        return;
+      }
+
+      const existing = await db.users.where('username').equals(username).first();
+      if (existing) {
+        UI.showToast(`Username '@${username}' is already in use.`, 'warning');
+        return;
+      }
+
+      const tenantId = (Auth.currentUser && Auth.currentUser.tenantId) ? Auth.currentUser.tenantId : (getActiveTenantId() || 1);
+      targetRepId = await db.users.add({
+        tenantId,
+        fullName,
+        username,
+        pin,
+        phone,
+        role: 'rep',
+        assignedRouteId: oldRoutes[0] || null,
+        assignedRouteIds: oldRoutes,
+        supervisorId: oldRep.supervisorId || null,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      targetRepName = fullName;
+    } else {
+      targetRepId = Number(targetVal);
+      const targetUser = await db.users.get(targetRepId);
+      if (!targetUser) return;
+      targetRepName = targetUser.fullName || targetUser.username;
+
+      const currentRoutes = Array.isArray(targetUser.assignedRouteIds) ? targetUser.assignedRouteIds.map(Number) : (targetUser.assignedRouteId ? [Number(targetUser.assignedRouteId)] : []);
+      const mergedRoutes = Array.from(new Set([...currentRoutes, ...oldRoutes]));
+
+      await db.users.update(targetRepId, {
+        assignedRouteIds: mergedRoutes,
+        assignedRouteId: mergedRoutes[0] || targetUser.assignedRouteId,
+        supervisorId: targetUser.supervisorId || oldRep.supervisorId || null,
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    // Auto-update all shops on these routes or created by old rep
+    const rawShops = await db.shops.toArray();
+    const shopsToUpdate = filterByTenant(rawShops).filter(s =>
+      oldRoutes.includes(Number(s.routeId)) ||
+      Number(s.repId) === oldRepId ||
+      (s.createdBy && String(s.createdBy).toLowerCase() === String(oldRep.username).toLowerCase())
+    );
+
+    let updatedShopCount = 0;
+    for (const s of shopsToUpdate) {
+      await db.shops.update(s.id, {
+        repId: targetRepId,
+        repName: targetRepName,
+        updatedAt: new Date().toISOString()
+      });
+      updatedShopCount++;
+    }
+
+    // Deactivate old rep if requested
+    const deactivateOld = document.getElementById('transfer-deactivate-old')?.checked;
+    if (deactivateOld) {
+      await db.users.update(oldRepId, {
+        isActive: false,
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    UI.closeModal('modal-transfer-rep');
+    UI.showToast(`🎉 ${oldRoutes.length} Routes and ${updatedShopCount} Shops transferred to ${targetRepName}!`, 'success');
+    await this.loadUsers();
   },
 
   async deleteUser(id) {
