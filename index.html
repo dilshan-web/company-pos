@@ -15933,6 +15933,12 @@ function notifyFirestoreChange(collectionName) {
         Users.loadUsers();
       } else if (tabId === 'tab-settings' && typeof Settings !== 'undefined' && Settings.loadSettings) {
         Settings.loadSettings();
+      } else if (tabId === 'tab-map' && typeof MapView !== 'undefined' && MapView.refreshMap) {
+        MapView.refreshMap();
+      }
+
+      if (collectionName === 'repLocations' && typeof MapView !== 'undefined' && MapView.refreshMap) {
+        MapView.refreshMap();
       }
 
       if (collectionName === 'company' && typeof UI !== 'undefined' && UI.updateCompanyBranding) {
@@ -15965,16 +15971,26 @@ class FirestoreQuery {
     return this;
   }
 
-  or(fn) {
-    if (typeof fn === 'function') {
+  or(fieldNameOrFn) {
+    if (typeof fieldNameOrFn === 'function') {
       const prev = this.predicates.pop();
       if (prev) {
-        this.predicates.push((item) => prev(item) || fn(item));
+        this.predicates.push((item) => prev(item) || fieldNameOrFn(item));
       } else {
-        this.predicates.push(fn);
+        this.predicates.push(fieldNameOrFn);
       }
+      return this;
     }
-    return this;
+    const self = this;
+    const fieldName = fieldNameOrFn;
+    return {
+      equals(val) {
+        return self.or((item) => String(item[fieldName]) === String(val));
+      },
+      notEqual(val) {
+        return self.or((item) => String(item[fieldName]) !== String(val));
+      }
+    };
   }
 
   filter(fn) {
@@ -18939,6 +18955,15 @@ const Auth = {
     try { this.applyRoleRestrictions(); } catch(e) { console.warn('applyRoleRestrictions error:', e); }
     try { this.updateHeaderUserBadge(); } catch(e) {}
     try { if (typeof UI !== 'undefined' && UI.updateCompanyBranding) UI.updateCompanyBranding(); } catch(e) {}
+
+    // Auto-start GPS live tracking for user (Reps, Delivery, Supervisors, ASM, SM)
+    try {
+      if (typeof GPS !== 'undefined' && GPS.onUserLogin) {
+        GPS.onUserLogin(matchedUser);
+      }
+    } catch(gpsErr) {
+      console.warn('GPS auto-start warning:', gpsErr);
+    }
 
     // Navigate to correct tab
     try {
@@ -24082,10 +24107,11 @@ const GPS = {
         timestamp: Date.now()
       };
 
-      const existing = await db.repLocations
-        .where('repId').equals(userId)
-        .or('repUsername').equals(user.username)
-        .first();
+      const allLocs = await db.repLocations.toArray();
+      const existing = allLocs.find(l =>
+        String(l.repId) === String(userId) ||
+        (l.repUsername && String(l.repUsername).toLowerCase() === String(user.username).toLowerCase())
+      );
 
       if (existing && existing.id) {
         await db.repLocations.update(existing.id, payload);
@@ -24308,13 +24334,20 @@ const MapView = {
         if (typeof Hierarchy !== 'undefined') {
           const allowedRepIds = await Hierarchy.getAllowedRepIds();
           if (allowedRepIds !== null) {
-            users = users.filter(u => allowedRepIds.has(Number(u.id)));
+            const repIdSet = new Set(allowedRepIds.map(Number));
+            users = users.filter(u => repIdSet.has(Number(u.id)));
           }
         }
-        const reps = users.filter(u => u.role === 'rep' || u.role === 'delivery');
-        let html = '<option value="all">🚚 All Sales Reps (සියලු නියෝජිතයින්)</option>';
+        const fieldRoles = ['rep', 'delivery', 'supervisor', 'asm', 'sm'];
+        const reps = users.filter(u => fieldRoles.includes(u.role));
+        let html = '<option value="all">👥 All Field Staff (සියලුම ක්ෂේත්‍ර කණ්ඩායම)</option>';
         reps.forEach(r => {
-          html += `<option value="${r.id}">${r.fullName || r.username} (${r.role === 'rep' ? 'Rep' : 'Delivery'})</option>`;
+          let roleLabel = 'Rep';
+          if (r.role === 'delivery') roleLabel = 'Delivery';
+          else if (r.role === 'supervisor') roleLabel = 'Supervisor';
+          else if (r.role === 'asm') roleLabel = 'ASM';
+          else if (r.role === 'sm') roleLabel = 'SM';
+          html += `<option value="${r.id}">${r.fullName || r.username} (${roleLabel})</option>`;
         });
         repSelect.innerHTML = html;
         repSelect.value = this.activeRepId;
@@ -24342,8 +24375,8 @@ const MapView = {
     const container = document.getElementById('live-map-canvas');
     if (!container || this.map) return;
 
-    // Default center: Sri Lanka North-Central (Galnewa)
-    const defaultCenter = (GPS.currentPos && GPS.currentPos.lat) ? [GPS.currentPos.lat, GPS.currentPos.lng] : [8.0886, 80.4578];
+    // Default center: Sri Lanka North-Central (Galnewa) - only use device pos for mobile field reps/delivery
+    const defaultCenter = (GPS.currentPos && GPS.currentPos.lat && (this.isRepUser() || this.isDeliveryUser())) ? [GPS.currentPos.lat, GPS.currentPos.lng] : [8.0886, 80.4578];
     const defaultZoom = 14;
 
     try {
@@ -24460,7 +24493,10 @@ const MapView = {
     const isRep = this.isRepUser();
 
     // 1. Draw User's Current Location ("You are Here" 📍)
-    await this.drawCurrentUserLocation();
+    // Only show "You (ඔබ)" pin for mobile field staff (Rep/Delivery) — NOT for Admin PC (avoids Kolonnawa IP geolocation pin)
+    if (isRep || isDelivery) {
+      await this.drawCurrentUserLocation();
+    }
 
     // 2. Route & Delivery Flow Router
     if (isDelivery) {
@@ -25328,10 +25364,23 @@ const MapView = {
       if (typeof Hierarchy !== 'undefined') {
         const allowedRepIds = await Hierarchy.getAllowedRepIds();
         if (allowedRepIds !== null) {
-          users = users.filter(u => allowedRepIds.has(Number(u.id)));
+          const repIdSet = new Set(allowedRepIds.map(Number));
+          users = users.filter(u => repIdSet.has(Number(u.id)));
         }
       }
-      const repsList = users.filter(u => u.role === 'rep' || u.role === 'delivery');
+      const fieldRoles = ['rep', 'delivery', 'supervisor', 'asm', 'sm'];
+      const repsList = users.filter(u => fieldRoles.includes(u.role));
+
+      // Role icon helper
+      const getRoleIcon = (role, isAlert) => {
+        if (isAlert) return '⚠️';
+        const icons = { rep: '🏍️', delivery: '🚚', supervisor: '📋', asm: '💼', sm: '👔' };
+        return icons[role] || '👤';
+      };
+      const getRoleLabel = (role) => {
+        const labels = { rep: 'Sales Rep', delivery: 'Delivery Driver', supervisor: 'Supervisor', asm: 'Area Sales Manager', sm: 'Sales Manager' };
+        return labels[role] || role;
+      };
 
       const rawLocations = await db.repLocations.toArray();
       const allLocations = filterByTenant(rawLocations);
@@ -25381,7 +25430,7 @@ const MapView = {
           <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
             ${isLive ? `<div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: ${isAlertOut ? '#ef4444' : repColor}; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
             <div style="background: ${iconBg}; color: #fff; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid #ffffff; box-shadow: 0 4px 12px ${isAlertOut ? 'rgba(239,68,68,0.7)' : 'rgba(0,0,0,0.4)'}; z-index: 10;">
-              ${isAlertOut ? '⚠️' : (repUser.role === 'rep' ? '🏍️' : '🚚')}
+              ${getRoleIcon(repUser.role, isAlertOut)}
             </div>
             <div style="background: ${isAlertOut ? '#991b1b' : repColor}; color: #fff; font-size: 9.5px; font-weight: 900; padding: 2px 7px; border-radius: 8px; margin-top: 2px; white-space: nowrap; z-index: 10; border: 1.5px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.35);">
               ${repUser.fullName || repUser.username} ${repLoc.speed ? `(${repLoc.speed} km/h)` : ''}
@@ -25406,10 +25455,10 @@ const MapView = {
         const repPopup = `
           <div style="font-family: system-ui, sans-serif; min-width: 220px; padding: 3px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-              <span style="font-size: 22px;">${isAlertOut ? '⚠️' : (repUser.role === 'rep' ? '🏍️' : '🚚')}</span>
+              <span style="font-size: 22px;">${getRoleIcon(repUser.role, isAlertOut)}</span>
               <div>
                 <strong style="font-size: 13.5px; color: ${iconBg};">${repUser.fullName || repUser.username}</strong>
-                <div style="font-size: 10px; color: #64748b;">${repUser.role === 'rep' ? 'Sales Rep' : 'Delivery Driver'} • 📞 ${repUser.phone || 'No phone'}</div>
+                <div style="font-size: 10px; color: #64748b;">${getRoleLabel(repUser.role)} • 📞 ${repUser.phone || 'No phone'}</div>
               </div>
             </div>
             ${outOfRouteBanner}
@@ -25417,15 +25466,15 @@ const MapView = {
               ${statusText} ${repLoc.speed ? `• ${repLoc.speed} km/h` : ''}
             </div>
             <div style="font-size: 11px; color: #334155; margin-bottom: 6px; line-height: 1.5;">
-              🏍️ Distance Traveled (ගමන් කළ දුර): <b style="color: #2563eb;">${repStats.totalKm} KM</b><br>
+              📍 Distance Traveled (ගමන් කළ දුර): <b style="color: #2563eb;">${repStats.totalKm} KM</b><br>
               ⚡ Live Speed (වේගය): <b style="color: #0284c7;">${repLoc.speed || repStats.currentSpeed || 0} km/h</b> (Max: ${repStats.maxSpeed} km/h)<br>
               🏪 Shops Visited (ගිය කඩ): <b>${visitedShopsCount} shops</b><br>
               💰 Sales Today (අද විකුණුම්): <b style="color: #16a34a;">Rs. ${totalBilled.toLocaleString()}</b><br>
-              📍 GPS Lat: ${Number(repLoc.lat).toFixed(5)}, Lng: ${Number(repLoc.lng).toFixed(5)}
+              📌 GPS Lat: ${Number(repLoc.lat).toFixed(5)}, Lng: ${Number(repLoc.lng).toFixed(5)}
             </div>
             ${repUser.phone ? `
               <a href="tel:${repUser.phone}" style="display: block; text-align: center; background: #16a34a; color: #fff; padding: 6px; border-radius: 8px; font-size: 11px; font-weight: bold; text-decoration: none;">
-                📞 Call Rep (ඇමතුමක් ගන්න)
+                📞 Call ${getRoleLabel(repUser.role)} (ඇමතුමක් ගන්න)
               </a>
             ` : ''}
           </div>
@@ -25512,6 +25561,12 @@ const MapView = {
         : { isOutOfRoute: false, minDistanceKm: 0, statusText: 'Normal' };
       const isAlertOut = outOfRoute.isOutOfRoute;
 
+      // Role icon/label helpers
+      const roleIcons = { rep: '🏍️', delivery: '🚚', supervisor: '📋', asm: '💼', sm: '👔' };
+      const roleLabels = { rep: 'Sales Rep', delivery: 'Delivery Driver', supervisor: 'Supervisor', asm: 'ASM', sm: 'Sales Manager' };
+      const roleIcon = isAlertOut ? '⚠️' : (roleIcons[rep.role] || '👤');
+      const roleLabel = roleLabels[rep.role] || rep.role;
+
       let statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-600">⚫ Offline</span>`;
       if (isLive) {
         statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 Live (${loc.speed || 0} km/h)</span>`;
@@ -25529,11 +25584,11 @@ const MapView = {
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white font-bold shadow-xs" style="background: ${isAlertOut ? '#ef4444' : repColor};">
-                  ${isAlertOut ? '⚠️' : (rep.role === 'rep' ? '🏍️' : '🚚')}
+                  ${roleIcon}
                 </div>
                 <div>
                   <h4 class="font-black text-xs sm:text-sm text-slate-900 leading-tight">${rep.fullName || rep.username}</h4>
-                  <span class="text-[10px] text-slate-500 font-bold">${rep.role === 'rep' ? 'Sales Rep' : 'Delivery'} • 📞 ${rep.phone || 'No phone'}</span>
+                  <span class="text-[10px] text-slate-500 font-bold">${roleLabel} • 📞 ${rep.phone || 'No phone'}</span>
                 </div>
               </div>
               <div class="flex flex-col items-end gap-1">
