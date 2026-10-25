@@ -17,6 +17,30 @@
       }
     }
     window.togglePasswordVisibility = togglePasswordVisibility;
+
+    // Guaranteed Early Auth Object — Prevents any 'Auth is not defined' errors
+    window.Auth = window.Auth || {
+      isLocked: true,
+      currentUser: null,
+      _lockUsernameChanged: function(val) {
+        if (window._realAuth && window._realAuth._lockUsernameChanged) {
+          window._realAuth._lockUsernameChanged(val);
+        }
+      },
+      handleTextLogin: async function() {
+        if (window._realAuth && window._realAuth.handleTextLogin) {
+          return window._realAuth.handleTextLogin();
+        }
+        for (var i = 0; i < 40; i++) {
+          await new Promise(function(r) { setTimeout(r, 100); });
+          if (window._realAuth && window._realAuth.handleTextLogin) {
+            return window._realAuth.handleTextLogin();
+          }
+        }
+        var btn = document.getElementById('btn-signin-main');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span>🔓 Sign In (ඇතුල් වන්න)</span>'; }
+      }
+    };
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -2527,8 +2551,8 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="button"
-          onclick="Auth.handleTextLogin()"
+        <button type="button" id="btn-signin-main"
+          onclick="(function(b){b.disabled=true;b.innerHTML='<span>⏳ ඇතුල් වෙනවා...</span>';Auth.handleTextLogin().then(function(){}).catch(function(){}).finally(function(){setTimeout(function(){b.disabled=false;b.innerHTML='<span>🔓 Sign In (ඇතුල් වන්න)</span>';},400);})})(this)"
           class="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-[0.98] text-white font-black text-sm py-3.5 rounded-2xl shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer">
           <span>🔓 Sign In (ඇතුල් වන්න)</span>
         </button>

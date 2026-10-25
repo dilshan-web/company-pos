@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+window.onerror = function(msg, url, line, col, err) {
+    var d = document.createElement('div');
+    d.className = 'script-error';
+    d.textContent = 'ERR: ' + msg + ' at ' + line + ':' + col;
+    document.body.appendChild(d);
+};
+</script>
+<script>
+var test = 1 + 1;
+</script>
+</head>
+<body>
+<div id="ready">READY</div>
+</body>
+</html>

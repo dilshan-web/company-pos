@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spice POS — සම්පූර්ණ සිංහල පරිශීලක අත්පොත (User Manual & Training Guide)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @page {
+      size: A4 portrait;
+      margin: 15mm 12mm 15mm 12mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Sinhala", "Iskoola Pota", Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.55;
+      color: #0f172a;
+      background: #f8fafc;
+      padding: 20px;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 30px 35px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .no-print-bar {
+      position: sticky;
+      top: 10px;
+      z-index: 1000;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .print-btn {
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      padding: 8px 18px;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .print-btn:hover { background: #15803d; transform: scale(1.02); }
+
+    /* Cover / Header */
+    .manual-header {
+      border-bottom: 4px solid #16a34a;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-title h1 {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    .brand-title p {
+      font-size: 12px;
+      color: #16a34a;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+    .manual-badge {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      padding: 6px 12px;
+      border-radius: 8px;
+      text-align: right;
+    }
+    .manual-badge span {
+      font-size: 10px;
+      font-weight: 800;
+      color: #15803d;
+      text-transform: uppercase;
+      display: block;
+    }
+    .manual-badge strong {
+      font-size: 12px;
+      color: #0f172a;
+    }
+
+    /* Table of Contents */
+    .toc-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+    }
+    .toc-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 20px;
+      font-size: 11px;
+    }
+    .toc-grid a {
+      color: #0369a1;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .toc-grid a:hover { text-decoration: underline; color: #0284c7; }
+
+    /* Sections */
+    .section-block {
+      margin-bottom: 28px;
+      page-break-inside: avoid;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border-left: 5px solid #16a34a;
+      margin-bottom: 12px;
+    }
+    .section-head h2 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .step-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+    }
+    .step-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    ul, ol {
+      padding-left: 20px;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+    li {
+      margin-bottom: 4px;
+      color: #334155;
+    }
+
+    /* Badges & Alerts */
+    .alert-box {
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-size: 10.5px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .alert-green { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    .alert-blue  { background: #eff6ff; border: 1px solid #93c5fd; color: #1e40af; }
+    .alert-amber { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+    .alert-purple { background: #faf5ff; border: 1px solid #d8b4fe; color: #6b21a8; }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .role-card {
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      text-align: center;
+    }
+    .role-card.admin { border-color: #86efac; background: #f0fdf4; }
+    .role-card.rep   { border-color: #93c5fd; background: #eff6ff; }
+    .role-card.driver { border-color: #fed7aa; background: #fff7ed; }
+    .role-pin {
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: 900;
+      display: block;
+      margin-top: 4px;
+      color: #0f172a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      margin: 10px 0;
+    }
+    thead th {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 6px 8px;
+      text-align: left;
+      font-weight: 700;
+    }
+    tbody td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .container { max-width: 100%; box-shadow: none; padding: 0; }
+      .no-print-bar { display: none !important; }
+      .page-break { page-break-before: always; }
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Floating Action Bar (Hidden during print) -->
+  <div class="no-print-bar">
+    <div>
+      <span style="font-size: 13px; font-weight: 800;">📖 Spice POS — සම්පූර්ණ සිංහල පරිශීලක අත්පොත</span>
+      <p style="font-size: 10px; color: #94a3b8;">මෙම පිටුව A4 PDF එකක් ලෙස Download කර හෝ Print කරගත හැක.</p>
+    </div>
+    <button onclick="window.print()" class="print-btn">
+      🖨️ PDF එකක් ලෙස බාගත කරන්න (Download / Print PDF)
+    </button>
+  </div>
+
+  <div class="container">
+
+    <!-- ═══ HEADER / COVER ══════════════════════════════════════════════════ -->
+    <div class="manual-header">
+      <div class="brand-title">
+        <h1>🌿 SPICE & WHOLESALE CARD POS</h1>
+        <p>Offline-First Mobile Distribution & POS System</p>
+      </div>
+      <div class="manual-badge">
+        <span>Official Training Manual</span>
+        <strong>සිංහල පරිශීලක අත්පොත</strong>
+      </div>
+    </div>
+
+    <!-- ═══ TABLE OF CONTENTS ══════════════════════════════════════════════ -->
+    <div class="toc-box">
+      <div class="toc-title">📋 පටුන (Table of Contents)</div>
+      <div class="toc-grid">
+        <a href="#sec-intro">1. හැඳින්වීම සහ ප්‍රධාන ලක්ෂණ</a>
+        <a href="#sec-login">2. පද්ධතියට ඇතුළු වීම & PIN අංක</a>
+        <a href="#sec-dashboard">3. ප්‍රධාන Dashboard එක හා දෛනික තොරතුරු</a>
+        <a href="#sec-routes-shops">4. මාර්ග (Routes) & කඩ සාප්පු (Shops)</a>
+        <a href="#sec-products">5. භාණ්ඩ (Products) & නොමිලේ දීමේ ක්‍රම (Free Schemes)</a>
+        <a href="#sec-pos">6. වේගවත් බිල්පත් දැමීම (POS Billing)</a>
+        <a href="#sec-collections">7. ණය එකතු කිරීම් (Credit Collections)</a>
+        <a href="#sec-delivery">8. ඇණවුම් & බෙදාහැරීම් (Production & Delivery)</a>
+        <a href="#sec-reports">9. මූල්‍ය වාර්තා & PDF Hub (Reports & PDF)</a>
+        <a href="#sec-settings">10. පද්ධති සැකසුම් & Printer Setup</a>
+        <a href="#sec-offline">11. 100% Offline ක්‍රියාකාරීත්වය & Sync</a>
+        <a href="#sec-faq">12. නිතර අසන ප්‍රශ්න සහ විසඳුම් (FAQ)</a>
+      </div>
+    </div>
+
+    <!-- ═══ 1. INTRODUCTION ════════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-intro">
+      <div class="section-head">
+        <h2>1. හැඳින්වීම සහ ප්‍රධාන ලක්ෂණ (System Overview)</h2>
+      </div>
+      <p>Spice & Wholesale Card POS යනු කුළුබඩු, කාඩ්පත්, පැකට් සහ තොග බෙදාහැරීමේ ව්‍යාපාර (Wholesale & Distribution) සඳහාම විශේෂයෙන් නිර්මාණය කරන ලද නවීන <strong>Offline-First Mobile POS</strong> පද්ධතියකි.</p>
+      
+      <div class="alert-box alert-green">
+        <span style="font-size: 18px;">💡</span>
+        <div>
+          <strong>ප්‍රධාන විශේෂතා (Key Capabilities):</strong>
+          <ul style="margin-top: 4px;">
+            <li><strong>100% Offline ක්‍රියාකාරීත්වය</strong> — Internet හෝ සිග්නල් නැති දුර බැහැර පළාත්වලද සම්පූර්ණ බිල්පත් සහ ණය කළමනාකරණය කිසිදු බාධාවකින් තොරව සිදුකළ හැක.</li>
+            <li><strong>Bluetooth Thermal Printer සහය</strong> — 58mm සහ 80mm Mobile Thermal Printers මඟින් සිංහල සහ ඉංග්‍රීසි භාෂාවෙන් ක්ෂණිකව බිල්පත් නිකුත් කළ හැක.</li>
+            <li><strong>ස්වයංක්‍රීය Free Issue Schemes</strong> — භාණ්ඩ සඳහා 12+1, 24+2 ආදී නොමිලේ දෙන ප්‍රවර්ධන ස්වයංක්‍රීයව බිලට එක් වේ.</li>
+            <li><strong>ආපසු ලැබුණු බඩු (Returns & Damages) කළමනාකරණය</strong> — කඩවලින් ආපසු ලැබෙන Damaged/Expired භාණ්ඩ බිලෙන්ම අඩු කරගැනීමේ හැකියාව.</li>
+            <li><strong>A4 PDF වාර්තා</strong> — සියලුම විකුණුම්, නොමිලේ දුන් භාණ්ඩ, Returns සහ ණය පිළිබඳ පූර්ණ A4 PDF වාර්තා ලබාගැනීම.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 2. LOGIN & USER ROLES ═══════════════════════════════════════════ -->
+    <div class="section-block" id="sec-login">
+      <div class="section-head">
+        <h2>2. පද්ධතියට ඇතුළු වීම සහ PIN අංක (Login & Multi-User Roles)</h2>
+      </div>
+      <p>පද්ධතියේ ආරක්ෂාව සහ කාර්යභාරයන් වෙන් කර තබාගැනීම සඳහා විශේෂිත භූමිකා (User Roles) 3ක් ඇත:</p>
+
+      <div class="role-grid">
+        <div class="role-card admin">
+          <strong>👑 Master Admin (හිමිකරු)</strong>
+          <p style="font-size:10px; color:#15803d; margin-top:2px;">සියලුම අංශ පාලනය, මිල වෙනස් කිරීම්, ලාභය සහ වාර්තා බැලීම.</p>
+          <span class="role-pin">PIN: 1234</span>
+        </div>
+        <div class="role-card rep">
+          <strong>📋 Sales Rep (නියෝජිත)</strong>
+          <p style="font-size:10px; color:#1d4ed8; margin-top:2px;">කඩවලට ගොස් Orders ගැනීම, නව කඩ දැමීම සහ ණය එකතු කිරීම.</p>
+          <span class="role-pin">PIN: 5555</span>
+        </div>
+        <div class="role-card driver">
+          <strong>🚚 Delivery Driver (රියදුරු)</strong>
+          <p style="font-size:10px; color:#c2410c; margin-top:2px;">ඇණවුම් බෙදාහැරීම, මුදල් භාරගැනීම සහ Delivery බිල් මුද්‍රණය.</p>
+          <span class="role-pin">PIN: 7777</span>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">🔑 පද්ධතිය Lock / Logout කරන්නේ කෙසේද?</div>
+        <p>තිරයේ ඉහළ දකුණු කෙළවරේ ඇති <strong>🔒 (Lock Icon)</strong> එක Click කළ විට පද්ධතිය ක්ෂණිකව Lock වන අතර නැවත PIN අංකය ඇතුළත් කළ යුතුය.</p>
+      </div>
+    </div>
+
+    <!-- ═══ 3. DASHBOARD ════════════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-dashboard">
+      <div class="section-head">
+        <h2>3. ප්‍රධාන Dashboard එක සහ දෛනික තොරතුරු (Dashboard Tab)</h2>
+      </div>
+      <p>Dashboard එක මඟින් ව්‍යාපාරයේ දෛනික සජීවී මූල්‍ය තත්ත්වය පැහැදිලිව පෙන්වයි:</p>
+      <ul>
+        <li><strong>Today Revenue (අද ආදායම)</strong> — අද දින බෙදාහරින ලද සම්පූර්ණ බිල්පත් වටිනාකම.</li>
+        <li><strong>Cash Collected (ලැබුණු මුදල්)</strong> — අද දින අතට ලැබුණු මුළු මුදල් ප්‍රමාණය (Cash Sales + Debt Collections).</li>
+        <li><strong>Net Profit (ශුද්ධ ලාභය)</strong> — අද විකුණුම්වලින් ලැබුණු ශුද්ධ ලාභය සහ Profit Margin ප්‍රතිශතය.</li>
+        <li><strong>Credit Issued & Recovered</strong> — අද ලබාදුන් අලුත් ණය සහ පරණ ණයවලින් එකතු කරගත් මුදල්.</li>
+        <li><strong>Total Market Debt</strong> — සියලුම කඩවලින් වෙළඳපොලේ එකතු වීමට ඇති මුළු ණය ප්‍රමාණය.</li>
+      </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- ═══ 4. ROUTES & SHOPS ═══════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-routes-shops">
+      <div class="section-head">
+        <h2>4. මාර්ග (Routes) සහ කඩ සාප්පු ලියාපදිංචිය (Shops Management)</h2>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">🛣️ 1. නව මාර්ගයක් (Route) එකතු කිරීම:</div>
+        <ol>
+          <li>පහළ Navigation Bar එකෙන් <strong>Routes Tab</strong> එකට යන්න.</li>
+          <li><strong>"+ Add Route"</strong> Button එක Click කරන්න.</li>
+          <li>මාර්ගයේ නම (උදා: <em>කොළඹ - නුවර පාර / Galle Road Route</em>) සහ විස්තරය ඇතුළත් කර <strong>Save</strong> කරන්න.</li>
+        </ol>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">🏪 2. අලුත් කඩයක් (Shop) ලියාපදිංචි කිරීම:</div>
+        <ol>
+          <li><strong>Shops Tab</strong> එකට ගොස් <strong>"+ Add Shop"</strong> Button එක Click කරන්න.</li>
+          <li>කඩේ නම (Shop Name), අයිතිකරුගේ නම (Owner Name), දුරකථන අංකය සහ ලිපිනය ඇතුළත් කරන්න.</li>
+          <li>අදාළ <strong>Route එක</strong> තෝරන්න. (Route එකක් නැතිනම් පද්ධතිය ස්වයංක්‍රීයව Default Route එකකට දමයි).</li>
+          <li>කඩේ උපරිම ණය සීමාව (<strong>Max Credit Limit</strong>) නියම කරන්න.</li>
+          <li>කඩේ පරණ හිඟ ණයක් තිබේ නම් <strong>Opening Balance (ණය ශේෂය)</strong> ඇතුළත් කරන්න.</li>
+          <li><strong>"Save Shop"</strong> Click කරන්න.</li>
+        </ol>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">📜 3. කඩේක ඉතිහාසය (History) බැලීම:</div>
+        <p>ඕනෑම කඩයක් අසල ඇති <strong>"History (ඉතිහාසය) 📜"</strong> Button එක Click කළ විට:</p>
+        <ul>
+          <li>කලින් දැමූ සියලුම බිල්පත් (Past Invoices) සහ ඒවායේ භාණ්ඩ විස්තර.</li>
+          <li>නොමිලේ ලබාදුන් භාණ්ඩ (Free Issues) සහ ආපසු දුන් භාණ්ඩ (Returns).</li>
+          <li>ණය මුදල් ගෙවූ දිනයන් සහ ගෙවූ ප්‍රමාණයන් සවිස්තරාත්මකව දැකගත හැක.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══ 5. PRODUCTS & FREE SCHEMES ══════════════════════════════════════ -->
+    <div class="section-block" id="sec-products">
+      <div class="section-head">
+        <h2>5. භාණ්ඩ (Products) සහ නොමිලේ දීමේ ක්‍රම (Free Schemes)</h2>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">📦 අලුත් භාණ්ඩයක් එකතු කිරීම සහ Free Scheme එකක් සැකසීම:</div>
+        <ol>
+          <li><strong>Products Tab</strong> එකට ගොස් <strong>"+ Add Product"</strong> Click කරන්න.</li>
+          <li>භාණ්ඩයේ නම (උදා: <em>Chilli Powder 100g / Pepper Card 20s</em>), ඒකකය (Unit: Packet / Card / Bottle) ඇතුළත් කරන්න.</li>
+          <li><strong>Cost Price (මිලදී ගත් මිල)</strong> සහ <strong>Selling Price (විකුණුම් මිල)</strong> ඇතුළත් කරන්න.</li>
+          <li><strong>Free Issue Scheme එකක් එක් කිරීමට:</strong>
+            <br/>- <strong>"Enable Free Scheme"</strong> Checkbox එක On කරන්න.
+            <br/>- උදාහරණයක් ලෙස <em>"12ක් ගත්විට 1ක් Free"</em> දීමට අවශ්‍ය නම් <strong>Min Qty: 12</strong> සහ <strong>Free Qty: 1</strong> ලෙස යොදන්න.
+          </li>
+          <li><strong>Save Product</strong> Click කරන්න.</li>
+        </ol>
+      </div>
+
+      <div class="alert-box alert-purple">
+        <span style="font-size: 18px;">🎁</span>
+        <div>
+          <strong>Free Scheme ක්‍රියා කරන ආකාරය:</strong>
+          <p>POS තිරයේදී එම භාණ්ඩයෙන් 12ක් Cart එකට දැමූ වහාම, පද්ධතිය ස්වයංක්‍රීයව <strong>+1 FREE</strong> ලෙස Cart එකට නොමිලේ භාණ්ඩය එකතු කර බිල්පතේ සහ මුද්‍රණයේ පැහැදිලිව සටහන් කරයි. 24ක් දැමූ විට +2 FREE ලෙස ස්වයංක්‍රීයව ගණනය වේ!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 6. POS BILLING ══════════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-pos">
+      <div class="section-head">
+        <h2>6. වේගවත් බිල්පත් දැමීම (POS Billing & Order Booking)</h2>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">🛒 පියවරෙන් පියවර බිලක් දමන ආකාරය:</div>
+        <ol>
+          <li><strong>POS Tab</strong> එකට යන්න.</li>
+          <li>ඉහළින් අදාළ <strong>Route එක</strong> සහ <strong>Shop එක</strong> තෝරන්න (හෝ Shop QR එක Scan කරන්න).</li>
+          <li>කඩේ නම තේරූ පසු එහි පරණ ණය ශේෂය සහ Credit Limit එක තිරයේ පෙන්වයි.</li>
+          <li>ලැයිස්තුවෙන් අවශ්‍ය භාණ්ඩය මත Tap කර <strong>(+)</strong> හෝ <strong>(-)</strong> මඟින් ප්‍රමාණය (Quantity) තෝරන්න.</li>
+          <li><strong>ආපසු ලැබුණු බඩු (Returns) තිබේ නම්:</strong>
+            <br/>- පහළ ඇති <strong>"🔄 Returns / Exchange"</strong> Button එක Click කරන්න.
+            <br/>- Return වන භාණ්ඩය, ප්‍රමාණය, හේතුව (<em>Damaged / Expired / Good Return</em>) තෝරා Add කරන්න. එම වටිනාකම බිලෙන් ක්ෂණිකව අඩු වේ!
+          </li>
+          <li><strong>ගෙවීම් ක්‍රමය (Payment Method) තෝරන්න:</strong>
+            <br/>- 💵 <strong>Full Cash Paid</strong>: සම්පූර්ණ මුදල අතින් ගෙවයි.
+            <br/>- 💳 <strong>Full Credit</strong>: මුළු බිල කඩේ ණය ගිණුමට එකතු වේ.
+            <br/>- ⚖️ <strong>Partial Cash</strong>: කොටසක් Cash ගෙවා ඉතිරිය ණයට තබයි.
+            <br/>- 🧾 <strong>Cheque</strong>: චෙක්පත් මඟින් ගෙවයි.
+          </li>
+          <li><strong>"🖨️ Print & Complete Bill"</strong> Click කර Bluetooth Thermal Printer එකෙන් බිල ලබාදෙන්න.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- ═══ 7. COLLECTIONS ══════════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-collections">
+      <div class="section-head">
+        <h2>7. ණය එකතු කිරීම් (Credit Collections & Recovery)</h2>
+      </div>
+      <p>කඩවලින් කලින් හිඟ ණය මුදල් එකතු කරගැනීම සඳහා Collections Tab එක භාවිතා කරයි:</p>
+
+      <div class="step-card">
+        <div class="step-title">💵 ණය මුදලක් භාරගෙන රිසිට්පතක් නිකුත් කිරීම:</div>
+        <ol>
+          <li><strong>Collections Tab</strong> එකට යන්න.</li>
+          <li>ණය ඇති කඩ ලැයිස්තුවෙන් අදාළ කඩේ නම Search කරන්න.</li>
+          <li><strong>"Collect 💵"</strong> Button එක Click කරන්න.</li>
+          <li>කඩේ හිමිකරු ගෙවන මුදල (<strong>Amount Paid</strong>) ඇතුළත් කරන්න.</li>
+          <li><strong>"Record Payment & Print"</strong> Click කරන්න.</li>
+          <li>පද්ධතිය ස්වයංක්‍රීයව කඩේ ණය ශේෂය අඩු කරන අතර, පරණ ණය, ගෙවූ මුදල සහ ඉතිරි ණය සහිත <strong>Payment Receipt</strong> එකක් Print කරයි.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ═══ 8. PRODUCTION & DELIVERY ════════════════════════════════════════ -->
+    <div class="section-block" id="sec-delivery">
+      <div class="section-head">
+        <h2>8. ඇණවුම් සහ බෙදාහැරීම් (Production & Delivery Management)</h2>
+      </div>
+      <p>Sales Reps විසින් කඩවලින් ගන්නා Orders (Pending Orders) කර්මාන්තශාලාවෙන්/ගබඩාවෙන් Pack කර Delivery Driver මඟින් බෙදාහැරීමේ ක්‍රියාවලිය:</p>
+
+      <div class="step-card">
+        <div class="step-title">🚚 බෙදාහැරීමේ පියවර (Delivery Steps):</div>
+        <ol>
+          <li><strong>Production / Delivery Tab</strong> එකට යන්න.</li>
+          <li>Rep විසින් දැමූ සියලුම Pending Orders සහ අවශ්‍ය මුළු භාණ්ඩ ප්‍රමාණයේ <strong>Packing Summary</strong> එක දැකගත හැක.</li>
+          <li>භාණ්ඩ වාහනයට පටවාගෙන ගොස් කඩයට භාණ්ඩ බාරදෙන විට <strong>"Deliver & Settle"</strong> Click කරන්න.</li>
+          <li>කඩේදී භාණ්ඩ අඩු වැඩි වීමක් සිදුවුවහොත් <strong>"Adjust Items"</strong> මඟින් එම ස්ථානයේදීම බිල සංශෝධනය කළ හැක.</li>
+          <li>කඩේ ගෙවන ආකාරය (Cash / Credit) තහවුරු කර <strong>"Deliver & Print Bill"</strong> Click කරන්න.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ═══ 9. REPORTS & PDF HUB ════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-reports">
+      <div class="section-head">
+        <h2>9. මූල්‍ය වාර්තා සහ PDF Hub (Reports & PDF Hub)</h2>
+      </div>
+      <p>Reports Tab එකෙන් ඔබට අවශ්‍ය ඕනෑම කාලසීමාවක් (Today, Yesterday, This Week, This Month, Custom Date Range) තෝරා පහත A4 PDF වාර්තා ලබාගත හැක:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>වාර්තා වර්ගය (Report Type)</th>
+            <th>අඩංගු තොරතුරු (Contents)</th>
+            <th>භාවිතය (Purpose)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>👑 Master Summary A4 PDF</strong></td>
+            <td>ආදායම, ලාභය, Free Issues, Returns, Collections, මාර්ග කාර්යසාධනය, වැඩිම විකුණුම් හා ණයගැතියන් සියල්ල.</td>
+            <td>ව්‍යාපාර හිමිකරුගේ සම්පූර්ණ විගණනයට.</td>
+          </tr>
+          <tr>
+            <td><strong>🎁 Free Issues PDF</strong></td>
+            <td>නොමිලේ දුන් මුළු Pack ගණන, භාණ්ඩ අනුව සහ කඩ අනුව ලබාදුන් Free ප්‍රමාණය සහ මුදල් වටිනාකම.</td>
+            <td>ප්‍රවර්ධන වියදම් සහ Schemes පාලනයට.</td>
+          </tr>
+          <tr>
+            <td><strong>🔄 Returns & Damages PDF</strong></td>
+            <td>ආපසු ලැබුණු Pack ගණන, හේතුව (Damaged/Expired), Invoice අංක සහ අඩු කළ Refund මුදල.</td>
+            <td>අලාභ හා හානි වූ භාණ්ඩ නිරීක්ෂණයට.</td>
+          </tr>
+          <tr>
+            <td><strong>🛒 Sales & Invoices PDF</strong></td>
+            <td>දැමූ සියලුම බිල්පත් අංක, මුදල් ගෙවීම්, ණය, ආදායම සහ ලාභය.</td>
+            <td>දෛනික විකුණුම් ලේඛනය ලෙස තබාගැනීමට.</td>
+          </tr>
+          <tr>
+            <td><strong>💳 Collections & Debtors PDF</strong></td>
+            <td>එකතු කරගත් ණය මුදල් සහ දැනට වෙළඳපොලේ කඩවලින් අයවිය යුතු සියලුම හිඟ ණය ලැයිස්තුව.</td>
+            <td>ණය එකතු කිරීමේ සැලසුම් සකස් කිරීමට.</td>
+          </tr>
+          <tr>
+            <td><strong>📦 Stock Outflow Matrix PDF</strong></td>
+            <td>විකිණුන ප්‍රමාණය + Free දුන් ප්‍රමාණය - Returns = ශුද්ධ පිටවූ Stock ප්‍රමාණය.</td>
+            <td>ගබඩා තොග පාලනය හා නිෂ්පාදන සැලසුමට.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══ 10. SETTINGS & PRINTER ══════════════════════════════════════════ -->
+    <div class="section-block" id="sec-settings">
+      <div class="section-head">
+        <h2>10. පද්ධති සැකසුම් & Thermal Printer සැකසීම (Settings)</h2>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">⚙️ ව්‍යාපාර තොරතුරු සහ Bluetooth Printer සැකසීම:</div>
+        <ol>
+          <li><strong>Settings Tab</strong> එකට යන්න.</li>
+          <li>ඔබගේ ආයතනයේ නම, Tagline එක, ලිපිනය සහ දුරකථන අංකය ඇතුළත් කරන්න.</li>
+          <li>ආයතනයේ <strong>Logo (ලාංඡනය)</strong> Upload කරන්න.</li>
+          <li><strong>Thermal Printer Width</strong> තෝරන්න:
+            <br/>- <strong>58mm (32 Columns)</strong>: කුඩා සාක්කුවේ ගෙනියන Bluetooth Mobile Printer සඳහා.
+            <br/>- <strong>80mm (48 Columns)</strong>: විශාල Desktop / Counter Thermal Printer සඳහා.
+          </li>
+          <li>බිල්පතේ යටින් වැටෙන ස්තූති පණිවිඩය (<strong>Receipt Footer Note</strong>) සකසන්න.</li>
+          <li><strong>"Save Company Profile & Settings"</strong> Click කරන්න.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- ═══ 11. OFFLINE & SYNC ══════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-offline">
+      <div class="section-head">
+        <h2>11. 100% Offline ක්‍රියාකාරීත්වය සහ Cloud Auto-Sync</h2>
+      </div>
+
+      <div class="alert-box alert-blue">
+        <span style="font-size: 18px;">📶</span>
+        <div>
+          <strong>Offline Mode ක්‍රියාත්මක වන ආකාරය:</strong>
+          <p>සිස්ටම් එකේ සියලුම දත්ත ඔබගේ Phone එකේ හෝ පරිගණකයේ <strong>IndexedDB Internal Database</strong> එක තුළ තැන්පත් වේ. Internet නැති විට කිසිදු Error එකක් නොපෙන්වා "Offline / Local DB" ලෙස ක්‍රියා කරයි. ඔබ සාමාන්‍ය පරිදි බිල්පත් දමන්න, කඩ ඇතුළත් කරන්න, ණය එකතු කරන්න.</p>
+        </div>
+      </div>
+
+      <div class="alert-box alert-green">
+        <span style="font-size: 18px;">☁️</span>
+        <div>
+          <strong>Auto Cloud Sync (Internet ලැබුණු විට):</strong>
+          <p>දුරකථනය නැවත Wi-Fi හෝ Mobile Data වෙත සම්බන්ධ වූ වහාම, Offline සිටියදී දැමූ සියලුම බිල්පත්, payments සහ shops ස්වයංක්‍රීයව Cloud Database (Supabase) එක වෙත Sync වේ!</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-title">💾 Backup ලබාගැනීම සහ Restore කිරීම:</div>
+        <p>Settings Tab එකේ පහළ ඇති <strong>"Export Backup (JSON)"</strong> Button එක Click කිරීමෙන් සම්පූර්ණ Database එකම එක File එකක් ලෙස Save කරගත හැක. අවශ්‍ය වූ විට <strong>"Import Backup"</strong> මඟින් නැවත Restore කළ හැක.</p>
+      </div>
+    </div>
+
+    <!-- ═══ 12. FAQ ═════════════════════════════════════════════════════════ -->
+    <div class="section-block" id="sec-faq">
+      <div class="section-head">
+        <h2>12. නිතර අසන ප්‍රශ්න සහ ගැටළු විසඳීම (FAQ)</h2>
+      </div>
+
+      <div class="step-card">
+        <strong>ප්‍රශ්නය 1: Phone එකේ App එකක් ලෙස Install කරගන්නේ කෙසේද?</strong>
+        <p>Google Chrome (Android) හෝ Safari (iOS) එකෙන් මෙම Web Link එක Open කර Browser Menu එකෙන් <strong>"Add to Home Screen"</strong> (හෝ <strong>"Install App"</strong>) තෝරන්න. එවිට Phone එකේ Display එක මත App Icon එකක් ආකාරයට හැදෙන අතර, Offline Open කළ හැක.</p>
+      </div>
+
+      <div class="step-card">
+        <strong>ප්‍රශ්නය 2: Bluetooth Printer එක Connect කරන්නේ කෙසේද?</strong>
+        <p>Phone එකේ Bluetooth On කර Thermal Printer එක Pair කරන්න. POS බිලක් දමා "Print Bill" දුන් විට එන Print Dialog එකෙන් අදාළ Bluetooth Printer එක තෝරන්න.</p>
+      </div>
+
+      <div class="step-card">
+        <strong>ප්‍රශ්නය 3: වැරදුණු බිලක් Cancel කරන්නේ කෙසේද?</strong>
+        <p>Shops Tab එකෙන් අදාළ කඩේ "History" වෙත ගොස් වැරදුණු බිල තෝරා "Cancel Invoice" Click කරන්න. එවිට කඩේ ණය ගිණුමෙන් එම මුදල ස්වයංක්‍රීයව නිවැරදි වේ.</p>
+      </div>
+    </div>
+
+    <!-- ═══ FOOTER ══════════════════════════════════════════════════════════ -->
+    <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 25px; font-size: 10px; color: #94a3b8;">
+      <p>🌿 <strong>Spice & Wholesale Card POS System</strong> — Official Sinhala User Guide & Training Manual v4.0</p>
+      <p>© 2026 All Rights Reserved. Designed for Mobile Wholesale Distribution.</p>
+    </div>
+
+  </div>
+
+</body>
+</html>
