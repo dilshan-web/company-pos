@@ -3136,6 +3136,9 @@ input, textarea, select {
             <button onclick="Users.openTransferModal()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 px-3 py-2 rounded-2xl text-xs font-black shadow-lg active:scale-95 transition-all flex items-center gap-1">
               🔄 Replace Rep
             </button>
+            <button onclick="RepOnboard.open()" class="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 px-3 py-2 rounded-2xl text-xs font-black shadow-lg active:scale-95 transition-all flex items-center gap-1">
+              🧙 New Rep Wizard
+            </button>
             <button onclick="Users.openAddModal()" class="bg-white text-purple-900 px-3.5 py-2 rounded-2xl text-xs font-black shadow-lg hover:bg-purple-50 active:scale-95 transition-all">
               + Add User
             </button>
@@ -4356,8 +4359,8 @@ input, textarea, select {
   <!-- =========================================================================
        MODAL: ADD / EDIT USER & SALES REP
        ========================================================================= -->
-  <div id="modal-user-form" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 shadow-2xl">
+  <div id="modal-user-form" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="modal-content bg-white w-full max-w-md rounded-3xl p-5 space-y-3.5 shadow-2xl max-h-[90vh] overflow-y-auto my-auto">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 id="user-modal-title" class="font-black text-sm text-slate-800">➕ Add New User</h3>
         <button onclick="UI.closeModal('modal-user-form')" class="p-1 text-slate-400 text-lg">✕</button>
@@ -4587,8 +4590,165 @@ input, textarea, select {
 
 
   <!-- =========================================================================
+       MODAL: NEW REP ONBOARDING WIZARD (Step 1: Rep → Step 2: Route → Step 3: Shops)
+       ========================================================================= -->
+  <div id="modal-rep-onboard" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+    <div class="modal-content bg-white w-full max-w-sm rounded-3xl shadow-2xl flex flex-col max-h-[96vh] overflow-hidden">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 rounded-t-3xl flex items-center justify-between flex-shrink-0">
+        <div>
+          <div class="text-[10px] font-black uppercase tracking-widest text-emerald-100">New Rep Setup Wizard</div>
+          <h3 id="onboard-title" class="text-white font-black text-sm mt-0.5">Step 1 of 3 — Create Rep Account</h3>
+        </div>
+        <button onclick="UI.closeModal('modal-rep-onboard')" class="text-white/70 hover:text-white text-lg p-1">✕</button>
+      </div>
+
+      <!-- Step Indicator -->
+      <div class="flex items-center px-5 py-2.5 border-b border-slate-100 bg-slate-50 gap-1 flex-shrink-0">
+        <div id="onboard-step-dot-1" class="flex-1 h-1.5 rounded-full bg-emerald-500 transition-all"></div>
+        <div id="onboard-step-dot-2" class="flex-1 h-1.5 rounded-full bg-slate-200 transition-all"></div>
+        <div id="onboard-step-dot-3" class="flex-1 h-1.5 rounded-full bg-slate-200 transition-all"></div>
+      </div>
+
+      <!-- Scrollable Body -->
+      <div class="overflow-y-auto flex-1 p-4 space-y-3">
+
+        <!-- ── STEP 1: CREATE REP ──────────────────────────────────── -->
+        <div id="onboard-step-1">
+          <div class="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200 space-y-2.5">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm font-black">🚚</div>
+              <div>
+                <div class="text-xs font-black text-emerald-900">Rep Account Details</div>
+                <div class="text-[10px] text-emerald-700">New Rep ගේ login details හදන්න</div>
+              </div>
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-600 block mb-1">Full Name (සම්පූර්ණ නම) *</label>
+              <input type="text" id="ob-rep-fullname" placeholder="e.g. Kasun Perera" class="w-full bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[11px] font-bold text-slate-600 block mb-1">Username *</label>
+                <input type="text" id="ob-rep-username" placeholder="e.g. rep1" class="w-full bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold lowercase" />
+              </div>
+              <div>
+                <label class="text-[11px] font-bold text-slate-600 block mb-1">PIN (4+ digits) *</label>
+                <input type="password" id="ob-rep-pin" maxlength="8" placeholder="1234" autocomplete="new-password" class="w-full bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs font-mono font-black text-center tracking-widest" />
+              </div>
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-600 block mb-1">Phone Number (දුරකථනය)</label>
+              <input type="tel" id="ob-rep-phone" placeholder="077 123 4567" class="w-full bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs" />
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-600 block mb-1">Supervisor (optional)</label>
+              <select id="ob-rep-supervisor" class="w-full bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold">
+                <option value="">-- No Supervisor --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── STEP 2: ROUTE ──────────────────────────────────────── -->
+        <div id="onboard-step-2" class="hidden">
+          <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-200 space-y-2.5">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center text-sm font-black">🗺️</div>
+              <div>
+                <div class="text-xs font-black text-orange-900">Assign Route (මාර්ගය)</div>
+                <div class="text-[10px] text-orange-700">Rep ට Route assign කරන්න හෝ අලුත් Route එකක් හදන්න</div>
+              </div>
+            </div>
+
+            <!-- Existing routes to choose from -->
+            <div>
+              <label class="text-[11px] font-bold text-slate-600 block mb-1">Select Existing Route(s):</label>
+              <div id="ob-routes-checklist" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+              <div class="flex-1 border-t border-slate-200"></div>
+              <span>හෝ / OR</span>
+              <div class="flex-1 border-t border-slate-200"></div>
+            </div>
+
+            <!-- Create New Route inline -->
+            <div class="bg-white p-2.5 rounded-xl border border-orange-300 space-y-2">
+              <div class="text-[11px] font-black text-orange-900">+ Create Brand New Route:</div>
+              <input type="text" id="ob-new-route-name" placeholder="e.g. Galnewa Route" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              <input type="text" id="ob-new-route-desc" placeholder="e.g. Galnewa, Bulnewa, Negampaha (towns)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+              <button onclick="RepOnboard.createRouteInline()" class="w-full bg-orange-600 text-white text-[11px] font-black py-2 rounded-xl active:scale-95 hover:bg-orange-700 transition-all">
+                ✅ Create Route & Add to Rep
+              </button>
+            </div>
+
+            <!-- Selected routes summary -->
+            <div class="bg-white px-3 py-1.5 rounded-xl border border-orange-200 flex items-center justify-between text-[11px] font-black">
+              <span id="ob-route-count-badge" class="text-orange-900">0 Routes Selected</span>
+              <span id="ob-shop-count-badge" class="text-slate-500">0 Shops</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── STEP 3: SHOPS ───────────────────────────────────────── -->
+        <div id="onboard-step-3" class="hidden">
+          <div class="bg-blue-50/70 p-3 rounded-2xl border border-blue-200 space-y-2.5">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-black">🏪</div>
+              <div>
+                <div class="text-xs font-black text-blue-900">Add Shops (කඩ සාප්පු)</div>
+                <div class="text-[10px] text-blue-700">Rep ගේ Route ට Shops add කරන්න (Skip කළ හැක)</div>
+              </div>
+            </div>
+
+            <!-- Already-existing shops summary -->
+            <div id="ob-existing-shops-note" class="bg-white px-3 py-2 rounded-xl border border-blue-200 text-[11px] text-blue-900 font-bold hidden">
+              ✅ Route ත Shop <span id="ob-existing-shops-count">0</span>ක් already ඇත — ඒවා Rep ට auto-link වේ.
+            </div>
+
+            <!-- Quick add multiple shops -->
+            <div class="space-y-1.5">
+              <div class="text-[11px] font-black text-blue-900">Quick Add Shops (Shop Name ලිස්ට් ගහන්න):</div>
+              <textarea id="ob-shops-bulk" rows="5" placeholder="එක shop name එකක් line එකකට:&#10;Perera Stores&#10;Nimal Kade&#10;Jayawardena Shop&#10;Lanka Traders" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 resize-none"></textarea>
+              <div class="text-[10px] text-slate-500">Line එකකට Shop name එකක් ලිවිය හැක. GPS coordinates පසුව shop edit ෙකොට set කරන්න.</div>
+            </div>
+
+            <!-- Route selected for shops -->
+            <div>
+              <label class="text-[11px] font-bold text-slate-600 block mb-1">Link Shops to Route:</label>
+              <select id="ob-shops-route-select" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                <option value="">-- Select Route --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end scrollable body -->
+
+      <!-- Footer Buttons -->
+      <div class="border-t border-slate-100 p-4 flex gap-2 flex-shrink-0">
+        <button id="onboard-btn-back" onclick="RepOnboard.prevStep()" class="hidden px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-black rounded-2xl hover:bg-slate-200 active:scale-95">← Back</button>
+        <button id="onboard-btn-skip" onclick="RepOnboard.skipStep()" class="px-4 py-2.5 bg-slate-100 text-slate-500 text-xs font-bold rounded-2xl hover:bg-slate-200 active:scale-95 hidden">Skip</button>
+        <button id="onboard-btn-next" onclick="RepOnboard.nextStep()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-2xl shadow-md active:scale-95 transition-all">
+          Next Step →
+        </button>
+        <button id="onboard-btn-finish" onclick="RepOnboard.finish()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-2xl shadow-md active:scale-95 transition-all hidden">
+          🎉 Finish Setup!
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
        MODAL: ADD / EDIT ROUTE
        ========================================================================= -->
+
   <div id="modal-route-form" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-5 space-y-3.5 shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -24090,41 +24250,35 @@ const GPS = {
       const user = Auth.currentUser;
       const tenantId = (user && user.tenantId) ? user.tenantId : (getActiveTenantId() || 1);
       const userId = user.id || 1;
+      const cleanUsername = String(user.username || userId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const docId = `rep_${cleanUsername}`;
 
       const payload = {
+        id: docId,
         tenantId,
         repId: userId,
         repUsername: user.username,
         repName: user.fullName || user.username,
         role: user.role,
-        lat: pos.lat,
-        lng: pos.lng,
-        accuracy: pos.accuracy,
-        speed: pos.speed,
-        heading: pos.heading,
+        lat: Number(pos.lat),
+        lng: Number(pos.lng),
+        accuracy: pos.accuracy || 10,
+        speed: pos.speed || 0,
+        heading: pos.heading || 0,
         isOnline: true,
         updatedAt: new Date().toISOString(),
         timestamp: Date.now()
       };
 
-      const allLocs = await db.repLocations.toArray();
-      const existing = allLocs.find(l =>
-        String(l.repId) === String(userId) ||
-        (l.repUsername && String(l.repUsername).toLowerCase() === String(user.username).toLowerCase())
-      );
+      await db.repLocations.put(payload);
 
-      if (existing && existing.id) {
-        await db.repLocations.update(existing.id, payload);
-      } else {
-        await db.repLocations.add(payload);
-      }
-
-      // Also update user's last coordinates in db.users
+      // Also update user's last coordinates in db.users for instant cross-device availability
       if (db.users && user.id) {
         try {
           await db.users.update(user.id, {
-            lastLat: pos.lat,
-            lastLng: pos.lng,
+            lastLat: Number(pos.lat),
+            lastLng: Number(pos.lng),
+            lastSpeed: pos.speed || 0,
             lastGpsTime: new Date().toISOString()
           });
         } catch (uErr) {}
@@ -25384,7 +25538,15 @@ const MapView = {
 
       const rawLocations = await db.repLocations.toArray();
       const allLocations = filterByTenant(rawLocations);
-      const locMap = Object.fromEntries(allLocations.map(l => [String(l.repId), l]));
+      const locMap = {};
+      allLocations.forEach(l => {
+        if (l.repId) locMap[String(l.repId)] = l;
+        if (l.repUsername) {
+          locMap[String(l.repUsername).toLowerCase()] = l;
+          locMap[String(l.repUsername)] = l;
+        }
+        if (l.id) locMap[String(l.id)] = l;
+      });
 
       let targetReps = repsList;
       if (this.activeRepId !== 'all') {
@@ -25393,12 +25555,16 @@ const MapView = {
 
       for (let i = 0; i < targetReps.length; i++) {
         const repUser = targetReps[i];
-        let repLoc = locMap[String(repUser.id)] || locMap[String(repUser.username)];
+        let repLoc = locMap[String(repUser.id)] ||
+                     (repUser.username && locMap[String(repUser.username).toLowerCase()]) ||
+                     (repUser.username && locMap[String(repUser.username)]) ||
+                     locMap[`rep_${String(repUser.username || repUser.id).toLowerCase()}`];
+
         if ((!repLoc || !repLoc.lat) && repUser.lastLat && repUser.lastLng) {
           repLoc = {
             lat: Number(repUser.lastLat),
             lng: Number(repUser.lastLng),
-            speed: 0,
+            speed: Number(repUser.lastSpeed) || 0,
             timestamp: repUser.lastGpsTime ? new Date(repUser.lastGpsTime).getTime() : Date.now(),
             repName: repUser.fullName || repUser.username
           };
@@ -25411,8 +25577,29 @@ const MapView = {
         bounds.push(repLatLng);
 
         const timeDiffMins = Math.round((Date.now() - (repLoc.timestamp || Date.now())) / 60000);
-        const isLive = timeDiffMins <= 3;
-        const statusText = isLive ? '🟢 Live Moving' : (timeDiffMins <= 15 ? '🟡 Idle' : `⚫ Offline (${timeDiffMins}m ago)`);
+        const isRecent = timeDiffMins <= 5;
+        const currentSpeed = Number(repLoc.speed) || 0;
+        const isMoving = isRecent && currentSpeed > 2;
+        const isHalted = isRecent && currentSpeed <= 2;
+        const isIdle = !isRecent && timeDiffMins <= 25;
+
+        let statusText = `⚫ Offline (${timeDiffMins}m ago)`;
+        let markerStatusText = 'Offline';
+        let statusBadgeBg = '#f1f5f9; color: #475569;';
+
+        if (isMoving) {
+          statusText = `🟢 Live Moving • ${currentSpeed} km/h`;
+          markerStatusText = `🏍️ ${currentSpeed} km/h`;
+          statusBadgeBg = '#dcfce7; color: #166534; border: 1px solid #86efac;';
+        } else if (isHalted) {
+          statusText = `⏸️ Halted / Stopped (නැවතී ඇත)`;
+          markerStatusText = '⏸️ Halted';
+          statusBadgeBg = '#e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;';
+        } else if (isIdle) {
+          statusText = `🟡 Idle (${timeDiffMins}m ago)`;
+          markerStatusText = `Idle ${timeDiffMins}m`;
+          statusBadgeBg = '#fef3c7; color: #92400e; border: 1px solid #fde68a;';
+        }
 
         const repSales = this.salesTodayCache.filter(s => String(s.repId) === String(repUser.id));
         const totalBilled = repSales.reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
@@ -25428,12 +25615,12 @@ const MapView = {
 
         const repIconHtml = `
           <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-            ${isLive ? `<div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: ${isAlertOut ? '#ef4444' : repColor}; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
+            ${isMoving ? `<div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: ${isAlertOut ? '#ef4444' : repColor}; opacity: 0.45; animation: ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : (isHalted ? `<div style="position: absolute; width: 40px; height: 40px; border-radius: 50%; background: #38bdf8; opacity: 0.35;"></div>` : '')}
             <div style="background: ${iconBg}; color: #fff; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid #ffffff; box-shadow: 0 4px 12px ${isAlertOut ? 'rgba(239,68,68,0.7)' : 'rgba(0,0,0,0.4)'}; z-index: 10;">
               ${getRoleIcon(repUser.role, isAlertOut)}
             </div>
             <div style="background: ${isAlertOut ? '#991b1b' : repColor}; color: #fff; font-size: 9.5px; font-weight: 900; padding: 2px 7px; border-radius: 8px; margin-top: 2px; white-space: nowrap; z-index: 10; border: 1.5px solid rgba(255,255,255,0.4); box-shadow: 0 2px 6px rgba(0,0,0,0.35);">
-              ${repUser.fullName || repUser.username} ${repLoc.speed ? `(${repLoc.speed} km/h)` : ''}
+              ${repUser.fullName || repUser.username} • ${markerStatusText}
               ${isAlertOut ? ` • 🚨 OUT` : ''}
             </div>
           </div>
@@ -25462,12 +25649,12 @@ const MapView = {
               </div>
             </div>
             ${outOfRouteBanner}
-            <div style="padding: 4px 8px; border-radius: 8px; font-size: 10.5px; font-weight: bold; margin-bottom: 6px; background: ${isLive ? '#dcfce7; color: #166534;' : '#f1f5f9; color: #475569;'}">
-              ${statusText} ${repLoc.speed ? `• ${repLoc.speed} km/h` : ''}
+            <div style="padding: 4px 8px; border-radius: 8px; font-size: 10.5px; font-weight: bold; margin-bottom: 6px; background: ${statusBadgeBg}">
+              ${statusText}
             </div>
             <div style="font-size: 11px; color: #334155; margin-bottom: 6px; line-height: 1.5;">
               📍 Distance Traveled (ගමන් කළ දුර): <b style="color: #2563eb;">${repStats.totalKm} KM</b><br>
-              ⚡ Live Speed (වේගය): <b style="color: #0284c7;">${repLoc.speed || repStats.currentSpeed || 0} km/h</b> (Max: ${repStats.maxSpeed} km/h)<br>
+              ⚡ Live Speed (වේගය): <b style="color: #0284c7;">${currentSpeed} km/h</b> (Max: ${repStats.maxSpeed} km/h)<br>
               🏪 Shops Visited (ගිය කඩ): <b>${visitedShopsCount} shops</b><br>
               💰 Sales Today (අද විකුණුම්): <b style="color: #16a34a;">Rs. ${totalBilled.toLocaleString()}</b><br>
               📌 GPS Lat: ${Number(repLoc.lat).toFixed(5)}, Lng: ${Number(repLoc.lng).toFixed(5)}
@@ -25533,12 +25720,16 @@ const MapView = {
     let html = '';
     for (let i = 0; i < repsList.length; i++) {
       const rep = repsList[i];
-      let loc = locMap[String(rep.id)] || locMap[String(rep.username)];
+      let loc = locMap[String(rep.id)] ||
+                (rep.username && locMap[String(rep.username).toLowerCase()]) ||
+                (rep.username && locMap[String(rep.username)]) ||
+                locMap[`rep_${String(rep.username || rep.id).toLowerCase()}`];
+
       if ((!loc || !loc.lat) && rep.lastLat && rep.lastLng) {
         loc = {
           lat: Number(rep.lastLat),
           lng: Number(rep.lastLng),
-          speed: 0,
+          speed: Number(rep.lastSpeed) || 0,
           timestamp: rep.lastGpsTime ? new Date(rep.lastGpsTime).getTime() : Date.now(),
           repName: rep.fullName || rep.username
         };
@@ -25546,8 +25737,11 @@ const MapView = {
       const repColor = this.REP_COLORS[i % this.REP_COLORS.length];
 
       const timeDiffMins = loc ? Math.round((Date.now() - (loc.timestamp || Date.now())) / 60000) : 999;
-      const isLive = loc && timeDiffMins <= 3;
-      const isIdle = loc && timeDiffMins > 3 && timeDiffMins <= 20;
+      const isRecent = loc && timeDiffMins <= 5;
+      const currentSpeed = Number(loc?.speed) || 0;
+      const isMoving = isRecent && currentSpeed > 2;
+      const isHalted = isRecent && currentSpeed <= 2;
+      const isIdle = loc && !isRecent && timeDiffMins <= 25;
 
       const repSales = this.salesTodayCache.filter(s => String(s.repId) === String(rep.id));
       const totalBilled = repSales.reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
@@ -25568,8 +25762,10 @@ const MapView = {
       const roleLabel = roleLabels[rep.role] || rep.role;
 
       let statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-600">⚫ Offline</span>`;
-      if (isLive) {
-        statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 Live (${loc.speed || 0} km/h)</span>`;
+      if (isMoving) {
+        statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 Moving (${currentSpeed} km/h)</span>`;
+      } else if (isHalted) {
+        statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-300">⏸️ Halted (නැවතී ඇත)</span>`;
       } else if (isIdle) {
         statusBadge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">🟡 Idle (${timeDiffMins}m ago)</span>`;
       }
@@ -26882,11 +27078,15 @@ const Shops = {
     if (latEl) latEl.value = shop ? (shop.lat || '') : '';
     if (lngEl) lngEl.value = shop ? (shop.lng || '') : '';
 
-    // Auto-fetch GPS in background for new shop
-    if (!shop && typeof GPS !== 'undefined') {
+    // Auto-fetch GPS in background for new shop ONLY for field mobile reps/delivery with real GPS (never desktop PC IP)
+    const isFieldRole = (typeof Auth !== 'undefined' && Auth.currentUser && (Auth.currentUser.role === 'rep' || Auth.currentUser.role === 'delivery'));
+    if (!shop && typeof GPS !== 'undefined' && isFieldRole) {
       GPS.getCurrentPosition().then(pos => {
-        if (latEl && !latEl.value && pos.lat) latEl.value = Number(pos.lat).toFixed(7);
-        if (lngEl && !lngEl.value && pos.lng) lngEl.value = Number(pos.lng).toFixed(7);
+        if (!pos || !pos.lat || !pos.lng) return;
+        const isColombo = (pos.lat >= 6.8 && pos.lat <= 7.15 && pos.lng >= 79.75 && pos.lng <= 80.05 && (pos.accuracy || 0) > 300);
+        if (isColombo) return;
+        if (latEl && !latEl.value) latEl.value = Number(pos.lat).toFixed(7);
+        if (lngEl && !lngEl.value) lngEl.value = Number(pos.lng).toFixed(7);
       }).catch(() => {});
     }
     if (shop && shop.routeId && routeSelect) {
@@ -26983,15 +27183,20 @@ const Shops = {
       let latVal = Number(document.getElementById('shop-modal-lat')?.value) || null;
       let lngVal = Number(document.getElementById('shop-modal-lng')?.value) || null;
 
-      // Fallback to live GPS if available
-      if ((!latVal || !lngVal) && typeof GPS !== 'undefined' && GPS.currentPos) {
-        latVal = Number(GPS.currentPos.lat.toFixed(7));
-        lngVal = Number(GPS.currentPos.lng.toFixed(7));
-      }
-
       const currentUser = (typeof Auth !== 'undefined' && Auth.currentUser) || null;
       let repId = currentUser ? currentUser.id : null;
       let repName = currentUser ? (currentUser.fullName || currentUser.username) : '';
+
+      // Fallback to live GPS ONLY for field reps/delivery with real GPS (never desktop ISP)
+      const isFieldUser = (currentUser && (currentUser.role === 'rep' || currentUser.role === 'delivery'));
+      if ((!latVal || !lngVal) && typeof GPS !== 'undefined' && GPS.currentPos && isFieldUser) {
+        const cp = GPS.currentPos;
+        const isColombo = (cp.lat >= 6.8 && cp.lat <= 7.15 && cp.lng >= 79.75 && cp.lng <= 80.05 && (cp.accuracy || 0) > 300);
+        if (!isColombo) {
+          latVal = Number(cp.lat.toFixed(7));
+          lngVal = Number(cp.lng.toFixed(7));
+        }
+      }
 
       // If created/edited by Admin, automatically link to the active Rep assigned to this route
       if (currentUser && currentUser.role === 'admin' && routeId && typeof db !== 'undefined' && db.users) {
@@ -27081,13 +27286,13 @@ const Shops = {
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
       }
 
-      // Immediately refresh MapView
+      UI.closeModal('modal-shop-form');
+      this.loadShops();
+
+      // Refresh MapView in background
       if (typeof MapView !== 'undefined' && MapView.refreshMap) {
         MapView.refreshMap();
       }
-
-      UI.closeModal('modal-shop-form');
-      await this.loadShops();
 
       // Refresh POS cache and auto-select shop if in POS
       if (typeof POS !== 'undefined') {
@@ -38294,38 +38499,41 @@ const Users = {
         UI.showToast('New User & Territory provisioned successfully! 🎉', 'success');
       }
 
-      // Auto-assign all shops in these routes to this Rep
-      if (role === 'rep' && assignedRouteIds.length > 0 && savedUserId) {
-        try {
-          const rawShops = await db.shops.toArray();
-          const targetShops = filterByTenant(rawShops).filter(s => assignedRouteIds.includes(Number(s.routeId)));
-          for (const s of targetShops) {
-            await db.shops.update(s.id, {
-              repId: savedUserId,
-              repName: fullName || username,
-              updatedAt: new Date().toISOString()
-            });
-          }
-        } catch (e) {
-          console.warn('Auto-assign shops to rep notice:', e);
-        }
-      }
-
-      // Deactivate inherited old rep if checkbox was checked
-      const inheritRepId = document.getElementById('user-form-inherit-rep')?.value;
-      const deactivateOld = document.getElementById('user-form-deactivate-old-rep')?.checked;
-      if (inheritRepId && deactivateOld) {
-        try {
-          await db.users.update(Number(inheritRepId), {
-            isActive: false,
-            updatedAt: new Date().toISOString()
-          });
-          UI.showToast('Previous rep account marked inactive! 🚫', 'info');
-        } catch (e) {}
-      }
-
+      // Close modal and refresh users list INSTANTLY
       UI.closeModal('modal-user-form');
       await this.loadUsers();
+
+      // Auto-assign shops and deactivate old rep in background without freezing UI
+      (async () => {
+        if (role === 'rep' && assignedRouteIds.length > 0 && savedUserId) {
+          try {
+            const rawShops = await db.shops.toArray();
+            const targetShops = filterByTenant(rawShops).filter(s => assignedRouteIds.includes(Number(s.routeId)));
+            for (const s of targetShops) {
+              await db.shops.update(s.id, {
+                repId: savedUserId,
+                repName: fullName || username,
+                updatedAt: new Date().toISOString()
+              });
+            }
+          } catch (e) {
+            console.warn('Auto-assign shops to rep notice:', e);
+          }
+        }
+
+        const inheritRepId = document.getElementById('user-form-inherit-rep')?.value;
+        const deactivateOld = document.getElementById('user-form-deactivate-old-rep')?.checked;
+        if (inheritRepId && deactivateOld) {
+          try {
+            await db.users.update(Number(inheritRepId), {
+              isActive: false,
+              updatedAt: new Date().toISOString()
+            });
+            UI.showToast('Previous rep account marked inactive! 🚫', 'info');
+            if (typeof Users !== 'undefined' && Users.loadUsers) Users.loadUsers();
+          } catch (e) {}
+        }
+      })();
     } catch (err) {
       console.error('Error saving user:', err);
       UI.showToast('Error saving user: ' + err.message, 'error');
@@ -38469,36 +38677,45 @@ const Users = {
       });
     }
 
-    // Auto-update all shops on these routes or created by old rep
-    const rawShops = await db.shops.toArray();
-    const shopsToUpdate = filterByTenant(rawShops).filter(s =>
-      oldRoutes.includes(Number(s.routeId)) ||
-      Number(s.repId) === oldRepId ||
-      (s.createdBy && String(s.createdBy).toLowerCase() === String(oldRep.username).toLowerCase())
-    );
-
-    let updatedShopCount = 0;
-    for (const s of shopsToUpdate) {
-      await db.shops.update(s.id, {
-        repId: targetRepId,
-        repName: targetRepName,
-        updatedAt: new Date().toISOString()
-      });
-      updatedShopCount++;
-    }
-
-    // Deactivate old rep if requested
-    const deactivateOld = document.getElementById('transfer-deactivate-old')?.checked;
-    if (deactivateOld) {
-      await db.users.update(oldRepId, {
-        isActive: false,
-        updatedAt: new Date().toISOString()
-      });
-    }
-
+    // Close modal and show initial toast INSTANTLY
     UI.closeModal('modal-transfer-rep');
-    UI.showToast(`🎉 ${oldRoutes.length} Routes and ${updatedShopCount} Shops transferred to ${targetRepName}!`, 'success');
+    UI.showToast(`Transferring ${oldRoutes.length} routes to ${targetRepName}... 🚀`, 'info');
     await this.loadUsers();
+
+    // Reassign shops and deactivate old rep in background
+    (async () => {
+      try {
+        const rawShops = await db.shops.toArray();
+        const shopsToUpdate = filterByTenant(rawShops).filter(s =>
+          oldRoutes.includes(Number(s.routeId)) ||
+          Number(s.repId) === oldRepId ||
+          (s.createdBy && String(s.createdBy).toLowerCase() === String(oldRep.username).toLowerCase())
+        );
+
+        let updatedShopCount = 0;
+        for (const s of shopsToUpdate) {
+          await db.shops.update(s.id, {
+            repId: targetRepId,
+            repName: targetRepName,
+            updatedAt: new Date().toISOString()
+          });
+          updatedShopCount++;
+        }
+
+        const deactivateOld = document.getElementById('transfer-deactivate-old')?.checked;
+        if (deactivateOld) {
+          await db.users.update(oldRepId, {
+            isActive: false,
+            updatedAt: new Date().toISOString()
+          });
+        }
+
+        UI.showToast(`🎉 ${oldRoutes.length} Routes and ${updatedShopCount} Shops transferred to ${targetRepName}!`, 'success');
+        if (typeof Users !== 'undefined' && Users.loadUsers) Users.loadUsers();
+      } catch (e) {
+        console.warn('Background shop transfer notice:', e);
+      }
+    })();
   },
 
   async deleteUser(id) {
@@ -38535,6 +38752,381 @@ const Users = {
 };
 
 window.Users = Users;
+
+// --- rep_onboard.js ---
+/**
+ * New Rep Onboarding Wizard — 3-Step Setup
+ * Step 1: Create Rep Account (name, username, PIN, phone, supervisor)
+ * Step 2: Assign existing routes or create a new route inline
+ * Step 3: Bulk-add shop names to the selected route (optional)
+ *
+ * After finish: Users list auto-refreshes so new rep name appears instantly.
+ */
+
+const RepOnboard = {
+  currentStep: 1,
+  savedRepId: null,
+  savedRepName: '',
+  savedRouteIds: [],
+
+  // ─── Open Wizard ─────────────────────────────────────────────────────────
+  async open() {
+    this.currentStep = 1;
+    this.savedRepId = null;
+    this.savedRepName = '';
+    this.savedRouteIds = [];
+
+    // Clear Step 1 fields
+    ['ob-rep-fullname', 'ob-rep-username', 'ob-rep-pin', 'ob-rep-phone'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    // Populate supervisor dropdown
+    try {
+      const rawUsers = await db.users.toArray();
+      const sups = filterByTenant(rawUsers).filter(u => u.role === 'supervisor' && u.isActive !== false);
+      const supSel = document.getElementById('ob-rep-supervisor');
+      if (supSel) {
+        supSel.innerHTML = '<option value="">-- No Supervisor --</option>' +
+          sups.map(s => `<option value="${s.id}">📋 ${s.fullName || s.username}</option>`).join('');
+      }
+    } catch (e) {}
+
+    this.renderStep(1);
+    UI.openModal('modal-rep-onboard');
+  },
+
+  // ─── Render Step UI ───────────────────────────────────────────────────────
+  renderStep(step) {
+    this.currentStep = step;
+
+    // Show/hide step panels
+    [1, 2, 3].forEach(n => {
+      const el = document.getElementById(`onboard-step-${n}`);
+      if (el) el.classList.toggle('hidden', n !== step);
+      const dot = document.getElementById(`onboard-step-dot-${n}`);
+      if (dot) {
+        dot.className = `flex-1 h-1.5 rounded-full transition-all ${n <= step ? 'bg-emerald-500' : 'bg-slate-200'}`;
+      }
+    });
+
+    // Title
+    const titles = {
+      1: 'Step 1 of 3 — Rep Account (ගිණුම)',
+      2: 'Step 2 of 3 — Assign Route (මාර්ගය)',
+      3: 'Step 3 of 3 — Add Shops (කඩ සාප්පු)'
+    };
+    const titleEl = document.getElementById('onboard-title');
+    if (titleEl) titleEl.textContent = titles[step] || '';
+
+    // Back button
+    const backBtn = document.getElementById('onboard-btn-back');
+    if (backBtn) backBtn.classList.toggle('hidden', step === 1);
+
+    // Skip button — only on step 3
+    const skipBtn = document.getElementById('onboard-btn-skip');
+    if (skipBtn) skipBtn.classList.toggle('hidden', step !== 3);
+
+    // Next / Finish toggle
+    const nextBtn = document.getElementById('onboard-btn-next');
+    const finBtn = document.getElementById('onboard-btn-finish');
+    if (nextBtn) nextBtn.classList.toggle('hidden', step === 3);
+    if (finBtn) finBtn.classList.toggle('hidden', step !== 3);
+  },
+
+  // ─── Step Navigation ──────────────────────────────────────────────────────
+  async nextStep() {
+    if (this.currentStep === 1) {
+      const ok = await this.saveStep1();
+      if (!ok) return;
+      await this.prepStep2();
+      this.renderStep(2);
+    } else if (this.currentStep === 2) {
+      await this.saveStep2Routes();
+      await this.prepStep3();
+      this.renderStep(3);
+    }
+  },
+
+  prevStep() {
+    if (this.currentStep > 1) {
+      this.renderStep(this.currentStep - 1);
+    }
+  },
+
+  skipStep() {
+    // Only Step 3 is skippable
+    if (this.currentStep === 3) {
+      this.finish();
+    }
+  },
+
+  // ─── STEP 1: Save Rep Account ─────────────────────────────────────────────
+  async saveStep1() {
+    const fullName = document.getElementById('ob-rep-fullname')?.value?.trim() || '';
+    const username = document.getElementById('ob-rep-username')?.value?.trim()?.toLowerCase() || '';
+    const pin = document.getElementById('ob-rep-pin')?.value?.trim() || '';
+    const phone = document.getElementById('ob-rep-phone')?.value?.trim() || '';
+    const supervisorId = document.getElementById('ob-rep-supervisor')?.value;
+
+    if (!fullName || !username || !pin) {
+      UI.showToast('Name, Username and PIN ඇතුලත් කරන්න! ❌', 'warning');
+      return false;
+    }
+    if (pin.length < 4) {
+      UI.showToast('PIN අවම වශයෙන් ඉලක්කම් 4ක් විය යුතුයි.', 'warning');
+      return false;
+    }
+
+    try {
+      // Check username unique
+      const existing = await db.users.where('username').equals(username).first();
+      if (existing) {
+        UI.showToast(`Username "@${username}" already used. වෙනත් නමක් දන්න.`, 'warning');
+        return false;
+      }
+
+      const tenantId = (Auth.currentUser && Auth.currentUser.tenantId) ? Auth.currentUser.tenantId : (getActiveTenantId() || 1);
+
+      this.savedRepId = await db.users.add({
+        tenantId,
+        fullName,
+        username,
+        pin,
+        phone,
+        role: 'rep',
+        supervisorId: supervisorId ? Number(supervisorId) : null,
+        assignedRouteId: null,
+        assignedRouteIds: [],
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      this.savedRepName = fullName;
+      UI.showToast(`✅ Rep "${fullName}" created! Step 2 ට යමු.`, 'success');
+      return true;
+    } catch (e) {
+      UI.showToast('Error creating rep: ' + e.message, 'error');
+      return false;
+    }
+  },
+
+  // ─── STEP 2: Populate Route Checklist ────────────────────────────────────
+  async prepStep2() {
+    try {
+      const rawRoutes = await db.routes.toArray();
+      const routes = filterByTenant(rawRoutes);
+      const rawShops = await db.shops.toArray();
+      const shopsByRoute = {};
+      filterByTenant(rawShops).forEach(s => {
+        shopsByRoute[Number(s.routeId)] = (shopsByRoute[Number(s.routeId)] || 0) + 1;
+      });
+
+      const list = document.getElementById('ob-routes-checklist');
+      if (list) {
+        if (routes.length === 0) {
+          list.innerHTML = '<p class="text-xs text-slate-400">Routes නෑ — පහත New Route හදන්න.</p>';
+        } else {
+          list.innerHTML = routes.map(r => {
+            const cnt = shopsByRoute[Number(r.id)] || 0;
+            return `
+              <label class="flex items-center justify-between p-2 bg-white rounded-xl border border-orange-200 text-xs font-bold text-slate-800 cursor-pointer hover:bg-orange-50">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" name="ob-route-cb" value="${r.id}" onchange="RepOnboard.onRouteCheckChange()" class="w-4 h-4 rounded text-orange-600 focus:ring-0" />
+                  <span>📍 ${r.name}</span>
+                </div>
+                <span class="text-[10px] bg-orange-100 text-orange-800 px-2 py-0.5 rounded-lg font-black">${cnt} Shops</span>
+              </label>
+            `;
+          }).join('');
+        }
+      }
+
+      // Clear new route fields
+      const nrn = document.getElementById('ob-new-route-name');
+      const nrd = document.getElementById('ob-new-route-desc');
+      if (nrn) nrn.value = '';
+      if (nrd) nrd.value = '';
+
+      this.onRouteCheckChange();
+    } catch (e) {}
+  },
+
+  async onRouteCheckChange() {
+    const cbs = document.querySelectorAll('input[name="ob-route-cb"]:checked');
+    const ids = Array.from(cbs).map(cb => Number(cb.value));
+    const badge = document.getElementById('ob-route-count-badge');
+    const shopBadge = document.getElementById('ob-shop-count-badge');
+
+    if (badge) badge.textContent = `${ids.length} Route${ids.length === 1 ? '' : 's'} Selected`;
+
+    if (shopBadge && ids.length > 0) {
+      try {
+        const rawShops = await db.shops.toArray();
+        const cnt = filterByTenant(rawShops).filter(s => ids.includes(Number(s.routeId))).length;
+        shopBadge.textContent = `${cnt} Shops`;
+      } catch (e) {}
+    } else if (shopBadge) {
+      shopBadge.textContent = '0 Shops';
+    }
+  },
+
+  // ─── Create Route Inline (Step 2 inline button) ───────────────────────────
+  async createRouteInline() {
+    const name = document.getElementById('ob-new-route-name')?.value?.trim();
+    const desc = document.getElementById('ob-new-route-desc')?.value?.trim() || '';
+    if (!name) {
+      UI.showToast('Route name ලිවිය යුතුයි!', 'warning');
+      return;
+    }
+
+    try {
+      const tenantId = getActiveTenantId() || 1;
+      const newRouteId = await db.routes.add({
+        tenantId,
+        name,
+        description: desc,
+        createdBy: Auth.currentUser?.username || 'admin',
+        updatedAt: new Date().toISOString()
+      });
+
+      UI.showToast(`✅ Route "${name}" created!`, 'success');
+
+      // Refresh checklist and auto-check new route
+      await this.prepStep2();
+      const cbs = document.querySelectorAll(`input[name="ob-route-cb"][value="${newRouteId}"]`);
+      cbs.forEach(cb => { cb.checked = true; });
+      this.onRouteCheckChange();
+
+      // Clear name/desc inputs
+      const nrn = document.getElementById('ob-new-route-name');
+      const nrd = document.getElementById('ob-new-route-desc');
+      if (nrn) nrn.value = '';
+      if (nrd) nrd.value = '';
+    } catch (e) {
+      UI.showToast('Error creating route: ' + e.message, 'error');
+    }
+  },
+
+  // ─── STEP 2: Save selected routes to Rep ─────────────────────────────────
+  async saveStep2Routes() {
+    const cbs = document.querySelectorAll('input[name="ob-route-cb"]:checked');
+    this.savedRouteIds = Array.from(cbs).map(cb => Number(cb.value));
+
+    if (this.savedRepId && this.savedRouteIds.length > 0) {
+      try {
+        await db.users.update(this.savedRepId, {
+          assignedRouteIds: this.savedRouteIds,
+          assignedRouteId: this.savedRouteIds[0],
+          updatedAt: new Date().toISOString()
+        });
+
+        // Auto-link existing shops in these routes to this rep
+        const rawShops = await db.shops.toArray();
+        const toUpdate = filterByTenant(rawShops).filter(s => this.savedRouteIds.includes(Number(s.routeId)));
+        for (const s of toUpdate) {
+          await db.shops.update(s.id, {
+            repId: this.savedRepId,
+            repName: this.savedRepName,
+            updatedAt: new Date().toISOString()
+          });
+        }
+
+        if (this.savedRouteIds.length > 0) {
+          UI.showToast(`✅ ${this.savedRouteIds.length} Route(s) linked to ${this.savedRepName}!`, 'success');
+        }
+      } catch (e) {
+        console.warn('Route assign warn:', e);
+      }
+    }
+  },
+
+  // ─── STEP 3: Prep shop step UI ───────────────────────────────────────────
+  async prepStep3() {
+    // Populate route select for shops
+    const sel = document.getElementById('ob-shops-route-select');
+    if (sel && this.savedRouteIds.length > 0) {
+      const rawRoutes = await db.routes.toArray();
+      const routes = filterByTenant(rawRoutes).filter(r => this.savedRouteIds.includes(Number(r.id)));
+      sel.innerHTML = routes.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    }
+
+    // Show existing shops note
+    const note = document.getElementById('ob-existing-shops-note');
+    const cnt = document.getElementById('ob-existing-shops-count');
+    if (note && this.savedRouteIds.length > 0) {
+      try {
+        const rawShops = await db.shops.toArray();
+        const existing = filterByTenant(rawShops).filter(s => this.savedRouteIds.includes(Number(s.routeId)));
+        if (existing.length > 0) {
+          if (cnt) cnt.textContent = existing.length;
+          note.classList.remove('hidden');
+        } else {
+          note.classList.add('hidden');
+        }
+      } catch (e) {}
+    }
+
+    // Clear textarea
+    const ta = document.getElementById('ob-shops-bulk');
+    if (ta) ta.value = '';
+  },
+
+  // ─── STEP 3: Finish — Bulk add shops + close ─────────────────────────────
+  async finish() {
+    const bulkText = document.getElementById('ob-shops-bulk')?.value?.trim() || '';
+    const routeIdForShops = Number(document.getElementById('ob-shops-route-select')?.value) || this.savedRouteIds[0] || null;
+
+    if (bulkText && routeIdForShops) {
+      const shopNames = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let addedCount = 0;
+      const tenantId = getActiveTenantId() || 1;
+
+      for (const shopName of shopNames) {
+        try {
+          await db.shops.add({
+            tenantId,
+            routeId: routeIdForShops,
+            name: shopName,
+            ownerName: '',
+            phone: '',
+            address: '',
+            currentCredit: 0,
+            lat: null,
+            lng: null,
+            repId: this.savedRepId,
+            repName: this.savedRepName,
+            isOpen: true,
+            createdBy: Auth.currentUser?.username || 'admin',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isSynced: false
+          });
+          addedCount++;
+        } catch (e) {
+          console.warn('Shop add warn:', e);
+        }
+      }
+
+      if (addedCount > 0) {
+        UI.showToast(`🏪 ${addedCount} Shops added to route!`, 'success');
+      }
+    }
+
+    UI.closeModal('modal-rep-onboard');
+
+    // ── KEY FIX: Immediately refresh Users list so new rep name appears ──
+    if (typeof Users !== 'undefined' && Users.loadUsers) {
+      await Users.loadUsers();
+    }
+
+    UI.showToast(`🎉 ${this.savedRepName} — Setup Complete! Rep ගිණුම, Routes & Shops සෑදීම ඉවරයි!`, 'success');
+  }
+};
+
+window.RepOnboard = RepOnboard;
 
 // --- app.js ---
 /**
