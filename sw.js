@@ -1,10 +1,12 @@
-const CACHE_NAME = 'spice-pos-v6.1.0';
+const CACHE_NAME = 'spice-pos-v6.1.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   'index.html',
   './manifest.json',
   'manifest.json',
+  './guide.html',
+  'guide.html',
   './icon-192.png',
   'icon-192.png',
   './icon-512.png',
