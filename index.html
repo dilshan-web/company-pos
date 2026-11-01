@@ -19014,6 +19014,7 @@ const Auth = {
     rep_can_view_qr: true,
     rep_can_edit_orders: true,
     rep_can_add_items_on_order: true,
+    allowSmsReceipt: false,
 
     // Delivery Driver Permissions
     delivery_can_edit_orders: true,
@@ -24274,21 +24275,19 @@ const POS = {
       UI.showToast(isBooking ? `Order #${invoiceNo} booked for delivery on ${UI.formatDate(deliveryDate)}!` : `Invoice #${invoiceNo} saved & billed!`, 'success');
       if (typeof SoundFX !== 'undefined') SoundFX.play('success');
 
-      // 5a. Offer SMS Receipt if shop has phone and user has permission
+      // 5a. Build SMS data now (before cart is cleared), trigger AFTER print/save
+      let _smsPending = null;
       try {
-        if (!isBooking && shop && shop.phone && Auth.checkPermission('allowSmsReceipt')) {
+        if (!isBooking && shop && shop.phone && Auth.can('allowSmsReceipt')) {
           const companyInfo = await db.company.get(1).catch(() => null);
           const companyName = (companyInfo && companyInfo.name) ? companyInfo.name : (localStorage.getItem('pos_company_name') || 'SPICE POS');
           const dateStr = new Date(date).toLocaleDateString('en-GB');
           const itemLines = State.cart.map(i => `${i.productName}: ${i.qty}x Rs.${i.sellingPrice}`).join('\n');
           const creditLine = creditAmount > 0 ? `\nCredit: Rs.${creditAmount.toFixed(2)}` : '';
           const smsMsg = `${companyName}\nDate: ${dateStr}\nInv: ${invoiceNo}\n${itemLines}\nTotal: Rs.${netTotal.toFixed(2)}${creditLine}\nThank you!`;
-          this._pendingSmsData = { phone: shop.phone, msg: smsMsg };
-          document.getElementById('sms-receipt-phone').textContent = shop.phone;
-          document.getElementById('sms-receipt-preview').textContent = smsMsg;
-          setTimeout(() => UI.openModal('modal-sms-receipt'), 600);
+          _smsPending = { phone: shop.phone, msg: smsMsg };
         }
-      } catch(smsErr) { console.warn('SMS offer error:', smsErr); }
+      } catch(smsErr) { console.warn('SMS build error:', smsErr); }
 
       // Realtime Order Notification for Store Keepers & Admin across tabs
       try {
@@ -24314,13 +24313,9 @@ const POS = {
         console.warn('Realtime order broadcast warning:', bcErr);
       }
 
-      // 5. Trigger Print if instant sale
-      if (!isBooking) {
-        if (autoPrint) {
-          await Print.printInvoice(saleId);
-        } else {
-          await Print.previewInvoice(saleId);
-        }
+      // 5. Trigger Print if instant sale (Save & Print only - Save Only does NOT print)
+      if (!isBooking && autoPrint) {
+        await Print.printInvoice(saleId);
       }
 
       // 6. Reset POS
@@ -24332,6 +24327,16 @@ const POS = {
       try { await this.loadRepDailySummary(); } catch(e) { console.warn('loadRepDailySummary notice:', e); }
       Dashboard.loadDashboard();
       if (typeof RepBills !== 'undefined' && RepBills.loadBills) RepBills.loadBills();
+
+      // 7. Show SMS modal after all resets (if data was prepared above)
+      if (_smsPending) {
+        this._pendingSmsData = _smsPending;
+        try {
+          document.getElementById('sms-receipt-phone').textContent = _smsPending.phone;
+          document.getElementById('sms-receipt-preview').textContent = _smsPending.msg;
+          setTimeout(() => UI.openModal('modal-sms-receipt'), 500);
+        } catch(smsOpenErr) { console.warn('SMS modal open error:', smsOpenErr); }
+      }
     } catch (err) {
       console.error('Error submitting sale:', err);
       UI.showToast('Error saving order: ' + err.message, 'error');
@@ -24572,7 +24577,7 @@ const RepBills = {
             🖨️
           </button>` : '';
 
-        const smsBtn = (shop && shop.phone && status !== 'Cancelled' && typeof Auth !== 'undefined' && Auth.checkPermission('allowSmsReceipt')) ? `
+        const smsBtn = (shop && shop.phone && status !== 'Cancelled' && typeof Auth !== 'undefined' && Auth.can('allowSmsReceipt')) ? `
           <button onclick="RepBills.sendSmsForBill(${sale.id})" title="Send SMS Receipt"
             class="w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm border border-emerald-200 active:scale-95 transition-all">
             📱
