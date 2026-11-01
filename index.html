@@ -369,6 +369,7 @@
       // Update UI & header
       if (typeof UI !== 'undefined') {
         try { if (UI.switchTab) UI.switchTab(defaultTab); } catch(e){}
+        try { if (defaultTab === 'pos' && typeof POS !== 'undefined' && POS.init) POS.init(); } catch(e){}
         try { if (UI.showToast) UI.showToast('සාදරයෙන් පිළිගනිමු, ' + (matchedUser.fullName || matchedUser.username) + '!', 'success'); } catch(e){}
         try { if (UI.updateCompanyBranding) UI.updateCompanyBranding(); } catch(e){}
       }
@@ -464,6 +465,12 @@
                 page.classList.add('hidden');
               }
             });
+            setTimeout(function() {
+              try {
+                if (typeof UI !== 'undefined' && UI.switchTab) UI.switchTab(defaultTab);
+                if (defaultTab === 'pos' && typeof POS !== 'undefined' && POS.init) POS.init();
+              } catch(e) {}
+            }, 100);
           }
         }
       } catch(e){}
@@ -2687,7 +2694,7 @@ body.theme-dark #app-bottom-nav {
         </div>
 
         <!-- Product Cards Grid -->
-        <div id="pos-products-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div id="pos-products-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2 pb-80 sm:pb-52">
           <!-- Populated by pos.js -->
         </div>
       </div>
@@ -3799,7 +3806,7 @@ body.theme-dark #app-bottom-nav {
     <!-- ==========================================
          TAB 10: USER & SALES REP MANAGEMENT (ADMIN ONLY)
          ========================================== -->
-    <section id="tab-users" class="app-tab-page hidden space-y-4 hr-or-admin">
+    <section id="tab-users" class="app-tab-page hidden space-y-4 admin-only">
       <!-- Users Hero Header -->
       <div class="bg-gradient-to-br from-purple-700 via-indigo-700 to-purple-900 rounded-3xl p-5 text-white shadow-xl shadow-purple-900/20 relative overflow-hidden">
         <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
@@ -3809,11 +3816,11 @@ body.theme-dark #app-bottom-nav {
               <span class="text-xl">👥</span>
               <span class="text-[10px] font-black uppercase tracking-widest text-purple-200">Team Access</span>
             </div>
-            <h2 class="text-xl font-black mt-0.5 tracking-tight">Users & Staff Management</h2>
-            <p class="text-xs text-purple-200/90 mt-0.5">Admin, Sales Reps & Delivery Distribution logins</p>
+            <h2 class="text-xl font-black mt-0.5 tracking-tight">Users & Staff Management (කාර්ය මණ්ඩලය)</h2>
+            <p class="text-xs text-purple-200/90 mt-0.5">Admin, Sales Reps, Delivery & Stores Team Logins</p>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="UI.refreshCurrentTab()" class="bg-white/20 hover:bg-white/30 text-white px-2.5 py-2 rounded-2xl text-xs font-bold backdrop-blur active:scale-95 flex items-center gap-1">
+            <button onclick="Users.loadUsers()" class="bg-white/20 hover:bg-white/30 text-white px-2.5 py-2 rounded-2xl text-xs font-bold backdrop-blur active:scale-95 flex items-center gap-1">
               <span class="refresh-icon-spin">🔄</span> Refresh
             </button>
             <button onclick="Users.openTransferModal()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 px-3 py-2 rounded-2xl text-xs font-black shadow-lg active:scale-95 transition-all flex items-center gap-1">
@@ -3846,6 +3853,59 @@ body.theme-dark #app-bottom-nav {
           <button onclick="Users.openAddModal('admin')" class="px-2.5 py-1 bg-purple-500 hover:bg-purple-400 text-white text-[11px] font-black rounded-xl shadow-xs active:scale-95 flex items-center gap-1 cursor-pointer">
             <span>👑 + Admin/Staff</span>
           </button>
+        </div>
+
+        <!-- Metric Summary Chips for Users -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 text-center">
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-purple-200 block">Total Users (සියලු දෙනා)</span>
+            <div id="users-total-count" class="text-base sm:text-lg font-black text-white mt-0.5">0</div>
+          </div>
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-emerald-200 block">Sales Reps (නියෝජිතයින්)</span>
+            <div id="users-rep-count" class="text-base sm:text-lg font-black text-white mt-0.5">0</div>
+          </div>
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-sky-200 block">Delivery (බෙදාහැරීම්)</span>
+            <div id="users-delivery-count" class="text-base sm:text-lg font-black text-white mt-0.5">0</div>
+          </div>
+          <div class="bg-white/15 backdrop-blur p-2.5 rounded-2xl border border-white/20">
+            <span class="text-[9px] uppercase font-bold text-amber-200 block">Admins & Staff</span>
+            <div id="users-admin-count" class="text-base sm:text-lg font-black text-white mt-0.5">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users List Container (Populated dynamically by Users.loadUsers()) -->
+      <div id="users-list-container" class="space-y-3">
+        <!-- Rendered by Users.loadUsers() -->
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TAB 11: HR & PAYROLL MANAGEMENT (20 CORE MODULES)
+         ========================================== -->
+    <section id="tab-payroll" class="app-tab-page hidden space-y-4 hr-or-admin">
+      <!-- HR Hero Header -->
+      <div class="bg-gradient-to-br from-pink-600 via-rose-600 to-rose-800 rounded-3xl p-5 text-white shadow-xl shadow-pink-900/20 relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between relative z-10">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xl">💰</span>
+              <span class="text-[10px] font-black uppercase tracking-widest text-pink-200">HR & Payroll Engine</span>
+            </div>
+            <h2 class="text-xl font-black mt-0.5 tracking-tight">HR & Payroll Management (මානව සම්පත් & වැටුප්)</h2>
+            <p class="text-xs text-pink-100/90 mt-0.5">Staff, Attendance, GPS Tracking, Leaves, EPF/ETF & Salaries</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="HR.init()" class="bg-white/20 hover:bg-white/30 text-white px-2.5 py-2 rounded-2xl text-xs font-bold backdrop-blur active:scale-95 flex items-center gap-1">
+              <span class="refresh-icon-spin">🔄</span> Refresh
+            </button>
+            <button onclick="HR.openAddEmployeeModal()" class="bg-white text-rose-800 px-3.5 py-2 rounded-2xl text-xs font-black shadow-lg hover:bg-pink-50 active:scale-95 transition-all">
+              + New Employee
+            </button>
+          </div>
         </div>
 
         <!-- Metric Summary Chips -->
@@ -4349,60 +4409,75 @@ body.theme-dark #app-bottom-nav {
 
       <!-- Select Product -->
       <div>
-        <label class="text-[11px] font-bold text-slate-500 block mb-1">Select Product *</label>
+        <label class="text-[11px] font-bold text-slate-500 block mb-1">ආපසු දෙන භාණ්ඩය *</label>
         <select id="return-modal-product" onchange="POS.onReturnProductChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-800">
           <!-- Populated dynamically -->
         </select>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <!-- Return Type: Full Card vs Unit/Piece -->
+        <!-- Return Type: dynamic per product unit -->
         <div>
-          <label class="text-[11px] font-bold text-slate-500 block mb-1">Return Unit Type</label>
+          <label class="text-[11px] font-bold text-slate-500 block mb-1">ආපසු දීමේ ඒකක වර්ගය</label>
           <select id="return-modal-type" onchange="POS.onReturnTypeChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold">
-            <option value="Card">Full Card (කාඩ් එකම)</option>
-            <option value="Unit">Single Unit (තනි පැකට්)</option>
+            <option value="Card">Full Card (සම්පූර්ණ කාඩ්)</option>
+            <option value="Unit">Single Unit (තනි ඒකකය)</option>
           </select>
         </div>
-        <!-- Return Quantity -->
+        <!-- Return Quantity: decimal allowed -->
         <div>
-          <label class="text-[11px] font-bold text-slate-500 block mb-1">Return Quantity *</label>
-          <input type="number" id="return-modal-qty" min="1" value="1" oninput="POS.onReturnQtyChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
+          <label class="text-[11px] font-bold text-slate-500 block mb-1">ප්‍රමාණය * (දශම ඉඩ)</label>
+          <input type="number" step="any" min="0.001" id="return-modal-qty" placeholder="1 හෝ 0.5 kg" value="1" oninput="POS.onReturnQtyChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-center" />
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <!-- Return Action: Deduct from bill vs Exchange -->
+        <!-- Return Action -->
         <div>
-          <label class="text-[11px] font-bold text-slate-500 block mb-1">Action</label>
+          <label class="text-[11px] font-bold text-slate-500 block mb-1">ක්‍රියාව</label>
           <select id="return-modal-action" onchange="POS.onReturnActionChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-red-700">
-            <option value="deduct">Deduct from Bill (බිලෙන් අඩු)</option>
-            <option value="replace">Exchange / Replace (මාරු කිරීම)</option>
+            <option value="deduct">💸 බිලෙන් අඩු (Deduct)</option>
+            <option value="replace">🔄 භාණ්ඩය මාරු (Exchange)</option>
           </select>
         </div>
         <!-- Reason -->
         <div>
-          <label class="text-[11px] font-bold text-slate-500 block mb-1">Reason</label>
-          <select id="return-modal-reason" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold">
-            <option value="Damaged (හානිවූ)">Damaged (හානිවූ/ඩැමේජ්)</option>
-            <option value="Expired (කල් ඉකුත්වූ)">Expired (කල් ඉකුත්වූ)</option>
-            <option value="Unsold (අලෙවි නොවූ)">Unsold (අලෙවි නොවූ)</option>
-            <option value="Other">Other Reason</option>
+          <label class="text-[11px] font-bold text-slate-500 block mb-1">හේතුව *</label>
+          <select id="return-modal-reason" onchange="POS.onReturnReasonChange()" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold">
+            <option value="">-- හේතුව තෝරන්න --</option>
+            <option value="Good Damage">🟢 Good Damage — නැවත කඩයකට</option>
+            <option value="Bad Damage">🔴 Bad Damage / Expired — විනාශ</option>
+            <option value="Unsold">📦 Unsold / Overstock</option>
+            <option value="Other">⚠️ Other — වෙනත් හේතු</option>
           </select>
         </div>
       </div>
 
+      <!-- Good Damage: Destination shop (hidden by default) -->
+      <div id="return-good-damage-section" class="hidden bg-green-50 border border-green-200 rounded-2xl p-3 space-y-1.5">
+        <label class="text-[11px] font-black text-green-700 block">📦 Good Damage — ගමනාන්ත කඩය</label>
+        <select id="return-modal-dest-shop" class="w-full bg-white border border-green-300 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-green-400">
+          <option value="">-- ගමනාන්ත කඩය තෝරන්න --</option>
+        </select>
+        <p class="text-[10px] text-green-600">✅ Stock inventory එකට ආපසු. Cost write-off නොවේ.</p>
+      </div>
+
+      <!-- Bad Damage warning (hidden by default) -->
+      <div id="return-bad-damage-note" class="hidden bg-red-50 border border-red-200 rounded-2xl p-2.5 text-[11px] text-red-700 font-semibold">
+        ⚠️ <strong>Bad Damage / Expired:</strong> Cost price write-off. ලාභ ප්‍රමාණය අඩු වේ. Inventory ආපසු නොයෙදේ.
+      </div>
+
       <!-- Live Refund Preview -->
-      <div id="return-modal-refund-preview" class="text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl text-center border border-red-200">
-        Deduction from Bill: -Rs. 0.00
+      <div id="return-modal-refund-preview" class="text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl text-center border border-red-200 whitespace-pre-line">
+        ආපසු ගෙවීම: Rs. 0.00
       </div>
 
       <div class="flex gap-2 pt-1">
         <button onclick="POS.saveReturnFromModal()" class="flex-1 bg-red-600 text-white text-xs font-black py-2.5 rounded-2xl shadow-md hover:bg-red-700 active:scale-95">
-          ✓ Add to Current Bill
+          ✓ ආපසු ගැනීම සටහන් කරන්න
         </button>
         <button onclick="UI.closeModal('modal-add-return')" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
-          Cancel
+          අවලංගු
         </button>
       </div>
     </div>
@@ -5387,6 +5462,20 @@ body.theme-dark #app-bottom-nav {
         <p class="text-[10px] text-slate-400 mt-0.5">පද්ධතිය භාවිතා කිරීමට පෙර බිල් පොත්වලින් කඩයට හිමි ණය ශේෂය මෙහි ඇතුළත් කරන්න (Reps ලාට එකතු කරගත හැක)</p>
       </div>
 
+      <!-- Shop QR Code Identifier Helper -->
+      <div class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-2xl flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🔲</span>
+          <div>
+            <span class="text-[11px] font-black text-indigo-900 block">Shop QR Code (ස්කෑන් කේතය)</span>
+            <span class="text-[9px] text-indigo-600 font-semibold block">කඩය Save කළ සැණින් ස්වයංක්‍රීයව QR Code එකක් ලැබේ</span>
+          </div>
+        </div>
+        <button type="button" onclick="Shops.previewShopModalQr()" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black rounded-xl active:scale-95 shadow-xs whitespace-nowrap cursor-pointer">
+          🔲 View QR
+        </button>
+      </div>
+
       <button onclick="Shops.saveShop()" class="w-full bg-emerald-600 text-white text-xs font-bold py-2.5 rounded-2xl shadow active:scale-95">
         Save Shop Details
       </button>
@@ -5741,13 +5830,14 @@ body.theme-dark #app-bottom-nav {
         <div class="grid grid-cols-2 gap-2 pt-1">
           <div>
             <span class="text-[9px] uppercase font-bold text-amber-800 block">Valid From (ආරම්භක දිනය)</span>
-            <input type="date" id="tenant-form-valid-from" class="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800" required />
+            <input type="date" id="tenant-form-valid-from" class="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800" required onchange="CompanyControl.onValidDateChange()" />
           </div>
           <div>
             <span class="text-[9px] uppercase font-bold text-amber-800 block">Valid To (කල් ඉකුත්වන දිනය)</span>
-            <input type="date" id="tenant-form-valid-to" class="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800" required />
+            <input type="date" id="tenant-form-valid-to" class="w-full bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800" required onchange="CompanyControl.onValidDateChange()" />
           </div>
         </div>
+        <div id="tenant-date-status-preview" class="text-xs font-semibold text-center py-1 mt-1 rounded-lg hidden"></div>
       </div>
 
       <!-- Active Toggle Switch -->
@@ -16784,7 +16874,7 @@ class FirestoreCollection {
         // Add timeout to avoid hanging when offline without persistence
         const fetchPromise = firestore.collection(this.name).get();
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('offline timeout')), 3000)
+          setTimeout(() => reject(new Error('offline timeout')), 800)
         );
         const snap = await Promise.race([fetchPromise, timeoutPromise]);
         snap.forEach((doc) => {
@@ -16831,7 +16921,7 @@ class FirestoreCollection {
 
     if (firestore) {
       try {
-        await firestore.collection(this.name).doc(String(id)).set(record);
+        firestore.collection(this.name).doc(String(id)).set(record).catch(err => { console.warn('Firestore add sync error on ' + this.name + ':', err); });
       } catch (err) {
         console.warn(`Firestore add error on '${this.name}':`, err);
       }
@@ -16859,7 +16949,7 @@ class FirestoreCollection {
 
     if (firestore) {
       try {
-        await firestore.collection(this.name).doc(String(id)).set(updated, { merge: true });
+        firestore.collection(this.name).doc(String(id)).set(updated, { merge: true }).catch(err => { console.warn('Firestore update sync error on ' + this.name + ':', err); });
       } catch (err) {
         console.warn(`Firestore update error on '${this.name}':`, err);
       }
@@ -16874,7 +16964,7 @@ class FirestoreCollection {
 
     if (firestore) {
       try {
-        await firestore.collection(this.name).doc(String(id)).delete();
+        firestore.collection(this.name).doc(String(id)).delete().catch(err => { console.warn('Firestore delete sync error on ' + this.name + ':', err); });
       } catch (err) {
         console.warn(`Firestore delete error on '${this.name}':`, err);
       }
@@ -16917,7 +17007,7 @@ class FirestoreCollection {
           for (const id of chunk) {
             batch.delete(firestore.collection(this.name).doc(String(id)));
           }
-          await batch.commit();
+          batch.commit().catch(err => { console.warn('Firestore bulkAdd sync notice on ' + this.name + ':', err); });
         } catch (err) {
           console.warn(`Firestore clear chunk error on '${this.name}':`, err);
         }
@@ -16949,7 +17039,7 @@ class FirestoreCollection {
             batch.set(firestore.collection(this.name).doc(String(id)), record);
             addedIds.push(id);
           }
-          await batch.commit();
+          batch.commit().catch(err => { console.warn('Firestore bulkAdd sync notice on ' + this.name + ':', err); });
         } catch (err) {
           console.warn(`Firestore bulkAdd chunk error on '${this.name}':`, err);
           for (const item of chunk) {
@@ -16985,7 +17075,7 @@ class FirestoreCollection {
             this._cache.delete(Number(id));
             batch.delete(firestore.collection(this.name).doc(String(id)));
           }
-          await batch.commit();
+          batch.commit().catch(err => { console.warn('Firestore bulkAdd sync notice on ' + this.name + ':', err); });
         } catch (err) {
           console.warn(`Firestore bulkDelete chunk error on '${this.name}':`, err);
           for (const id of chunk) {
@@ -17203,8 +17293,35 @@ async function initDatabaseDefaults() {
             db.tenants.refreshFromServer(),
             db.company.refreshFromServer(),
             db.routes.refreshFromServer(),
+            db.products.refreshFromServer(),
+            db.shops.refreshFromServer(),
             db.systemSettings.refreshFromServer()
           ]).catch(() => {});
+
+          // Even if server has users/company, ensure local routes and products exist so reps can work immediately offline
+          const routesCount = await db.routes.count();
+          if (routesCount === 0) {
+            await db.routes.add({
+              id: 1,
+              tenantId: 1,
+              name: 'Main Route (ප්‍රධාන මාර්ගය)',
+              description: 'Main Delivery & Sales Territory',
+              updatedAt: new Date().toISOString()
+            });
+          }
+          if (db.products) {
+            const productsCount = await db.products.count();
+            if (productsCount === 0) {
+              await db.products.bulkAdd([
+                { tenantId: 1, name: 'Chilli Powder Card - 20s (මිරිස් කුඩු කාඩ්)', unit: 'Card', costPrice: 380, sellingPrice: 500, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 30, freeSchemeEnabled: true, freeSchemeMinQty: 12, freeSchemeFreeQty: 1, currentStock: 100, isActive: true, updatedAt: new Date().toISOString() },
+                { tenantId: 1, name: 'Chilli Pieces Card - 20s (කෑලි මිරිස් කාඩ්)', unit: 'Card', costPrice: 400, sellingPrice: 520, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 32, freeSchemeEnabled: true, freeSchemeMinQty: 12, freeSchemeFreeQty: 1, currentStock: 80, isActive: true, updatedAt: new Date().toISOString() },
+                { tenantId: 1, name: 'Curry Powder Card - 20s (තුනපහ කුඩු කාඩ්)', unit: 'Card', costPrice: 360, sellingPrice: 480, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 30, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 90, isActive: true, updatedAt: new Date().toISOString() },
+                { tenantId: 1, name: 'Roasted Meat Curry Card - 16s (මස් කුඩු කාඩ්)', unit: 'Card', costPrice: 420, sellingPrice: 560, category: 'Cards', packetsPerCard: 16, packetRetailPrice: 40, freeSchemeEnabled: true, freeSchemeMinQty: 10, freeSchemeFreeQty: 1, currentStock: 75, isActive: true, updatedAt: new Date().toISOString() },
+                { tenantId: 1, name: 'Turmeric Powder Card - 20s (කහ කුඩු කාඩ්)', unit: 'Card', costPrice: 450, sellingPrice: 600, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 35, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 60, isActive: true, updatedAt: new Date().toISOString() },
+                { tenantId: 1, name: 'Mustard Seeds Packet - 100g (අබ පැකට්)', unit: 'Packet', costPrice: 60, sellingPrice: 85, category: 'Packets', packetsPerCard: 1, packetRetailPrice: 85, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 120, isActive: true, updatedAt: new Date().toISOString() }
+              ]);
+            }
+          }
           return;
         }
 
@@ -17267,8 +17384,8 @@ async function initDatabaseDefaults() {
         // Ensure existing tenant validity is never expired by default
         const allT = await db.tenants.toArray();
         for (const t of allT) {
-          if (!t.validTo || t.validTo < '2030-01-01') {
-            await db.tenants.update(t.id, { validTo: '2099-12-31', status: 'active', isActive: true });
+          if (!t.validTo) {
+            await db.tenants.update(t.id, { validTo: '2099-12-31' });
           }
         }
       }
@@ -17284,6 +17401,21 @@ async function initDatabaseDefaults() {
         description: 'Main Delivery & Sales Territory',
         updatedAt: new Date().toISOString()
       });
+    }
+
+    // Initialize Default Products if empty
+    if (db.products) {
+      const productsCount = await db.products.count();
+      if (productsCount === 0) {
+        await db.products.bulkAdd([
+          { tenantId: 1, name: 'Chilli Powder Card - 20s (මිරිස් කුඩු කාඩ්)', unit: 'Card', costPrice: 380, sellingPrice: 500, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 30, freeSchemeEnabled: true, freeSchemeMinQty: 12, freeSchemeFreeQty: 1, currentStock: 100, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: 1, name: 'Chilli Pieces Card - 20s (කෑලි මිරිස් කාඩ්)', unit: 'Card', costPrice: 400, sellingPrice: 520, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 32, freeSchemeEnabled: true, freeSchemeMinQty: 12, freeSchemeFreeQty: 1, currentStock: 80, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: 1, name: 'Curry Powder Card - 20s (තුනපහ කුඩු කාඩ්)', unit: 'Card', costPrice: 360, sellingPrice: 480, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 30, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 90, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: 1, name: 'Roasted Meat Curry Card - 16s (මස් කුඩු කාඩ්)', unit: 'Card', costPrice: 420, sellingPrice: 560, category: 'Cards', packetsPerCard: 16, packetRetailPrice: 40, freeSchemeEnabled: true, freeSchemeMinQty: 10, freeSchemeFreeQty: 1, currentStock: 75, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: 1, name: 'Turmeric Powder Card - 20s (කහ කුඩු කාඩ්)', unit: 'Card', costPrice: 450, sellingPrice: 600, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 35, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 60, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: 1, name: 'Mustard Seeds Packet - 100g (අබ පැකට්)', unit: 'Packet', costPrice: 60, sellingPrice: 85, category: 'Packets', packetsPerCard: 1, packetRetailPrice: 85, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 120, isActive: true, updatedAt: new Date().toISOString() }
+        ]);
+      }
     }
 
     // Initialize Default Users (7 Roles: Admin, SM, ASM, Supervisor, Rep, Delivery, Stores)
@@ -18092,12 +18224,15 @@ const Hierarchy = {
       if (Array.isArray(u.assignedRouteIds)) {
         u.assignedRouteIds.forEach(id => routeIds.add(Number(id)));
       }
-      // Also include any routes created by this rep
+      // Also include any routes created by this rep or assigned to this rep
       try {
         if (typeof db !== 'undefined' && db.routes) {
           const allRoutes = filterByTenant(await db.routes.toArray());
-          allRoutes.filter(r => Number(r.createdByRepId) === Number(u.id) || (r.createdBy && r.createdBy.toLowerCase() === u.username.toLowerCase()))
-                   .forEach(r => routeIds.add(Number(r.id)));
+          allRoutes.filter(r => 
+            Number(r.createdByRepId) === Number(u.id) || 
+            (r.createdBy && r.createdBy.toLowerCase() === u.username.toLowerCase()) ||
+            (r.assignedRepId && Number(r.assignedRepId) === Number(u.id))
+          ).forEach(r => routeIds.add(Number(r.id)));
         }
       } catch (e) {}
 
@@ -18145,22 +18280,21 @@ const Hierarchy = {
     const allowedRouteIds = await this.getAllowedRouteIds(u);
     if (allowedRouteIds === null) return routes;
 
-    // If rep has no routes assigned yet, allow them to see routes they created
+    // If rep has no specific routes assigned, allow them to see all tenant routes so they are never blocked
     if (allowedRouteIds.length === 0) {
-      const myCreated = routes.filter(r => Number(r.createdByRepId) === Number(u.id));
-      return myCreated;
+      return routes;
     }
 
-    return routes.filter(r =>
+    const filtered = routes.filter(r =>
       allowedRouteIds.includes(Number(r.id)) ||
       Number(r.createdByRepId) === Number(u.id)
     );
+    return (filtered && filtered.length > 0) ? filtered : routes;
   },
 
   /**
    * Filter shops array based on user hierarchy
-   * A rep ONLY sees shops in their assigned routes or created by them!
-   * A supervisor ONLY sees shops in their 3-5 reps' routes or created by their reps!
+   * A rep sees shops in their assigned routes, created by them, or all tenant shops if unassigned
    */
   async filterShops(shops, user = null) {
     if (!Array.isArray(shops)) return [];
@@ -18170,7 +18304,11 @@ const Hierarchy = {
 
     if (role === 'rep') {
       const allowedRouteIds = await this.getAllowedRouteIds(u);
-      return shops.filter(s => {
+      // If rep has no specific route restrictions assigned, allow all shops in tenant
+      if (!allowedRouteIds || allowedRouteIds.length === 0) {
+        return shops;
+      }
+      const filtered = shops.filter(s => {
         // Shop created by this rep
         if (s.repId && Number(s.repId) === Number(u.id)) return true;
         if (s.createdBy && String(s.createdBy).toLowerCase() === String(u.username).toLowerCase()) return true;
@@ -18178,6 +18316,7 @@ const Hierarchy = {
         if (allowedRouteIds && allowedRouteIds.includes(Number(s.routeId))) return true;
         return false;
       });
+      return (filtered && filtered.length > 0) ? filtered : shops;
     }
 
     if (role === 'supervisor' || role === 'asm') {
@@ -18189,6 +18328,7 @@ const Hierarchy = {
         if (allowedRouteIds && allowedRouteIds.includes(Number(s.routeId))) return true;
         return false;
       });
+      return (filtered && filtered.length > 0) ? filtered : shops;
     }
 
     return shops;
@@ -18216,6 +18356,7 @@ const Hierarchy = {
         if (fName && (rName.includes(fName) || fName.includes(rName))) return true;
         return false;
       });
+      return (filtered && filtered.length > 0) ? filtered : shops;
     }
 
     if (role === 'supervisor' || role === 'asm') {
@@ -18225,6 +18366,7 @@ const Hierarchy = {
         if (s.repId && allowedRepIds.includes(Number(s.repId))) return true;
         return false;
       });
+      return (filtered && filtered.length > 0) ? filtered : shops;
     }
 
     return sales;
@@ -19530,7 +19672,7 @@ const Auth = {
       if (typeof db !== 'undefined' && db.tenants) {
         const tList = await db.tenants.toArray().catch(() => []);
         for (const t of tList) {
-          if (!t.validTo || t.validTo < '2030-01-01' || t.status === 'expired' || t.isActive === false) {
+          if (false) { // auto-heal disabled to preserve user selected dates and ON/OFF status
             await db.tenants.update(t.id, { validTo: '2099-12-31', status: 'active', isActive: true }).catch(() => {});
           }
         }
@@ -20187,6 +20329,7 @@ const CompanyControl = {
     document.getElementById('tenant-form-active').checked = true;
 
     UI.openModal('modal-add-tenant');
+    setTimeout(() => this.onValidDateChange(), 80);
   },
 
   // 5. Open Edit Tenant Modal
@@ -20207,6 +20350,7 @@ const CompanyControl = {
     document.getElementById('tenant-form-active').checked = tenant.isActive !== false;
 
     UI.openModal('modal-add-tenant');
+    setTimeout(() => this.onValidDateChange(), 80);
   },
 
   // 6. Save New / Updated Tenant
@@ -20671,7 +20815,36 @@ const CompanyControl = {
         UI.showToast(`Account Number: ${text}`, 'info');
       }
     }
-  }
+  },
+
+  // Company Control — live date status preview
+  onValidDateChange() {
+    const validFrom = document.getElementById('tenant-form-valid-from')?.value;
+    const validTo   = document.getElementById('tenant-form-valid-to')?.value;
+    const statusEl  = document.getElementById('tenant-date-status-preview');
+    if (!statusEl) return;
+    if (!validFrom || !validTo) {
+      statusEl.textContent = '';
+      statusEl.className = 'hidden';
+      return;
+    }
+    const todayStr    = new Date().toISOString().split('T')[0];
+    const isPastDue   = todayStr > validTo;
+    const isNotStart  = todayStr < validFrom;
+    const diffMs      = new Date(validTo) - new Date(todayStr);
+    const diffDays    = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    statusEl.classList.remove('hidden');
+    if (isPastDue) {
+      statusEl.textContent = '\u26a0\ufe0f Expired! \u0db8\u0dda\u0db8 \u0daf\u0dd2\u0db1\u0dba \u0d89\u0d9a\u0dd4\u0dad\u0dda \u0d85\u0dc0\u0dbd\u0db1\u0dca\u0db1 \u0d9a\u0dbd \u0db1\u0dda.';
+      statusEl.className = 'text-xs font-semibold text-center py-1.5 mt-1 rounded-xl bg-red-100 text-red-700 block';
+    } else if (isNotStart) {
+      statusEl.textContent = `\u23f3 Starts ${validFrom} — \u0dad\u0dc0\u0db8 \u0d86\u0dbb\u0db8\u0dca\u0db7 \u0dc0\u0dd3 \u0db1\u0dda\u0dad.`;
+      statusEl.className = 'text-xs font-semibold text-center py-1.5 mt-1 rounded-xl bg-yellow-100 text-yellow-700 block';
+    } else {
+      statusEl.textContent = `\u2705 \u0dc3\u0d9a\u0dca\u200d\u0dbb\u0dd3\u0dba\u0dba\u0dd2 \u2014 \u0daf\u0dd2\u0db1 ${diffDays}\u0d9a\u0dd2\u0db1\u0dca \u0d9a\u0dbd\u0dca \u0d89\u0d9a\u0dd4\u0dad\u0dda.`;
+      statusEl.className = 'text-xs font-semibold text-center py-1.5 mt-1 rounded-xl bg-green-100 text-green-700 block';
+    }
+  },
 };
 
 window.CompanyControl = CompanyControl;
@@ -21093,9 +21266,10 @@ const UI = {
       } else if (tabId === 'dashboard' && typeof Dashboard !== 'undefined' && Dashboard.loadDashboard) {
         await Dashboard.loadDashboard();
       } else if (tabId === 'pos' && typeof POS !== 'undefined') {
-        if (POS.loadRepDailySummary) await POS.loadRepDailySummary();
+        if (POS.init) await POS.init();
+        else if (POS.loadRepDailySummary) await POS.loadRepDailySummary();
         if (POS.loadProductsCatalog) await POS.loadProductsCatalog();
-        if (POS.loadShopsDropdown) await POS.loadShopsDropdown();
+        if (POS.populateRoutes) await POS.populateRoutes();
       } else if (tabId === 'rep-bills' && typeof RepBills !== 'undefined' && RepBills.loadBills) {
         await RepBills.loadBills();
       } else if (tabId === 'production' && typeof Production !== 'undefined' && Production.loadMatrix) {
@@ -22430,9 +22604,9 @@ const POS = {
 
   async init() {
     State.clearCart();
-    await this.populateRoutes();
-    await this.loadProductsCatalog();
-    await this.loadRepDailySummary();
+    try { await this.populateRoutes(); } catch(e) { console.warn('populateRoutes notice:', e); }
+    try { await this.loadProductsCatalog(); } catch(e) { console.warn('loadProductsCatalog notice:', e); }
+    try { await this.loadRepDailySummary(); } catch(e) { console.warn('loadRepDailySummary notice:', e); }
     this.renderCartUI();
     this.renderReturnsUI();
     this.renderPaymentSummary();
@@ -22752,15 +22926,36 @@ const POS = {
   async populateRoutes() {
     const rawRoutes = await db.routes.toArray();
     let routes = filterByTenant(rawRoutes);
-    if (typeof Hierarchy !== 'undefined') {
-      routes = await Hierarchy.filterRoutes(routes);
+    if (!routes || routes.length === 0) {
+      routes = rawRoutes;
     }
+    if (typeof Hierarchy !== 'undefined') {
+      const filtered = await Hierarchy.filterRoutes(routes);
+      if (filtered && filtered.length > 0) {
+        routes = filtered;
+      }
+    }
+    if ((!routes || routes.length === 0) && rawRoutes.length > 0) {
+      routes = rawRoutes;
+    }
+    if ((!routes || routes.length === 0) && rawRoutes.length === 0) {
+      const defRoute = {
+        id: 1,
+        tenantId: (typeof getActiveTenantId === 'function' ? getActiveTenantId() : 1) || 1,
+        name: 'Main Route (ප්‍රධාන මාර්ගය)',
+        description: 'Main Delivery & Sales Territory',
+        updatedAt: new Date().toISOString()
+      };
+      try { await db.routes.add(defRoute); routes = [defRoute]; } catch(e) { routes = [defRoute]; }
+    }
+
     const routeSelect = document.getElementById('pos-route-select');
     if (!routeSelect) return;
 
-    let html = `<option value="">-- Select Delivery Route --</option>`;
+    let html = '<option value="">-- Select Delivery Route (මාර්ගය තෝරන්න) --</option>';
     for (const r of routes) {
-      html += `<option value="${r.id}" ${this.activeRouteId == r.id ? 'selected' : ''}>${r.name}</option>`;
+      const isSel = (this.activeRouteId == r.id) ? 'selected' : '';
+      html += '<option value="' + r.id + '" ' + isSel + '>' + r.name + '</option>';
     }
     routeSelect.innerHTML = html;
 
@@ -22776,7 +22971,13 @@ const POS = {
       await this.onRouteSelected(this.activeRouteId);
     } else {
       routeSelect.disabled = false;
-      await this.onRouteSelected(null);
+      if (routes.length === 1) {
+        this.activeRouteId = Number(routes[0].id);
+        routeSelect.value = this.activeRouteId;
+        await this.onRouteSelected(this.activeRouteId);
+      } else {
+        await this.onRouteSelected(null);
+      }
     }
     if (typeof RouteSession !== 'undefined') RouteSession.renderBanners();
   },
@@ -22798,12 +22999,18 @@ const POS = {
       if (typeof Hierarchy !== 'undefined') {
         shops = await Hierarchy.filterShops(shops);
       }
+      if ((!shops || shops.length === 0) && rawShops.length > 0) {
+        shops = rawShops;
+      }
       this.shopsCache = shops;
     } else {
       const rawShops = await db.shops.toArray();
       let shops = filterByTenant(rawShops);
       if (typeof Hierarchy !== 'undefined') {
         shops = await Hierarchy.filterShops(shops);
+      }
+      if ((!shops || shops.length === 0) && rawShops.length > 0) {
+        shops = rawShops;
       }
       this.shopsCache = shops;
     }
@@ -22986,8 +23193,31 @@ const POS = {
   },
 
   async loadProductsCatalog() {
-    const rawProducts = await db.products.toArray();
-    this.productsCache = filterByTenant(rawProducts);
+    let rawProducts = await db.products.toArray();
+    let prods = filterByTenant(rawProducts);
+    if ((!prods || prods.length === 0) && rawProducts.length > 0) {
+      prods = rawProducts;
+    }
+    if ((!prods || prods.length === 0) && rawProducts.length === 0) {
+      try {
+        const tid = (typeof getActiveTenantId === 'function' ? getActiveTenantId() : 1) || 1;
+        const starterProducts = [
+          { tenantId: tid, name: 'Chilli Powder Card - 20s (මිරිස් කුඩු කාඩ්)', unit: 'Card', costPrice: 380, sellingPrice: 500, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 30, freeSchemeEnabled: true, freeSchemeMinQty: 12, freeSchemeFreeQty: 1, currentStock: 100, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: tid, name: 'Chilli Pieces Card - 20s (කෑලි මිරිස් කාඩ්)', unit: 'Card', costPrice: 400, sellingPrice: 520, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 32, freeSchemeEnabled: true, freeSchemeMinQty: 12, freeSchemeFreeQty: 1, currentStock: 80, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: tid, name: 'Curry Powder Card - 20s (තුනපහ කුඩු කාඩ්)', unit: 'Card', costPrice: 360, sellingPrice: 480, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 30, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 90, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: tid, name: 'Roasted Meat Curry Card - 16s (මස් කුඩු කාඩ්)', unit: 'Card', costPrice: 420, sellingPrice: 560, category: 'Cards', packetsPerCard: 16, packetRetailPrice: 40, freeSchemeEnabled: true, freeSchemeMinQty: 10, freeSchemeFreeQty: 1, currentStock: 75, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: tid, name: 'Turmeric Powder Card - 20s (කහ කුඩු කාඩ්)', unit: 'Card', costPrice: 450, sellingPrice: 600, category: 'Cards', packetsPerCard: 20, packetRetailPrice: 35, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 60, isActive: true, updatedAt: new Date().toISOString() },
+          { tenantId: tid, name: 'Mustard Seeds Packet - 100g (අබ පැකට්)', unit: 'Packet', costPrice: 60, sellingPrice: 85, category: 'Packets', packetsPerCard: 1, packetRetailPrice: 85, freeSchemeEnabled: false, freeSchemeMinQty: 0, freeSchemeFreeQty: 0, currentStock: 120, isActive: true, updatedAt: new Date().toISOString() }
+        ];
+        await db.products.bulkAdd(starterProducts);
+        rawProducts = await db.products.toArray();
+        prods = filterByTenant(rawProducts);
+        if (!prods || prods.length === 0) prods = rawProducts;
+      } catch (e) {
+        console.warn('Auto-seed products notice:', e);
+      }
+    }
+    this.productsCache = prods || [];
     this.renderProductsList();
   },
 
@@ -23013,75 +23243,92 @@ const POS = {
     );
 
     for (const prod of filtered) {
-      const inCart = State.cart.find(item => item.productId === prod.id);
+      const inCart = State.cart.find(item => String(item.productId) === String(prod.id));
       const qty = inCart ? inCart.qty : 0;
       const freeQty = inCart ? inCart.freeQty : 0;
       const isCard = (prod.unit || 'Card').toLowerCase() === 'card';
       const packetsPerCard = prod.packetsPerCard || 20;
       const stock = prod.currentStock !== undefined ? Number(prod.currentStock) : (prod.stock !== undefined ? Number(prod.stock) : 0);
-      const isLowStock = stock <= 5;
+      const isLowStock = stock > 0 && stock <= 5;
 
       html += `
-        <div class="bg-white p-2.5 sm:p-3 rounded-2xl border ${qty > 0 ? 'border-emerald-500 shadow-md ring-2 ring-emerald-200 bg-emerald-50/25' : 'border-slate-200/90 shadow-2xs hover:border-slate-300'} flex flex-col justify-between transition-all relative overflow-hidden group">
-          <!-- Top Unit & Stock Badge -->
-          <div>
+        <div onclick="if(!event.target.closest('button, input')) POS.updateProductQty('${prod.id}', 1)"
+          class="bg-white rounded-2xl border ${qty > 0 ? 'border-emerald-500 shadow-lg ring-2 ring-emerald-300 bg-emerald-50/30' : 'border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md cursor-pointer'} flex flex-col justify-between transition-all relative overflow-hidden" style="min-height:152px">
+
+          <div class="p-2 sm:p-2.5 flex flex-col flex-1 relative z-10">
+            <!-- Top: Unit badge + Stock badge -->
             <div class="flex items-center justify-between gap-1 mb-1">
               <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md ${isCard ? 'bg-emerald-100 text-emerald-800' : 'bg-orange-100 text-orange-800'}">
                 ${prod.unit || 'Card'}
               </span>
-              <span class="text-[9px] font-bold ${stock > 0 ? (isLowStock ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-slate-500 bg-slate-100') : 'text-rose-600 bg-rose-50 border border-rose-200'} px-1.5 py-0.5 rounded-md truncate max-w-[75px]">
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md ${stock <= 0 ? 'bg-slate-100 text-slate-400' : isLowStock ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}">
                 📦 ${stock}
               </span>
             </div>
 
-            <!-- Product Title (2-line clamp) -->
-            <h4 class="font-black text-slate-900 text-xs line-clamp-2 leading-tight tracking-tight min-h-[2rem]" title="${prod.name}">
+            <!-- Product name -->
+            <h4 class="font-black text-slate-900 text-[11px] sm:text-xs line-clamp-2 leading-tight flex-1" title="${prod.name}">
               ${prod.name}
             </h4>
 
-            <!-- Wholesale Price & Packets per Card -->
-            <div class="flex items-baseline justify-between gap-1 mt-1 flex-wrap">
-              <span class="font-black text-emerald-700 text-xs sm:text-sm">
-                ${UI.formatCurrency(prod.sellingPrice)}
-              </span>
-              ${isCard ? `
-                <span class="text-[9px] text-slate-400 font-medium">${packetsPerCard} pkts</span>
-              ` : ''}
+            <!-- Price row with quick plus circle button -->
+            <div class="flex items-center justify-between mt-1 gap-1">
+              <div class="flex items-baseline gap-1">
+                <span class="font-black text-emerald-700 text-xs sm:text-sm leading-none">
+                  ${UI.formatCurrency(prod.sellingPrice)}
+                </span>
+                ${isCard ? `<span class="text-[9px] text-slate-400 font-medium">${packetsPerCard}pkts</span>` : ''}
+              </div>
+              <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
+                class="w-8 h-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-90 text-white font-black text-base flex items-center justify-center shadow-md flex-shrink-0"
+                title="Add 1 to order">
+                ＋
+              </button>
             </div>
 
-            <!-- Free Issue Slab Info -->
+            <!-- Free scheme badge -->
             ${prod.freeSchemeEnabled ? `
               <div class="mt-1">
-                <span class="text-[8px] font-black px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-900 inline-block truncate max-w-full">
-                  🎁 Buy ${prod.freeSlabs?.[0]?.minQty || prod.freeSchemeMinQty || 12}+${prod.freeSlabs?.[0]?.freeQty || prod.freeSchemeFreeQty || 1} Free
+                <span class="text-[8px] font-black px-1 py-0.5 rounded bg-purple-100 text-purple-900 inline-block">
+                  🎁 ${prod.freeSlabs?.[0]?.minQty || prod.freeSchemeMinQty || 12}+${prod.freeSlabs?.[0]?.freeQty || prod.freeSchemeFreeQty || 1}Free
                 </span>
               </div>
             ` : ''}
           </div>
 
-          <!-- Stepper Controls (Bottom Box) -->
-          <div class="mt-2 pt-1.5 border-t border-slate-100">
-            <div class="flex items-center justify-between bg-slate-100/90 rounded-xl p-0.5">
-              <button type="button" onclick="POS.updateProductQty(${prod.id}, -1)" class="w-7 h-7 rounded-lg bg-white shadow-2xs font-black text-slate-700 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 active:scale-90 text-sm">
-                -
+          <!-- Bottom: ADD button (when qty=0) OR Stepper (when qty>0) -->
+          <div class="relative z-10 px-1.5 pb-2">
+            ${qty === 0 ? `
+              <!-- BIG ADD BUTTON -->
+              <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
+                class="w-full h-10 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md bg-emerald-600 hover:bg-emerald-700 text-white">
+                <span class="text-base font-black">＋</span> <span>ADD TO ORDER</span>
               </button>
-              <input type="number" min="0" value="${qty}" onchange="POS.setProductQty(${prod.id}, this.value)" class="w-9 text-center font-black text-xs bg-transparent border-0 focus:ring-0 p-0 ${qty > 0 ? 'text-emerald-700 font-extrabold' : 'text-slate-500'}" />
-              <button type="button" onclick="POS.updateProductQty(${prod.id}, 1)" class="w-7 h-7 rounded-lg bg-emerald-600 shadow-2xs font-black text-white flex items-center justify-center hover:bg-emerald-700 active:scale-90 text-sm">
-                +
-              </button>
-            </div>
-            ${qty > 0 && freeQty > 0 ? `
-              <div class="text-center mt-1">
-                <span class="text-[9px] font-black text-purple-800 bg-purple-100 px-1.5 py-0.2 rounded-md">
-                  🎁 +${freeQty} Free
-                </span>
+            ` : `
+              <!-- STEPPER -->
+              <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1" onclick="event.stopPropagation()">
+                <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', -1)"
+                  class="flex-shrink-0 w-10 h-10 rounded-xl bg-white shadow font-black text-slate-700 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 active:scale-90 text-lg">
+                  −
+                </button>
+                <input type="number" min="0" value="${qty}"
+                  onchange="POS.setProductQty('${prod.id}', this.value)"
+                  class="flex-1 min-w-0 text-center font-black text-sm text-emerald-700 bg-transparent border-0 focus:ring-0 p-0" />
+                <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
+                  class="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-600 shadow font-black text-white flex items-center justify-center hover:bg-emerald-700 active:scale-90 text-lg">
+                  ＋
+                </button>
               </div>
-            ` : ''}
+              ${freeQty > 0 ? `
+                <div class="text-center mt-0.5">
+                  <span class="text-[9px] font-black text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">🎁 +${freeQty} Free</span>
+                </div>
+              ` : ''}
+            `}
           </div>
         </div>
       `;
     }
-
     container.innerHTML = html;
   },
 
@@ -23127,7 +23374,7 @@ const POS = {
   },
 
   updateProductQty(productId, delta) {
-    const prod = this.productsCache.find(p => p.id === productId);
+    const prod = this.productsCache.find(p => String(p.id) === String(productId));
     if (!prod) return;
 
     if (delta > 0) {
@@ -23136,7 +23383,7 @@ const POS = {
       if (typeof SoundFX !== 'undefined') SoundFX.play('remove_item');
     }
 
-    const existingIndex = State.cart.findIndex(i => i.productId === productId);
+    const existingIndex = State.cart.findIndex(i => String(i.productId) === String(productId));
 
     if (existingIndex >= 0) {
       const item = State.cart[existingIndex];
@@ -23180,7 +23427,7 @@ const POS = {
 
   setProductQty(productId, value) {
     const val = parseInt(value) || 0;
-    const prod = this.productsCache.find(p => p.id === productId);
+    const prod = this.productsCache.find(p => String(p.id) === String(productId));
     if (!prod) return;
 
     if (val > 0) {
@@ -23189,7 +23436,7 @@ const POS = {
       if (typeof SoundFX !== 'undefined') SoundFX.play('remove_item');
     }
 
-    const existingIndex = State.cart.findIndex(i => i.productId === productId);
+    const existingIndex = State.cart.findIndex(i => String(i.productId) === String(productId));
 
     if (val <= 0) {
       if (existingIndex >= 0) State.cart.splice(existingIndex, 1);
@@ -23233,7 +23480,7 @@ const POS = {
 
   onCartItemPriceChange(productId, val) {
     const item = State.cart.find(i => i.productId === productId);
-    const prod = this.productsCache.find(p => p.id === productId);
+    const prod = this.productsCache.find(p => String(p.id) === String(productId));
     if (!item) return;
 
     const newPrice = Math.max(0, parseFloat(val) || 0);
@@ -23259,7 +23506,7 @@ const POS = {
 
   onCartItemFreeQtyChange(productId, val) {
     const item = State.cart.find(i => i.productId === productId);
-    const prod = this.productsCache.find(p => p.id === productId);
+    const prod = this.productsCache.find(p => String(p.id) === String(productId));
     if (!item) return;
 
     const newFree = Math.max(0, parseInt(val) || 0);
@@ -23287,7 +23534,7 @@ const POS = {
 
   resetCartItemDeal(productId) {
     const item = State.cart.find(i => i.productId === productId);
-    const prod = this.productsCache.find(p => p.id === productId);
+    const prod = this.productsCache.find(p => String(p.id) === String(productId));
     if (!item || !prod) return;
 
     item.sellingPrice = Number(item.standardPrice || prod.sellingPrice) || 0;
@@ -23501,54 +23748,108 @@ const POS = {
     const select = document.getElementById('return-modal-product');
     if (select) {
       const products = this.productsCache.length > 0 ? this.productsCache : filterByTenant(await db.products.toArray());
-      let html = '<option value="">-- Select Product to Return --</option>';
+      let html = '<option value="">-- ආපසු දෙන භාණ්ඩය තෝරන්න --</option>';
       for (const p of products) {
         const packets = p.packetsPerCard || 20;
-        html += `<option value="${p.id}" data-price="${p.sellingPrice}" data-packets="${packets}" data-unit="${p.unit || 'Card'}">${p.name} (${p.unit || 'Card'}) - Rs. ${p.sellingPrice}</option>`;
+        const cost = p.costPrice || 0;
+        html += `<option value="${p.id}" data-price="${p.sellingPrice}" data-packets="${packets}" data-unit="${p.unit || 'Card'}" data-cost="${cost}">${p.name} (${p.unit || 'Card'}) - Rs. ${p.sellingPrice}</option>`;
       }
       select.innerHTML = html;
     }
 
+    // Reset fields
     const modalQty = document.getElementById('return-modal-qty');
     if (modalQty) modalQty.value = '1';
-
     const modalAction = document.getElementById('return-modal-action');
     if (modalAction) modalAction.value = 'deduct';
-
-    const modalType = document.getElementById('return-modal-type');
-    if (modalType) modalType.value = 'Card';
-
     const modalReason = document.getElementById('return-modal-reason');
-    if (modalReason) modalReason.value = 'Damaged (හානිවූ)';
+    if (modalReason) modalReason.value = '';
+
+    // Hide conditional sections
+    document.getElementById('return-good-damage-section')?.classList.add('hidden');
+    document.getElementById('return-bad-damage-note')?.classList.add('hidden');
+
+    // Populate destination shops dropdown
+    await this._populateReturnDestShops();
 
     this.onReturnProductChange();
     UI.openModal('modal-add-return');
   },
 
+  async _populateReturnDestShops() {
+    const destSelect = document.getElementById('return-modal-dest-shop');
+    if (!destSelect) return;
+    const rawShops = await db.shops.toArray();
+    const shops = filterByTenant(rawShops);
+    let html = '<option value="">-- ගමනාන්ත කඩය තෝරන්න --</option>';
+    for (const s of shops) {
+      html += `<option value="${s.id}">${s.name}</option>`;
+    }
+    destSelect.innerHTML = html;
+  },
+
+  onReturnReasonChange() {
+    const reason = document.getElementById('return-modal-reason')?.value || '';
+    const isGoodDamage = reason === 'Good Damage';
+    const isBadDamage  = reason === 'Bad Damage';
+    const goodSect = document.getElementById('return-good-damage-section');
+    const badNote  = document.getElementById('return-bad-damage-note');
+    if (goodSect) goodSect.classList.toggle('hidden', !isGoodDamage);
+    if (badNote)  badNote.classList.toggle('hidden', !isBadDamage);
+    this.onReturnProductChange();
+  },
+
   onReturnProductChange() {
     const select = document.getElementById('return-modal-product');
     const selectedOpt = select?.options[select.selectedIndex];
-    const price = selectedOpt ? Number(selectedOpt.getAttribute('data-price')) || 0 : 0;
-    const packets = selectedOpt ? Math.max(1, Number(selectedOpt.getAttribute('data-packets')) || 20) : 20;
+    const price       = selectedOpt ? Number(selectedOpt.getAttribute('data-price')) || 0 : 0;
+    const packets     = selectedOpt ? Math.max(1, Number(selectedOpt.getAttribute('data-packets')) || 20) : 20;
+    const productUnit = selectedOpt ? (selectedOpt.getAttribute('data-unit') || 'Card') : 'Card';
+    const costPrice   = selectedOpt ? Number(selectedOpt.getAttribute('data-cost')) || 0 : 0;
 
+    // Update type dropdown labels to match actual product unit
     const typeSelect = document.getElementById('return-modal-type');
+    if (typeSelect) {
+      const cur = typeSelect.value;
+      let singleLabel = `තනි ${productUnit}`;
+      if (productUnit === 'kg')          singleLabel = 'ග්\u200dරෑම් ගණනින් (by weight)';
+      else if (productUnit === 'Bottle') singleLabel = 'තනි බෝතල (Single Bottle)';
+      else if (productUnit === 'Packet') singleLabel = 'තනි පැකට් (Single Packet)';
+      typeSelect.innerHTML = `
+        <option value="Card">Full Card — ${packets} ${productUnit}</option>
+        <option value="Unit">${singleLabel}</option>`;
+      if (cur === 'Unit') typeSelect.value = 'Unit';
+    }
+
     const returnType = typeSelect?.value || 'Card';
-    const qty = Math.max(1, Number(document.getElementById('return-modal-qty')?.value) || 1);
+    const qty    = Math.max(0.001, Number(document.getElementById('return-modal-qty')?.value) || 1);
     const action = document.getElementById('return-modal-action')?.value || 'deduct';
+    const reason = document.getElementById('return-modal-reason')?.value || '';
+    const isBadDamage = reason === 'Bad Damage';
 
     let unitRefund = price;
+    let unitCost   = costPrice;
     if (returnType === 'Unit') {
-      unitRefund = price / packets; // accurate proportional packet wholesale value
+      unitRefund = price / packets;
+      unitCost   = costPrice / packets;
     }
+
+    const totalRefund    = qty * unitRefund;
+    const totalCostWrOff = isBadDamage ? (qty * unitCost) : 0;
 
     const refundPreview = document.getElementById('return-modal-refund-preview');
     if (refundPreview) {
       if (action === 'deduct') {
-        const totalRefund = qty * unitRefund;
-        refundPreview.textContent = `Deduction from Bill: -${UI.formatCurrency(totalRefund)} (${returnType === 'Unit' ? `${qty} pkts @ Rs. ${unitRefund.toFixed(2)}/pkt (${packets}s card)` : `${qty} full card(s)`})`;
-        refundPreview.className = 'text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl text-center border border-red-200';
+        let msg = `බිල්පතෙන් අඩු: -${UI.formatCurrency(totalRefund)}`;
+        msg += returnType === 'Unit'
+          ? `  (${qty} \u00d7 Rs.${unitRefund.toFixed(2)}/${productUnit})`
+          : `  (${qty} card${qty > 1 ? 's' : ''} \u00d7 Rs.${price})`;
+        if (isBadDamage && totalCostWrOff > 0)
+          msg += `\n\u26a0\ufe0f Cost Write-off: -${UI.formatCurrency(totalCostWrOff)} (\u0dbd\u0dcf\u0dbd \u0d85\u0da9 \u0dc0\u0dda)`;
+        refundPreview.textContent = msg;
+        refundPreview.className = 'text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl text-center border border-red-200 whitespace-pre-line';
       } else {
-        refundPreview.textContent = `1-to-1 Replacement: Exchange ${qty} ${returnType === 'Unit' ? 'Loose Packets' : 'Cards'} (භාණ්ඩය මාරු කිරීම)`;
+        refundPreview.textContent = `1-to-1 \u0db8\u0dcf\u0dbb\u0dd4: ${qty} ${returnType === 'Unit' ? productUnit : 'Card'}`;
         refundPreview.className = 'text-xs font-bold text-emerald-700 bg-emerald-50 p-2.5 rounded-xl text-center border border-emerald-200';
       }
     }
@@ -23572,38 +23873,62 @@ const POS = {
     const selectedOpt = select?.options[select.selectedIndex];
 
     if (!productId || !selectedOpt) {
-      UI.showToast('Please select a product to return.', 'warning');
+      UI.showToast('\u0d86\u0db4\u0dc3\u0dd4 \u0daf\u0dda\u0db1 \u0d89\u0dbd\u0da7 \u0daf\u0dd9\u0db1 \u0dbb\u0dd0\u0db1 \u0dba\u0dbd \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1.', 'warning');
+      return;
+    }
+    const reason = document.getElementById('return-modal-reason')?.value || '';
+    if (!reason) {
+      UI.showToast('\u0dc4\u0dda\u0dad\u0dd4\u0dc0 \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1.', 'warning');
       return;
     }
 
     const productName = selectedOpt.text.split(' - ')[0];
-    const fullPrice = Number(selectedOpt.getAttribute('data-price')) || 0;
-    const packets = Math.max(1, Number(selectedOpt.getAttribute('data-packets')) || 20);
+    const fullPrice   = Number(selectedOpt.getAttribute('data-price')) || 0;
+    const packets     = Math.max(1, Number(selectedOpt.getAttribute('data-packets')) || 20);
+    const productUnit = selectedOpt.getAttribute('data-unit') || 'Card';
+    const costPrice   = Number(selectedOpt.getAttribute('data-cost')) || 0;
+
     const returnType = document.getElementById('return-modal-type')?.value || 'Card';
-    const qty = Math.max(1, Number(document.getElementById('return-modal-qty')?.value) || 1);
+    const qty    = Math.max(0.001, Number(document.getElementById('return-modal-qty')?.value) || 1);
     const action = document.getElementById('return-modal-action')?.value || 'deduct';
-    const reason = document.getElementById('return-modal-reason')?.value || 'Damaged';
+
+    const isGoodDamage = reason === 'Good Damage';
+    const isBadDamage  = reason === 'Bad Damage';
+
+    // Good Damage requires a destination shop
+    let destinationShopId = null;
+    if (isGoodDamage) {
+      const destEl = document.getElementById('return-modal-dest-shop');
+      destinationShopId = destEl?.value ? Number(destEl.value) : null;
+      if (!destinationShopId) {
+        UI.showToast('Good Damage \u0dc3\u0d82\u0daf\u0dc4\u0dcf \u0d9c\u0db8\u0db1\u0dcf\u0db1\u0dca\u0dad \u0d9a\u0da9\u0dba \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1.', 'warning');
+        return;
+      }
+    }
 
     let unitRefund = fullPrice;
+    let unitCost   = costPrice;
     if (returnType === 'Unit') {
       unitRefund = fullPrice / packets;
+      unitCost   = costPrice  / packets;
     }
     const refundAmount = action === 'deduct' ? (qty * unitRefund) : 0;
+    const costWriteOff = isBadDamage ? (qty * unitCost) : 0;
 
     State.returns.push({
-      productId,
-      productName,
-      returnType,
-      qty,
-      packetsPerCard: packets,
-      unitRefund,
-      refundAmount,
-      action,
-      reason
+      productId, productName, productUnit,
+      returnType, qty, packetsPerCard: packets,
+      unitRefund, refundAmount, costWriteOff,
+      action, reason, isGoodDamage, isBadDamage, destinationShopId
     });
 
     UI.closeModal('modal-add-return');
-    UI.showToast(action === 'deduct' ? `Return added: -${UI.formatCurrency(refundAmount)} deducted` : `Exchange item recorded!`, 'success');
+    let msg = action === 'deduct'
+      ? `\u0d86\u0db4\u0dc3\u0dd4 \u0d9c\u0dad\u0dca\u0dad\u0dcf: -${UI.formatCurrency(refundAmount)} \u0db6\u0dd2\u0dbd\u0dca\u0db4\u0dad\u0dda\u0db1\u0dca \u0d85\u0da9\u0dd4 \u0d9a\u0dda\u0dbb\u0dda`
+      : `Exchange \u0dc3\u0da7\u0dc4\u0db1\u0dca \u0d9a\u0dda\u0dbb\u0dd2\u0dab\u0dcf!`;
+    if (isBadDamage && costWriteOff > 0)
+      msg += ` | Cost write-off: ${UI.formatCurrency(costWriteOff)}`;
+    UI.showToast(msg, 'success');
 
     this.renderReturnsUI();
     this.renderCartUI();
@@ -23951,7 +24276,7 @@ const POS = {
       this.renderCartUI();
       this.renderReturnsUI();
       this.selectShop(shop.id);
-      await this.loadRepDailySummary();
+      try { await this.loadRepDailySummary(); } catch(e) { console.warn('loadRepDailySummary notice:', e); }
       Dashboard.loadDashboard();
       if (typeof RepBills !== 'undefined' && RepBills.loadBills) RepBills.loadBills();
     } catch (err) {
@@ -27220,8 +27545,30 @@ const RouteSession = {
       routeId = sel ? sel.value : null;
     }
 
+    // Auto-fallback: if rep hasn't selected route from dropdown yet, try auto-detecting
+    if (!routeId && typeof db !== 'undefined' && db.routes) {
+      try {
+        const rawRoutes = await db.routes.toArray();
+        let routes = filterByTenant(rawRoutes);
+        if (typeof Hierarchy !== 'undefined') {
+          routes = await Hierarchy.filterRoutes(routes);
+        }
+        if (!routes || routes.length === 0) routes = rawRoutes;
+        if (routes.length > 0) {
+          routeId = routes[0].id;
+          const sel = document.getElementById('pos-route-select');
+          if (sel) sel.value = String(routeId);
+          if (typeof POS !== 'undefined' && POS.onRouteSelected) {
+            await POS.onRouteSelected(routeId);
+          }
+        }
+      } catch (e) {}
+    }
+
     if (!routeId) {
-      UI.showToast('කරුණාකර අද යන Route එක තෝරා "Start Route" ඔබන්න.', 'warning');
+      const sel = document.getElementById('pos-route-select');
+      if (sel) sel.focus();
+      UI.showToast('කරුණාකර අද දින ධාවනය කරන Route එක තෝරන්න (Select Route to start).', 'warning');
       return;
     }
 
@@ -27233,7 +27580,22 @@ const RouteSession = {
 
     this._pendingRouteId = Number(routeId);
 
-    // Populate Modal
+    // Populate Modal Dropdown
+    const modalSel = document.getElementById('start-route-modal-select');
+    if (modalSel && typeof db !== 'undefined' && db.routes) {
+      const rawRoutes = await db.routes.toArray();
+      let routes = filterByTenant(rawRoutes);
+      if (typeof Hierarchy !== 'undefined') routes = await Hierarchy.filterRoutes(routes);
+      if (!routes || routes.length === 0) routes = rawRoutes;
+      let optHtml = '';
+      for (const r of routes) {
+        const isSel = (Number(r.id) === Number(routeId)) ? 'selected' : '';
+        optHtml += <option value="" ></option>;
+      }
+      modalSel.innerHTML = optHtml;
+      modalSel.value = String(routeId);
+    }
+
     const titleEl = document.getElementById('start-route-modal-name');
     if (titleEl) titleEl.textContent = route.name;
 
@@ -27257,6 +27619,16 @@ const RouteSession = {
     if (previewSelfie) { previewSelfie.src = ''; previewSelfie.classList.add('hidden'); }
 
     UI.openModal('modal-start-route-attendance');
+  },
+
+  async onModalRouteChange(routeId) {
+    if (!routeId) return;
+    this._pendingRouteId = Number(routeId);
+    const sel = document.getElementById('pos-route-select');
+    if (sel) sel.value = String(routeId);
+    if (typeof POS !== 'undefined' && POS.onRouteSelected) {
+      await POS.onRouteSelected(routeId);
+    }
   },
 
   /** Image preview handlers */
@@ -27902,7 +28274,7 @@ window.Routes = Routes;
 </script>
   <script>
 /**
- * Shop / Customer Directory — QR Code, Open/Closed Status, Delete Cascade
+ * Shop / Customer Directory â€” QR Code, Open/Closed Status, Delete Cascade
  */
 
 const Shops = {
@@ -27939,7 +28311,7 @@ const Shops = {
       if (shops.length === 0) {
         container.innerHTML = `
           <div class="text-center py-10 bg-white rounded-2xl border border-gray-100 p-6 col-span-full shadow-sm">
-            <div class="text-5xl mb-3">🏪</div>
+            <div class="text-5xl mb-3">ðŸª</div>
             <h3 class="font-bold text-gray-700 text-sm">No Shops Found</h3>
             <p class="text-xs text-gray-400 mt-1">Add shops under your routes with location details and photos.</p>
             <button onclick="Shops.openShopModal()" class="mt-4 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-orange-400/30 active:scale-95">
@@ -27955,7 +28327,7 @@ const Shops = {
       const canEdit = (role === 'admin') || (role === 'rep' && Auth.can('rep_can_edit_shops'));
       const canDelete = (role === 'admin') || (role === 'rep' && Auth.can('rep_can_delete_shops'));
       const canViewHistory = (role === 'admin') || (role === 'rep' && Auth.can('rep_can_view_history'));
-      const canViewQR = (role === 'admin') || (role === 'rep' && Auth.can('rep_can_view_qr'));
+      const canViewQR = true; // Always allow viewing and printing shop QR
 
       let html = '';
       for (const shop of shops) {
@@ -27975,7 +28347,7 @@ const Shops = {
                 <div class="relative cursor-pointer flex-shrink-0" onclick="Shops.viewShopPhoto('${shop.photoBase64 || ''}', '${shop.name.replace(/'/g,"\\'")}')">
                   ${shop.photoBase64
                     ? `<img src="${shop.photoBase64}" class="w-14 h-14 rounded-xl object-cover border border-gray-200 shadow-sm" alt="Shop Photo"/>`
-                    : `<div class="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 border border-orange-200 flex items-center justify-center text-2xl shadow-inner">🏪</div>`
+                    : `<div class="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 border border-orange-200 flex items-center justify-center text-2xl shadow-inner">ðŸª</div>`
                   }
                   ${isOpen
                     ? `<span class="absolute -bottom-1 -right-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500 text-white shadow">OPEN</span>`
@@ -27987,15 +28359,15 @@ const Shops = {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="px-2 py-0.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-md">
-                      🗺️ ${route ? route.name : 'Unassigned'}
+                      ðŸ—ºï¸ ${route ? route.name : 'Unassigned'}
                     </span>
                   </div>
                   <h3 class="font-bold text-gray-900 text-sm mt-1 truncate">${shop.name}</h3>
                   <p class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                    <span>👤 ${shop.ownerName || 'Owner'}</span>
+                    <span>ðŸ‘¤ ${shop.ownerName || 'Owner'}</span>
                   </p>
                   <p class="text-xs text-gray-400 truncate mt-0.5">
-                    📍 ${shop.address || 'No address note'}
+                    ðŸ“ ${shop.address || 'No address note'}
                   </p>
                 </div>
 
@@ -28003,17 +28375,17 @@ const Shops = {
                 <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                   ${canEdit ? `
                     <button onclick="Shops.editShop(${shop.id})" class="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Edit">
-                      ✏️
+                      âœï¸
                     </button>
                   ` : ''}
                   ${shop.phone ? `
                     <a href="tel:${shop.phone}" class="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg flex items-center justify-center" title="Call Shop">
-                      📞
+                      ðŸ“ž
                     </a>
                   ` : ''}
                   ${canDelete ? `
                     <button onclick="Shops.confirmDeleteShop(${shop.id})" class="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Delete Shop">
-                      🗑️
+                      ðŸ—‘ï¸
                     </button>
                   ` : ''}
                 </div>
@@ -28024,19 +28396,19 @@ const Shops = {
                 <div>
                   <span class="text-[10px] text-gray-400 block font-medium">Outstanding Credit</span>
                   <span class="font-bold text-xs ${hasCredit ? 'text-red-600' : 'text-emerald-600'}">
-                    ${hasCredit ? '⚠️ ' + UI.formatCurrency(credit) : '✓ Cleared (Rs. 0)'}
+                    ${hasCredit ? 'âš ï¸ ' + UI.formatCurrency(credit) : 'âœ“ Cleared (Rs. 0)'}
                   </span>
                 </div>
 
                 <div class="flex items-center gap-1.5">
                   ${hasCredit ? `
                     <button onclick="Shops.openDebtCollectionModal(${shop.id})" class="px-2.5 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-lg hover:bg-green-100 border border-green-200 active:scale-95">
-                      Collect 💵
+                      Collect ðŸ’µ
                     </button>
                   ` : ''}
                   ${canViewHistory ? `
                     <button onclick="Shops.viewShopHistory(${shop.id})" class="px-2.5 py-1.5 bg-gray-50 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-100 border border-gray-200 active:scale-95">
-                      History 📜
+                      History ðŸ“œ
                     </button>
                   ` : ''}
                 </div>
@@ -28047,25 +28419,25 @@ const Shops = {
                 <div class="flex items-center gap-1">
                   ${shop.lat && shop.lng ? `
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      📍 GPS Tagged
+                      ðŸ“ GPS Tagged
                     </span>
                   ` : `
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                      ⚠️ No GPS
+                      âš ï¸ No GPS
                     </span>
                   `}
                 </div>
                 <div class="flex items-center gap-1">
                   ${shop.lat && shop.lng ? `
                     <button onclick="GPS.navigateToShop(${shop.id})" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold rounded-xl border border-sky-200 flex items-center gap-1 active:scale-95 transition-all" title="Turn-by-turn Navigation">
-                      🧭 Navigate (පාර)
+                      ðŸ§­ Navigate (à¶´à·à¶»)
                     </button>
                   ` : `
                     <button onclick="GPS.tagShopCurrentLocation(${shop.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs flex items-center gap-1 active:scale-95 transition-all" title="Tag phone's current GPS location">
-                      📍 Tag GPS
+                      ðŸ“ Tag GPS
                     </button>
                     <button onclick="MapView.openLocationPicker(${shop.id})" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-xl active:scale-95" title="Pin on interactive map">
-                      🗺️ Map
+                      ðŸ—ºï¸ Map
                     </button>
                   `}
                 </div>
@@ -28078,12 +28450,12 @@ const Shops = {
                     class="flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${isOpen
                       ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
                       : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'}">
-                    ${isOpen ? '🔴 Mark Closed' : '🟢 Mark Open'}
+                    ${isOpen ? 'ðŸ”´ Mark Closed' : 'ðŸŸ¢ Mark Open'}
                   </button>
                   ${canViewQR ? `
                     <button onclick="Shops.viewShopQR(${shop.id})"
                       class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all">
-                      🔲 View QR
+                      ðŸ”² View QR
                     </button>
                   ` : ''}
                 </div>
@@ -28136,7 +28508,7 @@ const Shops = {
       const activeTid = getActiveTenantId() || 1;
       await db.routes.add({
         tenantId: activeTid,
-        name: 'Main Route (ප්‍රධාන මාර්ගය)',
+        name: 'Main Route (à¶´à·Šâ€à¶»à¶°à·à¶± à¶¸à·à¶»à·Šà¶œà¶º)',
         description: 'Default Sales & Delivery Route'
       });
       routes = await db.routes.toArray();
@@ -28247,7 +28619,7 @@ const Shops = {
     const currentCredit = Number(document.getElementById('shop-modal-credit').value) || 0;
     const activeTid = getActiveTenantId() || 1;
 
-    if (!name) { UI.showToast('Please enter Shop Name (කඩේ නම ඇතුලත් කරන්න)', 'warning'); return; }
+    if (!name) { UI.showToast('Please enter Shop Name (à¶šà¶©à·š à¶±à¶¸ à¶‡à¶­à·”à¶½à¶­à·Š à¶šà¶»à¶±à·Šà¶±)', 'warning'); return; }
 
     // Fallback if routeId is missing or empty
     if (!routeId || isNaN(routeId)) {
@@ -28256,7 +28628,7 @@ const Shops = {
       if (routes.length === 0) {
         routeId = await db.routes.add({
           tenantId: activeTid,
-          name: 'Main Route (ප්‍රධාන මාර්ගය)',
+          name: 'Main Route (à¶´à·Šâ€à¶»à¶°à·à¶± à¶¸à·à¶»à·Šà¶œà¶º)',
           description: 'Default Sales & Delivery Route'
         });
       } else {
@@ -28320,7 +28692,7 @@ const Shops = {
           createdBy: existing?.createdBy || (currentUser ? currentUser.username : 'admin')
         };
         await db.shops.update(savedShopId, payload);
-        UI.showToast('Shop details updated! ✅', 'success');
+        UI.showToast('Shop details updated! âœ…', 'success');
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
       } else {
         // Add new shop
@@ -28362,12 +28734,13 @@ const Shops = {
               isOpeningCredit: true,
               repId: repId,
               repName: repName,
-              notes: 'පැරණි බිල්පත් ණය ශේෂය (Opening Credit Balance)'
+              notes: 'à¶´à·à¶»à¶«à·’ à¶¶à·’à¶½à·Šà¶´à¶­à·Š à¶«à¶º à·à·šà·‚à¶º (Opening Credit Balance)'
             });
           } catch (e) {}
         }
 
-        UI.showToast('New shop registered! 🏪✓', 'success');
+        UI.showToast('New shop registered! ðŸªâœ“', 'success');
+        setTimeout(() => { this.viewShopQR(savedShopId); }, 350);
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
       }
 
@@ -28404,7 +28777,7 @@ const Shops = {
   async toggleShopStatus(shopId, currentIsOpen) {
     const newStatus = !currentIsOpen;
     await db.shops.update(shopId, { isOpen: newStatus });
-    UI.showToast(newStatus ? '🟢 Shop marked as OPEN' : '🔴 Shop marked as CLOSED', newStatus ? 'success' : 'warning');
+    UI.showToast(newStatus ? 'ðŸŸ¢ Shop marked as OPEN' : 'ðŸ”´ Shop marked as CLOSED', newStatus ? 'success' : 'warning');
     this.loadShops();
   },
 
@@ -28476,7 +28849,7 @@ const Shops = {
     link.click();
     document.body.removeChild(link);
 
-    UI.showToast('📥 QR image downloaded!', 'success');
+    UI.showToast('ðŸ“¥ QR image downloaded!', 'success');
   },
 
   // View QR Code modal
@@ -28504,6 +28877,16 @@ const Shops = {
     });
 
     UI.openModal('modal-shop-qr');
+  },
+
+  // Preview QR for shop being edited in the modal
+  previewShopModalQr() {
+    const id = document.getElementById('shop-modal-id')?.value;
+    if (id) {
+      this.viewShopQR(Number(id));
+    } else {
+      UI.showToast('කඩය සුරකිා QR code ලබා ගන්න. (Save the shop first to generate QR Code.)', 'info');
+    }
   },
 
   // Print QR Sticker
@@ -28571,7 +28954,7 @@ const Shops = {
       await db.shops.delete(shopId);
 
       UI.closeModal('modal-delete-shop');
-      UI.showToast('Shop and all related data deleted! 🗑️', 'success');
+      UI.showToast('Shop and all related data deleted! ðŸ—‘ï¸', 'success');
       this.loadShops();
       Dashboard.loadDashboard();
     } catch (err) {
@@ -28628,7 +29011,7 @@ const Shops = {
 
   async viewShopHistory(shopId) {
     if (!shopId) {
-      UI.showToast('Please select a shop first to view history (කරුණාකර පළමුව කඩය තෝරන්න)', 'warning');
+      UI.showToast('Please select a shop first to view history (à¶šà¶»à·”à¶«à·à¶šà¶» à¶´à·…à¶¸à·”à·€ à¶šà¶©à¶º à¶­à·à¶»à¶±à·Šà¶±)', 'warning');
       return;
     }
     const numId = Number(shopId);
@@ -28655,7 +29038,7 @@ const Shops = {
     const nameEl = document.getElementById('hist-modal-shop-name');
     const subEl = document.getElementById('hist-modal-shop-sub');
     if (nameEl) nameEl.textContent = shop.name;
-    if (subEl) subEl.textContent = `${shop.ownerName || 'Owner'} • ${shop.phone || 'No phone'} • 🗺️ ${route ? route.name : 'Unassigned'}`;
+    if (subEl) subEl.textContent = `${shop.ownerName || 'Owner'} â€¢ ${shop.phone || 'No phone'} â€¢ ðŸ—ºï¸ ${route ? route.name : 'Unassigned'}`;
 
     const totalBills = sales.length;
     const totalSpent = sales.filter(s => s.status !== 'Cancelled').reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
@@ -28728,7 +29111,7 @@ const Shops = {
     if (!events || events.length === 0) {
       listContainer.innerHTML = `
         <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100 p-4">
-          <div class="text-3xl mb-1">📜</div>
+          <div class="text-3xl mb-1">ðŸ“œ</div>
           <p class="text-xs font-bold">No past orders or payments recorded yet.</p>
           <p class="text-[10px] text-slate-400 mt-0.5">Orders and bill history will appear here automatically.</p>
         </div>
@@ -28746,13 +29129,13 @@ const Shops = {
         if (ev.items && ev.items.length > 0) {
           itemsHtml = `
             <div class="mt-2 pt-2 border-t border-slate-100 space-y-1">
-              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">📦 Items Purchased (ගනුදෙනු කල භාණ්ඩ):</span>
+              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">ðŸ“¦ Items Purchased (à¶œà¶±à·”à¶¯à·™à¶±à·” à¶šà¶½ à¶·à·à¶«à·Šà¶©):</span>
               <div class="bg-slate-50 rounded-xl p-2 space-y-1">
                 ${ev.items.map(it => `
                   <div class="flex items-center justify-between text-xs py-0.5">
                     <span class="font-bold text-slate-800">
-                      • ${it.productName} <span class="text-slate-500 font-semibold">(${it.qty} ${it.unit})</span>
-                      ${it.freeQty > 0 ? `<span class="ml-1 px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-800 text-[9px] font-black">🎁 +${it.freeQty} FREE</span>` : ''}
+                      â€¢ ${it.productName} <span class="text-slate-500 font-semibold">(${it.qty} ${it.unit})</span>
+                      ${it.freeQty > 0 ? `<span class="ml-1 px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-800 text-[9px] font-black">ðŸŽ +${it.freeQty} FREE</span>` : ''}
                     </span>
                     <span class="font-bold text-slate-700">
                       Rs. ${(Number(it.sellingPrice) * Number(it.qty)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -28768,11 +29151,11 @@ const Shops = {
         if (ev.returns && ev.returns.length > 0) {
           returnsHtml = `
             <div class="mt-1.5 bg-red-50/70 border border-red-200/60 rounded-xl p-2 space-y-1">
-              <span class="text-[10px] font-black text-red-700 uppercase tracking-wider block">🔄 Returns / Replacements (ආපසු/මාරු):</span>
+              <span class="text-[10px] font-black text-red-700 uppercase tracking-wider block">ðŸ”„ Returns / Replacements (à¶†à¶´à·ƒà·”/à¶¸à·à¶»à·”):</span>
               ${ev.returns.map(r => `
                 <div class="flex items-center justify-between text-[11px] text-red-800 font-bold">
-                  <span>${r.action === 'deduct' ? '• [Deducted]' : '• [Exchange]'} ${r.productName} (${r.qty} ${r.returnType === 'Unit' ? 'Loose Pkts' : 'Cards'})</span>
-                  <span>${r.action === 'deduct' ? '-' + UI.formatCurrency(r.refundAmount) : '✓ Replaced'}</span>
+                  <span>${r.action === 'deduct' ? 'â€¢ [Deducted]' : 'â€¢ [Exchange]'} ${r.productName} (${r.qty} ${r.returnType === 'Unit' ? 'Loose Pkts' : 'Cards'})</span>
+                  <span>${r.action === 'deduct' ? '-' + UI.formatCurrency(r.refundAmount) : 'âœ“ Replaced'}</span>
                 </div>
               `).join('')}
             </div>
@@ -28785,14 +29168,14 @@ const Shops = {
               <div>
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="px-2 py-0.5 rounded-lg text-[10px] font-black ${isBooking ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">
-                    ${isBooking ? '📦 DELIVERY BOOKING' : '⚡ DIRECT SALE'}
+                    ${isBooking ? 'ðŸ“¦ DELIVERY BOOKING' : 'âš¡ DIRECT SALE'}
                   </span>
                   <span class="text-xs font-black text-slate-900">#${ev.invoiceNo}</span>
                   <span class="text-[10px] font-semibold text-slate-500">by ${ev.repName}</span>
                 </div>
                 <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
-                  <span>📅 ${UI.formatDateTime(ev.date)}</span>
-                  ${ev.deliveryDate ? `<span>• Del: ${UI.formatDate(ev.deliveryDate)}</span>` : ''}
+                  <span>ðŸ“… ${UI.formatDateTime(ev.date)}</span>
+                  ${ev.deliveryDate ? `<span>â€¢ Del: ${UI.formatDate(ev.deliveryDate)}</span>` : ''}
                 </div>
               </div>
               <div class="text-right">
@@ -28815,13 +29198,13 @@ const Shops = {
               <span class="text-[10px] text-slate-400">Paid: ${UI.formatCurrency(ev.paidAmount || 0)} | Credit: ${UI.formatCurrency(ev.creditAmount || 0)}</span>
               <div class="flex items-center gap-1.5">
                 <button onclick="Print.previewInvoice(${ev.id})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-xs font-bold rounded-xl active:scale-95 flex items-center gap-1 border border-indigo-200" title="Preview Thermal Receipt">
-                  <span>👁️ Preview</span>
+                  <span>ðŸ‘ï¸ Preview</span>
                 </button>
                 <button onclick="Print.printExistingInvoice(${ev.id})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl active:scale-95 flex items-center gap-1 border border-slate-200" title="Print Receipt">
-                  <span>🖨️ Print</span>
+                  <span>ðŸ–¨ï¸ Print</span>
                 </button>
                 <button onclick="Shops.confirmDeleteSale(${ev.id}, ${targetShopId})" class="p-1 text-red-400 hover:text-red-600 rounded-lg" title="Delete Invoice">
-                  🗑️
+                  ðŸ—‘ï¸
                 </button>
               </div>
             </div>
@@ -28832,16 +29215,16 @@ const Shops = {
           <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center justify-between gap-2">
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-200 text-emerald-900">💵 DEBT PAYMENT</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-200 text-emerald-900">ðŸ’µ DEBT PAYMENT</span>
                 <span class="text-xs text-emerald-800 font-bold">${UI.formatDateTime(ev.date)}</span>
               </div>
               <p class="text-[11px] text-emerald-700 mt-1">${ev.note || 'Debt Collection'}</p>
-              <p class="text-[10px] text-slate-500 mt-0.5">Credit: ${UI.formatCurrency(ev.previousCredit)} ➔ ${UI.formatCurrency(ev.newCredit)}</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Credit: ${UI.formatCurrency(ev.previousCredit)} âž” ${UI.formatCurrency(ev.newCredit)}</p>
             </div>
             <div class="text-right flex flex-col items-end gap-1.5 flex-shrink-0">
               <div class="text-sm font-black text-emerald-800">+${UI.formatCurrency(ev.amountPaid)}</div>
               <button onclick="Print.printCollectionReceipt(${ev.id})" class="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all" title="Print Collection Receipt">
-                🖨️ Print
+                ðŸ–¨ï¸ Print
               </button>
             </div>
           </div>
@@ -28881,14 +29264,14 @@ const Shops = {
   async confirmDeleteSale(saleId, shopId) {
     if (!confirm('Delete this invoice? Credit will be reversed if applicable.')) return;
     await this._deleteSaleRecord(saleId);
-    UI.showToast('Invoice deleted! 🗑️', 'success');
+    UI.showToast('Invoice deleted! ðŸ—‘ï¸', 'success');
     await this.viewShopHistory(shopId || this._currentHistoryShopId);
     Dashboard.loadDashboard();
   },
 
   async grabCurrentGpsForModal() {
     try {
-      UI.showToast('📡 Satellite GPS fix ලබා ගනිමින්... (Acquiring GPS)', 'info');
+      UI.showToast('ðŸ“¡ Satellite GPS fix à¶½à¶¶à· à¶œà¶±à·’à¶¸à·’à¶±à·Š... (Acquiring GPS)', 'info');
       let pos = null;
       if (typeof GPS !== 'undefined' && GPS.requestImmediateFix) {
         pos = await GPS.requestImmediateFix();
@@ -28906,7 +29289,7 @@ const Shops = {
         // Discard Colombo ISP gateway fallback if accuracy is coarse (>300m)
         const isColombo = (pos.lat >= 6.8 && pos.lat <= 7.15 && pos.lng >= 79.75 && pos.lng <= 80.05 && (pos.accuracy || 0) > 300);
         if (isColombo) {
-          UI.showToast('⚠️ Desktop/ISP Location Detected (Colombo). Phone GPS භාවිතා කරන්න හෝ Map එකෙන් ලකුණු කරන්න.', 'warning');
+          UI.showToast('âš ï¸ Desktop/ISP Location Detected (Colombo). Phone GPS à¶·à·à·€à·’à¶­à· à¶šà¶»à¶±à·Šà¶± à·„à· Map à¶‘à¶šà·™à¶±à·Š à¶½à¶šà·”à¶«à·” à¶šà¶»à¶±à·Šà¶±.', 'warning');
           return;
         }
         const latEl = document.getElementById('shop-modal-lat');
@@ -28914,9 +29297,9 @@ const Shops = {
         if (latEl) latEl.value = Number(pos.lat).toFixed(7);
         if (lngEl) lngEl.value = Number(pos.lng).toFixed(7);
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
-        UI.showToast(`📍 GPS Captured! [${Number(pos.lat).toFixed(5)}, ${Number(pos.lng).toFixed(5)}] ±${Math.round(pos.accuracy || 5)}m`, 'success');
+        UI.showToast(`ðŸ“ GPS Captured! [${Number(pos.lat).toFixed(5)}, ${Number(pos.lng).toFixed(5)}] Â±${Math.round(pos.accuracy || 5)}m`, 'success');
       } else {
-        UI.showToast('GPS coordinates not available — please turn on Phone Location', 'warning');
+        UI.showToast('GPS coordinates not available â€” please turn on Phone Location', 'warning');
       }
     } catch (e) {
       UI.showToast('Could not acquire GPS: ' + (e.message || 'Please enable Location'), 'error');
@@ -39544,9 +39927,15 @@ const Users = {
         try { await ensureHrUserExists(); } catch (e) {}
       }
       const rawUsers = await db.users.toArray();
-      const users = filterByTenant(rawUsers);
+      let users = filterByTenant(rawUsers);
+      if ((!users || users.length === 0) && rawUsers.length > 0) {
+        users = rawUsers;
+      }
       const rawRoutes = await db.routes.toArray();
-      const routes = filterByTenant(rawRoutes);
+      let routes = filterByTenant(rawRoutes);
+      if ((!routes || routes.length === 0) && rawRoutes.length > 0) {
+        routes = rawRoutes;
+      }
       const routeMap = Object.fromEntries(routes.map(r => [r.id, r.name]));
       const userMap = Object.fromEntries(users.map(u => [u.id, u.fullName || u.username]));
 
@@ -39746,9 +40135,11 @@ const Users = {
    */
   async populateHierarchyControls(currentUser = null) {
     const rawRoutes = await db.routes.toArray();
-    const routes = filterByTenant(rawRoutes);
+    let routes = filterByTenant(rawRoutes);
+    if ((!routes || routes.length === 0) && rawRoutes.length > 0) routes = rawRoutes;
     const rawUsers = await db.users.toArray();
-    const allUsers = filterByTenant(rawUsers);
+    let allUsers = filterByTenant(rawUsers);
+    if ((!allUsers || allUsers.length === 0) && rawUsers.length > 0) allUsers = rawUsers;
 
     // 1. Calculate shop counts per route for live counter
     const rawShops = (typeof db !== 'undefined' && db.shops) ? await db.shops.toArray() : [];
@@ -40783,13 +41174,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (e) {}
 
-  // 6. Load Dashboard if admin session active
+  // 6. Load initial role screen on startup
   try {
-    if (Auth.currentUser && Auth.currentUser.role === 'admin') {
-      Dashboard.loadDashboard();
+    if (Auth.currentUser) {
+      if (Auth.currentUser.role === 'admin') {
+        Dashboard.loadDashboard();
+      } else if (Auth.currentUser.role === 'rep' && typeof POS !== 'undefined' && POS.init) {
+        POS.init();
+      } else if (Auth.currentUser.role === 'hr' && typeof HR !== 'undefined' && HR.init) {
+        HR.init();
+      }
+    }
+    const posPage = document.getElementById('tab-pos');
+    if (posPage && !posPage.classList.contains('hidden') && typeof POS !== 'undefined' && POS.init) {
+      POS.init();
     }
   } catch (dashErr) {
-    console.warn('Dashboard load error:', dashErr);
+    console.warn('Startup view load error:', dashErr);
   }
 
   // 7. Setup Keyboard shortcut for modal close
@@ -40804,33 +41205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  console.log('Spice Wholesale Card POS v4.5 - Local Offline & Multi-Role Active');
-});
-
-// ── PWA One-Tap Install Event Listeners (Mobile & Desktop Standalone) ──
-window.deferredInstallPrompt = null;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  window.deferredInstallPrompt = e;
-  console.log('[PWA] beforeinstallprompt captured! Ready for native installation.');
-
-  document.querySelectorAll('.pwa-install-btn, #pwa-install-container, #header-install-btn').forEach(el => {
-    el.classList.remove('hidden');
-    el.style.display = '';
+  // Global Error Handler for Offline Reliability
+  window.addEventListener('unhandledrejection', (event) => {
+    console.warn('Unhandled promise rejection captured for offline stability:', event.reason);
   });
-});
-
-window.addEventListener('appinstalled', () => {
-  console.log('[PWA] App installed successfully!');
-  window.deferredInstallPrompt = null;
-  document.querySelectorAll('.pwa-install-btn, #pwa-install-container, #header-install-btn').forEach(el => {
-    el.classList.add('hidden');
-    el.style.display = 'none';
-  });
-  if (typeof UI !== 'undefined' && UI.showToast) {
-    UI.showToast('🎉 App එක සාර්ථකව Install විය! දැන් Home screen / Desktop එකෙන් Open කරන්න.', 'success');
-  }
 });
 </script>
 
@@ -41577,12 +41955,13 @@ window.addEventListener('appinstalled', () => {
         <button onclick="UI.closeModal('modal-start-route-attendance')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
       </div>
 
-      <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs space-y-1">
-        <div class="flex justify-between">
-          <span class="text-slate-500 font-bold">Active Route:</span>
-          <span id="start-route-modal-name" class="font-black text-emerald-900">-</span>
+      <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs space-y-2">
+        <div>
+          <label class="text-slate-600 font-bold block mb-1">Route (ධාවනය කරන මාර්ගය):</label>
+          <select id="start-route-modal-select" onchange="RouteSession.onModalRouteChange(this.value)" class="w-full bg-white border border-emerald-300 rounded-xl px-2.5 py-2 font-bold text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-hidden">
+          </select>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center pt-1 border-t border-emerald-100">
           <span class="text-slate-500 font-bold">Sales Rep:</span>
           <span id="start-route-modal-rep" class="font-black text-slate-800">-</span>
         </div>
