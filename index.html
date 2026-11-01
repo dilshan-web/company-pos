@@ -4382,17 +4382,53 @@ body.theme-dark #app-bottom-nav {
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-2">
-        <button onclick="POS.submitSale(true)" class="flex-1 bg-emerald-600 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-emerald-600/30 hover:bg-emerald-500 active:scale-95">
-          ✓ Save Order / Print
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="POS.submitSale(false)" class="bg-slate-700 text-white text-xs font-black py-3.5 rounded-2xl active:scale-95 flex items-center justify-center gap-1.5 hover:bg-slate-800">
+          💾 <span>Save Only</span>
         </button>
-        <button onclick="POS.submitSale(false)" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl hover:bg-slate-200 active:scale-95">
-          Save Only
+        <button onclick="POS.submitSale(true)" class="bg-emerald-600 text-white text-xs font-black py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center gap-1.5 hover:bg-emerald-500">
+          🖨️ <span>Save &amp; Print</span>
         </button>
       </div>
     </div>
   </div>
 
+
+  <!-- =========================================================================
+       MODAL: SMS RECEIPT (SMS රිසිට්පත)
+       ========================================================================= -->
+  <div id="modal-sms-receipt" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl">📱</div>
+          <div>
+            <h3 class="text-sm font-black text-slate-900">SMS රිසිට්පත යවන්නද?</h3>
+            <p class="text-[10px] text-slate-400 font-medium">Send SMS Receipt to Shop</p>
+          </div>
+        </div>
+        <button onclick="UI.closeModal('modal-sms-receipt')" class="p-1 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+
+      <div class="bg-slate-50 rounded-2xl p-3.5 space-y-1.5">
+        <div class="flex items-center gap-2 text-xs text-slate-600">
+          <span class="text-base">📞</span>
+          <span>To: <span id="sms-receipt-phone" class="font-black text-slate-900"></span></span>
+        </div>
+        <div class="text-[11px] text-slate-400 font-medium">SMS message preview:</div>
+        <pre id="sms-receipt-preview" class="text-[11px] text-slate-700 font-mono bg-white border border-slate-200 rounded-xl p-2.5 whitespace-pre-wrap break-all leading-relaxed max-h-40 overflow-y-auto"></pre>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="UI.closeModal('modal-sms-receipt')" class="bg-slate-100 text-slate-700 text-xs font-bold py-3 rounded-2xl hover:bg-slate-200 active:scale-95">
+          Cancel
+        </button>
+        <button onclick="POS.sendSmsReceipt()" class="bg-emerald-600 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-emerald-600/30 hover:bg-emerald-500 active:scale-95 flex items-center justify-center gap-1.5">
+          📤 <span>Send SMS</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- =========================================================================
        MODAL: ADD SALES RETURN / REPLACEMENT (සේල්ස් රිටන්ස් & භාණ්ඩ මාරු)
@@ -23311,8 +23347,9 @@ const POS = {
                   class="flex-shrink-0 w-10 h-10 rounded-xl bg-white shadow font-black text-slate-700 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 active:scale-90 text-lg">
                   −
                 </button>
-                <input type="number" min="0" value="${qty}"
+                <input inputmode="numeric" pattern="[0-9]*" type="number" min="0" value="${qty}"
                   onchange="POS.setProductQty('${prod.id}', this.value)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();POS.setProductQty('${prod.id}',this.value);}"
                   class="flex-1 min-w-0 text-center font-black text-sm text-emerald-700 bg-transparent border-0 focus:ring-0 p-0" />
                 <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
                   class="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-600 shadow font-black text-white flex items-center justify-center hover:bg-emerald-700 active:scale-90 text-lg">
@@ -23633,7 +23670,7 @@ const POS = {
             <!-- Quantity [-] [val] [+] -->
             <div class="col-span-4 flex items-center bg-white rounded-lg border border-slate-200 px-1 py-0.5" title="ප්‍රමාණය (Quantity)">
               <button type="button" onclick="POS.adjustCartItemQty(${item.productId}, -1)" class="w-6 h-6 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-100 rounded active:scale-90">-</button>
-              <input type="number" min="1" value="${item.qty}" onchange="POS.onCartItemQtyChange(${item.productId}, this.value)" class="w-full text-center text-xs font-black text-slate-900 border-0 p-0 focus:ring-0 bg-transparent" />
+              <input inputmode="numeric" pattern="[0-9]*" type="number" min="1" value="${item.qty}" onchange="POS.onCartItemQtyChange(${item.productId}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();POS.onCartItemQtyChange(${item.productId},this.value);}" class="w-full text-center text-xs font-black text-slate-900 border-0 p-0 focus:ring-0 bg-transparent" />
               <button type="button" onclick="POS.adjustCartItemQty(${item.productId}, 1)" class="w-6 h-6 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-100 rounded active:scale-90">+</button>
             </div>
 
@@ -24237,6 +24274,22 @@ const POS = {
       UI.showToast(isBooking ? `Order #${invoiceNo} booked for delivery on ${UI.formatDate(deliveryDate)}!` : `Invoice #${invoiceNo} saved & billed!`, 'success');
       if (typeof SoundFX !== 'undefined') SoundFX.play('success');
 
+      // 5a. Offer SMS Receipt if shop has phone and user has permission
+      try {
+        if (!isBooking && shop && shop.phone && Auth.checkPermission('allowSmsReceipt')) {
+          const companyInfo = await db.company.get(1).catch(() => null);
+          const companyName = (companyInfo && companyInfo.name) ? companyInfo.name : (localStorage.getItem('pos_company_name') || 'SPICE POS');
+          const dateStr = new Date(date).toLocaleDateString('en-GB');
+          const itemLines = State.cart.map(i => `${i.productName}: ${i.qty}x Rs.${i.sellingPrice}`).join('\n');
+          const creditLine = creditAmount > 0 ? `\nCredit: Rs.${creditAmount.toFixed(2)}` : '';
+          const smsMsg = `${companyName}\nDate: ${dateStr}\nInv: ${invoiceNo}\n${itemLines}\nTotal: Rs.${netTotal.toFixed(2)}${creditLine}\nThank you!`;
+          this._pendingSmsData = { phone: shop.phone, msg: smsMsg };
+          document.getElementById('sms-receipt-phone').textContent = shop.phone;
+          document.getElementById('sms-receipt-preview').textContent = smsMsg;
+          setTimeout(() => UI.openModal('modal-sms-receipt'), 600);
+        }
+      } catch(smsErr) { console.warn('SMS offer error:', smsErr); }
+
       // Realtime Order Notification for Store Keepers & Admin across tabs
       try {
         const orderBroadcastData = {
@@ -24336,6 +24389,15 @@ const POS = {
       this._qrStream = null;
     }
     UI.closeModal('modal-qr-scanner');
+  },
+
+  sendSmsReceipt() {
+    const d = this._pendingSmsData;
+    if (!d || !d.phone || !d.msg) return;
+    const smsUrl = 'sms:' + d.phone.replace(/\s/g, '') + '?body=' + encodeURIComponent(d.msg);
+    window.open(smsUrl, '_blank');
+    UI.closeModal('modal-sms-receipt');
+    this._pendingSmsData = null;
   },
 
   async selectShopByQR(shopId) {
@@ -24504,10 +24566,16 @@ const RepBills = {
             🗑️
           </button>` : '';
 
-        const printBtn = status === 'Delivered' ? `
+        const printBtn = (status === 'Delivered' || status === 'Pending') ? `
           <button onclick="Print.printExistingInvoice(${sale.id})" title="Print Invoice"
             class="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 flex items-center justify-center text-sm border border-slate-200 active:scale-95 transition-all">
             🖨️
+          </button>` : '';
+
+        const smsBtn = (shop && shop.phone && status !== 'Cancelled' && typeof Auth !== 'undefined' && Auth.checkPermission('allowSmsReceipt')) ? `
+          <button onclick="RepBills.sendSmsForBill(${sale.id})" title="Send SMS Receipt"
+            class="w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm border border-emerald-200 active:scale-95 transition-all">
+            📱
           </button>` : '';
 
         html += `
@@ -24526,7 +24594,7 @@ const RepBills = {
               <div class="text-right flex-shrink-0 flex flex-col items-end gap-1.5">
                 <div class="font-black text-slate-900 text-sm">${UI.formatCurrency(sale.totalAmount)}</div>
                 <div class="flex items-center gap-1">
-                  ${printBtn}${editBtn}${delBtn}
+                  ${smsBtn}${printBtn}${editBtn}${delBtn}
                 </div>
               </div>
             </div>
@@ -24622,6 +24690,26 @@ const RepBills = {
     // Reload lists
     await this.loadBills();
     if (typeof Dashboard !== 'undefined') Dashboard.loadDashboard();
+  },
+
+  async sendSmsForBill(saleId) {
+    try {
+      const sale = await db.sales.get(saleId);
+      if (!sale) return UI.showToast('Bill not found!', 'error');
+      const shop = await db.shops.get(sale.shopId);
+      if (!shop || !shop.phone) return UI.showToast('Shop has no phone number!', 'warning');
+      const companyInfo = await db.company.get(1).catch(() => null);
+      const companyName = (companyInfo && companyInfo.name) ? companyInfo.name : (localStorage.getItem('pos_company_name') || 'SPICE POS');
+      const dateStr = new Date(sale.date).toLocaleDateString('en-GB');
+      const items = await db.saleItems.where('saleId').equals(saleId).toArray();
+      const itemLines = items.map(i => `${i.productName}: ${i.qty}x Rs.${i.sellingPrice}`).join('\n');
+      const creditLine = (sale.creditAmount > 0) ? `\nCredit: Rs.${(sale.creditAmount).toFixed(2)}` : '';
+      const msg = `${companyName}\nDate: ${dateStr}\nInv: ${sale.invoiceNo}\n${itemLines}\nTotal: Rs.${(sale.totalAmount).toFixed(2)}${creditLine}\nThank you!`;
+      const smsUrl = 'sms:' + shop.phone.replace(/\s/g, '') + '?body=' + encodeURIComponent(msg);
+      window.open(smsUrl, '_blank');
+    } catch(e) {
+      UI.showToast('SMS error: ' + e.message, 'error');
+    }
   }
 };
 
@@ -27590,7 +27678,8 @@ const RouteSession = {
       let optHtml = '';
       for (const r of routes) {
         const isSel = (Number(r.id) === Number(routeId)) ? 'selected' : '';
-        optHtml += <option value="" ></option>;
+        optHtml += `<option value="${r.id}" ${isSel}>${r.name}</option>`;
+
       }
       modalSel.innerHTML = optHtml;
       modalSel.value = String(routeId);
@@ -27614,9 +27703,13 @@ const RouteSession = {
 
     const previewMeter = document.getElementById('start-route-preview-meter');
     if (previewMeter) { previewMeter.src = ''; previewMeter.classList.add('hidden'); }
+    const startMeterBtn = document.getElementById('start-meter-photo-btn');
+    if (startMeterBtn) startMeterBtn.classList.remove('hidden');
 
     const previewSelfie = document.getElementById('start-route-preview-selfie');
     if (previewSelfie) { previewSelfie.src = ''; previewSelfie.classList.add('hidden'); }
+    const startSelfieBtn = document.getElementById('start-selfie-photo-btn');
+    if (startSelfieBtn) startSelfieBtn.classList.remove('hidden');
 
     UI.openModal('modal-start-route-attendance');
   },
@@ -27639,6 +27732,9 @@ const RouteSession = {
     const url = URL.createObjectURL(file);
     previewEl.src = url;
     previewEl.classList.remove('hidden');
+    // Hide the capture button (sibling before the hidden input's next button)
+    const btn = inputEl.nextElementSibling;
+    if (btn && btn.tagName === 'BUTTON') btn.classList.add('hidden');
   },
 
   /** Submit Start Route with Attendance, Meter & Selfie */
@@ -27821,9 +27917,11 @@ const RouteSession = {
 
     const previewEndMeter = document.getElementById('end-route-preview-meter');
     if (previewEndMeter) { previewEndMeter.src = ''; previewEndMeter.classList.add('hidden'); }
+    document.querySelectorAll('#modal-end-route-attendance button[onclick*="end-route-meter-photo"]').forEach(b => b.classList.remove('hidden'));
 
     const previewEndSelfie = document.getElementById('end-route-preview-selfie');
     if (previewEndSelfie) { previewEndSelfie.src = ''; previewEndSelfie.classList.add('hidden'); }
+    document.querySelectorAll('#modal-end-route-attendance button[onclick*="end-route-selfie-photo"]').forEach(b => b.classList.remove('hidden'));
 
     UI.openModal('modal-end-route-attendance');
   },
@@ -35301,7 +35399,8 @@ const Settings = {
       { key: 'rep_can_give_credit', title: 'Issue Credit (ණයට බිල්පත් නිකුත් කිරීම)', desc: 'Allow Sales Rep to book credit & partial payment bills' },
       { key: 'rep_can_view_qr', title: 'View & Download QR (QR කේත)', desc: 'Allow Sales Rep to view and print shop QR stickers' },
       { key: 'rep_can_edit_orders', title: 'Edit / Adjust Orders (ඇණවුම් වෙනස් කිරීම)', desc: 'Allow Sales Rep to adjust item quantities on booked orders' },
-      { key: 'rep_can_add_items_on_order', title: 'Add Extra Items (අමතර භාණ්ඩ එකතු කිරීම)', desc: 'Allow Sales Rep to add extra products into existing orders' }
+      { key: 'rep_can_add_items_on_order', title: 'Add Extra Items (අමතර භාණ්ඩ එකතු කිරීම)', desc: 'Allow Sales Rep to add extra products into existing orders' },
+      { key: 'allowSmsReceipt', title: 'Send SMS Receipt (📱 SMS රිසිට්පත)', desc: 'Allow rep to send SMS invoice summary to shop phone after sale' }
     ];
 
     const driverPermItems = [
@@ -41942,57 +42041,84 @@ document.addEventListener('DOMContentLoaded', async () => {
   <!-- =========================================================================
        MODAL: START ROUTE & MORNING ATTENDANCE (උදෑසන ගමන් අරඹා පැමිණීම සටහන් කිරීම)
        ========================================================================= -->
-  <div id="modal-start-route-attendance" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="modal-content bg-white w-full max-w-md rounded-3xl p-5 space-y-3.5 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+  <div id="modal-start-route-attendance" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[95vh] overflow-y-auto">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-3xl">
         <div class="flex items-center gap-2">
-          <span class="text-2xl">🛵</span>
+          <div class="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl">🛵</div>
           <div>
-            <h3 class="font-black text-sm text-slate-900">Start Route & Clock Attendance</h3>
-            <p class="text-[11px] text-emerald-700 font-bold">උදෑසන ගමන අරඹා පැමිණීම සටහන් කරන්න</p>
+            <h3 class="font-black text-sm text-slate-900">Start Route</h3>
+            <p class="text-[10px] text-emerald-700 font-bold">උදෑසන ගමන අරඹන්න</p>
           </div>
         </div>
-        <button onclick="UI.closeModal('modal-start-route-attendance')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button onclick="UI.closeModal('modal-start-route-attendance')" class="p-2 text-slate-400 hover:text-slate-600 text-lg rounded-xl hover:bg-slate-100">✕</button>
       </div>
 
-      <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs space-y-2">
+      <div class="px-5 pb-5 space-y-4 pt-4">
+
+        <!-- Route & Rep Info -->
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-2.5">
+          <div>
+            <label class="text-slate-600 font-bold block mb-1.5">🗺️ Route (රූට් එක):</label>
+            <select id="start-route-modal-select" onchange="RouteSession.onModalRouteChange(this.value)" class="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2.5 font-black text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none">
+            </select>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-emerald-200">
+            <span class="text-slate-500 font-bold">👤 Sales Rep:</span>
+            <span id="start-route-modal-rep" class="font-black text-slate-900">-</span>
+          </div>
+        </div>
+
+        <!-- KM Input -->
         <div>
-          <label class="text-slate-600 font-bold block mb-1">Route (ධාවනය කරන මාර්ගය):</label>
-          <select id="start-route-modal-select" onchange="RouteSession.onModalRouteChange(this.value)" class="w-full bg-white border border-emerald-300 rounded-xl px-2.5 py-2 font-bold text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-hidden">
-          </select>
+          <label class="font-black text-slate-800 text-xs block mb-1.5">🏍️ Starting Odometer KM (ආරම්භක මීටර්)</label>
+          <input inputmode="numeric" pattern="[0-9]*" type="number" id="start-route-meter-km" placeholder="e.g. 14250"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+            class="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 rounded-2xl px-4 py-3 font-black text-slate-900 text-base focus:ring-0 outline-none" />
         </div>
-        <div class="flex justify-between items-center pt-1 border-t border-emerald-100">
-          <span class="text-slate-500 font-bold">Sales Rep:</span>
-          <span id="start-route-modal-rep" class="font-black text-slate-800">-</span>
-        </div>
-      </div>
 
-      <div class="space-y-3 text-xs">
+        <!-- Meter Photo -->
         <div>
-          <label class="font-bold text-slate-700 block mb-1">1. Bike Starting Odometer KM (මීටර් අගය) <span class="text-rose-500">*</span></label>
-          <input type="number" id="start-route-meter-km" placeholder="e.g. 14250" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 font-black text-slate-900 text-sm focus:ring-2 focus:ring-emerald-500 outline-hidden" />
+          <label class="font-black text-slate-800 text-xs block mb-2">📸 Bike Meter Photo (මීටර් ඡායාරූපය)</label>
+          <input type="file" id="start-route-meter-photo" accept="image/*" capture="environment"
+            class="hidden" onchange="RouteSession.handlePhotoPreview(this, 'start-route-preview-meter')" />
+          <button type="button" onclick="document.getElementById('start-route-meter-photo').click()"
+            id="start-meter-photo-btn"
+            class="w-full h-20 rounded-2xl border-2 border-dashed border-emerald-300 bg-emerald-50 hover:bg-emerald-100 active:scale-95 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="text-3xl">📷</span>
+            <span class="text-[11px] font-bold text-emerald-700">Tap to take Meter Photo</span>
+          </button>
+          <img id="start-route-preview-meter" class="hidden w-full h-40 object-cover rounded-2xl border-2 border-emerald-200 shadow-sm mt-2 cursor-pointer"
+            alt="Bike Meter Preview" onclick="document.getElementById('start-route-meter-photo').click()" />
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <label class="font-bold text-slate-700 block">2. Bike Meter Photo (මීටර් ඡායාරූපය) <span class="text-rose-500">*</span></label>
-          <input type="file" id="start-route-meter-photo" accept="image/*" capture="environment" onchange="RouteSession.handlePhotoPreview(this, 'start-route-preview-meter')" class="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer" />
-          <img id="start-route-preview-meter" class="hidden w-full h-36 object-cover rounded-xl border border-slate-200 shadow-inner mt-1" alt="Bike Meter Preview" />
+        <!-- Selfie Photo -->
+        <div>
+          <label class="font-black text-slate-800 text-xs block mb-2">🤳 Morning Selfie (උදෑසන සෙල්ෆි)</label>
+          <input type="file" id="start-route-selfie-photo" accept="image/*" capture="user"
+            class="hidden" onchange="RouteSession.handlePhotoPreview(this, 'start-route-preview-selfie')" />
+          <button type="button" onclick="document.getElementById('start-route-selfie-photo').click()"
+            id="start-selfie-photo-btn"
+            class="w-full h-20 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50 hover:bg-blue-100 active:scale-95 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="text-3xl">🤳</span>
+            <span class="text-[11px] font-bold text-blue-700">Tap to take Selfie</span>
+          </button>
+          <img id="start-route-preview-selfie" class="hidden w-full h-40 object-cover rounded-2xl border-2 border-blue-200 shadow-sm mt-2 cursor-pointer"
+            alt="Selfie Preview" onclick="document.getElementById('start-route-selfie-photo').click()" />
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <label class="font-bold text-slate-700 block">3. Rep Morning Selfie (මුහුණේ ඡායාරූපය) <span class="text-rose-500">*</span></label>
-          <input type="file" id="start-route-selfie-photo" accept="image/*" capture="user" onchange="RouteSession.handlePhotoPreview(this, 'start-route-preview-selfie')" class="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer" />
-          <img id="start-route-preview-selfie" class="hidden w-full h-36 object-cover rounded-xl border border-slate-200 shadow-inner mt-1" alt="Rep Selfie Preview" />
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="UI.closeModal('modal-start-route-attendance')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-3.5 rounded-2xl active:scale-95">
+            Cancel
+          </button>
+          <button onclick="RouteSession.submitStartRouteAttendance()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center gap-1.5">
+            🚀 <span>Start Route</span>
+          </button>
         </div>
-      </div>
 
-      <div class="flex gap-2 pt-2 border-t border-slate-100">
-        <button onclick="RouteSession.submitStartRouteAttendance()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95 flex items-center justify-center gap-1.5">
-          <span>🚀 Start Route & Mark Attendance</span>
-        </button>
-        <button onclick="UI.closeModal('modal-start-route-attendance')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
-          Cancel
-        </button>
       </div>
     </div>
   </div>
@@ -42000,68 +42126,97 @@ document.addEventListener('DOMContentLoaded', async () => {
   <!-- =========================================================================
        MODAL: END ROUTE & EVENING ATTENDANCE (දවසේ ගමන අවසන් කර පිටවීම සටහන් කිරීම)
        ========================================================================= -->
-  <div id="modal-end-route-attendance" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="modal-content bg-white w-full max-w-md rounded-3xl p-5 space-y-3.5 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+  <div id="modal-end-route-attendance" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[95vh] overflow-y-auto">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-3xl">
         <div class="flex items-center gap-2">
-          <span class="text-2xl">🏁</span>
+          <div class="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center text-xl">🏁</div>
           <div>
-            <h3 class="font-black text-sm text-slate-900">End Route & Clock Out</h3>
-            <p class="text-[11px] text-purple-700 font-bold">දවසේ ගමන අවසන් කර පිටවීම සටහන් කරන්න</p>
+            <h3 class="font-black text-sm text-slate-900">End Route</h3>
+            <p class="text-[10px] text-purple-700 font-bold">ගමන අවසන් කරන්න</p>
           </div>
         </div>
-        <button onclick="UI.closeModal('modal-end-route-attendance')" class="p-1.5 text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button onclick="UI.closeModal('modal-end-route-attendance')" class="p-2 text-slate-400 hover:text-slate-600 text-lg rounded-xl hover:bg-slate-100">✕</button>
       </div>
 
-      <div class="p-3 bg-purple-50 rounded-2xl border border-purple-100 text-xs space-y-1">
-        <div class="flex justify-between">
-          <span class="text-slate-500 font-bold">Route:</span>
-          <span id="end-route-modal-name" class="font-black text-purple-900">-</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500 font-bold">Start Meter:</span>
-          <span id="end-route-modal-start-km" class="font-black text-slate-800">0 KM</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500 font-bold">Today's Sales:</span>
-          <span id="end-route-modal-sales" class="font-black text-emerald-700">Rs. 0</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500 font-bold">Visited Shops:</span>
-          <span id="end-route-modal-shops" class="font-black text-slate-800">0 Shops</span>
-        </div>
-        <div class="flex justify-between pt-1 border-t border-purple-200">
-          <span class="text-purple-900 font-bold">Calculated Distance:</span>
-          <span id="end-route-modal-diff-km" class="font-black text-purple-900">0 KM Total</span>
-        </div>
-      </div>
+      <div class="px-5 pb-5 space-y-4 pt-4">
 
-      <div class="space-y-3 text-xs">
+        <!-- Summary Stats -->
+        <div class="p-3.5 bg-purple-50 rounded-2xl border border-purple-200 text-xs space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-white rounded-xl p-2.5 text-center border border-purple-100">
+              <div class="text-[10px] text-slate-400 font-bold">Route</div>
+              <div id="end-route-modal-name" class="font-black text-purple-900 text-sm truncate">-</div>
+            </div>
+            <div class="bg-white rounded-xl p-2.5 text-center border border-purple-100">
+              <div class="text-[10px] text-slate-400 font-bold">Start KM</div>
+              <div id="end-route-modal-start-km" class="font-black text-slate-800 text-sm">0 KM</div>
+            </div>
+            <div class="bg-white rounded-xl p-2.5 text-center border border-emerald-100">
+              <div class="text-[10px] text-slate-400 font-bold">Today's Sales</div>
+              <div id="end-route-modal-sales" class="font-black text-emerald-700 text-sm">Rs. 0</div>
+            </div>
+            <div class="bg-white rounded-xl p-2.5 text-center border border-slate-100">
+              <div class="text-[10px] text-slate-400 font-bold">Shops Visited</div>
+              <div id="end-route-modal-shops" class="font-black text-slate-800 text-sm">0</div>
+            </div>
+          </div>
+          <div class="bg-purple-600 text-white rounded-xl p-2.5 flex justify-between items-center">
+            <span class="text-[11px] font-bold">Distance Travelled:</span>
+            <span id="end-route-modal-diff-km" class="font-black text-sm">0 KM</span>
+          </div>
+        </div>
+
+        <!-- Closing KM -->
         <div>
-          <label class="font-bold text-slate-700 block mb-1">Closing Meter KM (අවසන් මීටර් අගය) <span class="text-rose-500">*</span></label>
-          <input type="number" id="end-route-meter-km" oninput="RouteSession.onEndKmInput(this.value)" placeholder="e.g. 14310" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 font-black text-slate-900 text-sm focus:ring-2 focus:ring-purple-500 outline-hidden" />
+          <label class="font-black text-slate-800 text-xs block mb-1.5">🏍️ Closing Odometer KM (අවසන් මීටර්)</label>
+          <input inputmode="numeric" pattern="[0-9]*" type="number" id="end-route-meter-km"
+            oninput="RouteSession.onEndKmInput(this.value)"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+            placeholder="e.g. 14310"
+            class="w-full bg-slate-50 border-2 border-slate-200 focus:border-purple-500 rounded-2xl px-4 py-3 font-black text-slate-900 text-base focus:ring-0 outline-none" />
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <label class="font-bold text-slate-700 block">Closing Meter Photo (අවසන් මීටර් ඡායාරූපය) <span class="text-rose-500">*</span></label>
-          <input type="file" id="end-route-meter-photo" accept="image/*" capture="environment" onchange="RouteSession.handlePhotoPreview(this, 'end-route-preview-meter')" class="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer" />
-          <img id="end-route-preview-meter" class="hidden w-full h-36 object-cover rounded-xl border border-slate-200 shadow-inner mt-1" alt="Closing Meter Preview" />
+        <!-- Closing Meter Photo -->
+        <div>
+          <label class="font-black text-slate-800 text-xs block mb-2">📸 Closing Meter Photo (අවසන් මීටර් ඡායාරූපය)</label>
+          <input type="file" id="end-route-meter-photo" accept="image/*" capture="environment"
+            class="hidden" onchange="RouteSession.handlePhotoPreview(this, 'end-route-preview-meter')" />
+          <button type="button" onclick="document.getElementById('end-route-meter-photo').click()"
+            class="w-full h-20 rounded-2xl border-2 border-dashed border-purple-300 bg-purple-50 hover:bg-purple-100 active:scale-95 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="text-3xl">📷</span>
+            <span class="text-[11px] font-bold text-purple-700">Tap to take Meter Photo</span>
+          </button>
+          <img id="end-route-preview-meter" class="hidden w-full h-40 object-cover rounded-2xl border-2 border-purple-200 shadow-sm mt-2 cursor-pointer"
+            alt="Closing Meter Preview" onclick="document.getElementById('end-route-meter-photo').click()" />
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-          <label class="font-bold text-slate-700 block">Closing Selfie (හවස පිටවීමේ ඡායාරූපය) <span class="text-rose-500">*</span></label>
-          <input type="file" id="end-route-selfie-photo" accept="image/*" capture="user" onchange="RouteSession.handlePhotoPreview(this, 'end-route-preview-selfie')" class="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer" />
-          <img id="end-route-preview-selfie" class="hidden w-full h-36 object-cover rounded-xl border border-slate-200 shadow-inner mt-1" alt="Closing Selfie Preview" />
+        <!-- Closing Selfie -->
+        <div>
+          <label class="font-black text-slate-800 text-xs block mb-2">🤳 Closing Selfie (හවස සෙල්ෆි)</label>
+          <input type="file" id="end-route-selfie-photo" accept="image/*" capture="user"
+            class="hidden" onchange="RouteSession.handlePhotoPreview(this, 'end-route-preview-selfie')" />
+          <button type="button" onclick="document.getElementById('end-route-selfie-photo').click()"
+            class="w-full h-20 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 active:scale-95 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="text-3xl">🤳</span>
+            <span class="text-[11px] font-bold text-indigo-700">Tap to take Selfie</span>
+          </button>
+          <img id="end-route-preview-selfie" class="hidden w-full h-40 object-cover rounded-2xl border-2 border-indigo-200 shadow-sm mt-2 cursor-pointer"
+            alt="Closing Selfie Preview" onclick="document.getElementById('end-route-selfie-photo').click()" />
         </div>
-      </div>
 
-      <div class="flex gap-2 pt-2 border-t border-slate-100">
-        <button onclick="RouteSession.submitEndRouteAttendance()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black py-2.5 rounded-2xl shadow-md active:scale-95 flex items-center justify-center gap-1.5">
-          <span>🏁 End Route & Check Out</span>
-        </button>
-        <button onclick="UI.closeModal('modal-end-route-attendance')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-2xl">
-          Cancel
-        </button>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="UI.closeModal('modal-end-route-attendance')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-3.5 rounded-2xl active:scale-95">
+            Cancel
+          </button>
+          <button onclick="RouteSession.submitEndRouteAttendance()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-black py-3.5 rounded-2xl shadow-lg shadow-purple-600/30 active:scale-95 flex items-center justify-center gap-1.5">
+            🏁 <span>End Route</span>
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
