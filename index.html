@@ -2845,13 +2845,16 @@ body.theme-dark #app-bottom-nav {
           </div>
         </div>
 
-        <!-- Subtabs: Packing Matrix vs Delivery Dispatch -->
-        <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl">
-          <button id="prod-subtab-packing" onclick="Production.switchSubtab('packing')" class="py-2 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-xs">
-            📦 Van Packing List (පැකින් ලැයිස්තුව)
+        <!-- Subtabs: Packing Matrix vs Delivery Dispatch vs Returned Stock -->
+        <div class="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl">
+          <button id="prod-subtab-packing" onclick="Production.switchSubtab('packing')" class="py-2 rounded-xl text-[11px] sm:text-xs font-black bg-emerald-600 text-white shadow-xs">
+            📦 Packing
           </button>
-          <button id="prod-subtab-dispatch" onclick="Production.switchSubtab('dispatch')" class="py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
-            🚚 Delivery Route Orders (කඩවල් ඇණවුම්)
+          <button id="prod-subtab-dispatch" onclick="Production.switchSubtab('dispatch')" class="py-2 rounded-xl text-[11px] sm:text-xs font-bold bg-slate-100 text-slate-700">
+            🚚 Orders
+          </button>
+          <button id="prod-subtab-returns" onclick="Production.switchSubtab('returns')" class="py-2 rounded-xl text-[11px] sm:text-xs font-bold bg-slate-100 text-slate-700">
+            🔄 Returns
           </button>
         </div>
 
@@ -4463,33 +4466,45 @@ body.theme-dark #app-bottom-nav {
        MODAL: SMS RECEIPT (SMS රිසිට්පත)
        ========================================================================= -->
   <div id="modal-sms-receipt" class="modal-overlay hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="modal-content bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl">
+    <div class="modal-content bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 space-y-3.5 shadow-2xl">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl">📱</div>
           <div>
-            <h3 class="text-sm font-black text-slate-900">SMS රිසිට්පත යවන්නද?</h3>
-            <p class="text-[10px] text-slate-400 font-medium">Send SMS Receipt to Shop</p>
+            <h3 class="text-sm font-black text-slate-900">SMS රිසිට්පත යවන්න</h3>
+            <p class="text-[10px] text-slate-400 font-medium">Send SMS / WhatsApp Receipt</p>
           </div>
         </div>
         <button onclick="UI.closeModal('modal-sms-receipt')" class="p-1 text-slate-400 hover:text-slate-600 text-lg">✕</button>
       </div>
 
-      <div class="bg-slate-50 rounded-2xl p-3.5 space-y-1.5">
-        <div class="flex items-center gap-2 text-xs text-slate-600">
-          <span class="text-base">📞</span>
-          <span>To: <span id="sms-receipt-phone" class="font-black text-slate-900"></span></span>
+      <div class="bg-slate-50 rounded-2xl p-3 space-y-2">
+        <div>
+          <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Customer Mobile (දුරකථන අංකය)</label>
+          <div class="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-3 py-2 shadow-inner">
+            <span class="text-base">📞</span>
+            <input type="tel" id="sms-receipt-phone-input" placeholder="07X XXX XXXX" class="w-full text-xs font-black text-slate-900 bg-transparent border-0 p-0 focus:ring-0 outline-none" />
+          </div>
         </div>
-        <div class="text-[11px] text-slate-400 font-medium">SMS message preview:</div>
-        <pre id="sms-receipt-preview" class="text-[11px] text-slate-700 font-mono bg-white border border-slate-200 rounded-xl p-2.5 whitespace-pre-wrap break-all leading-relaxed max-h-40 overflow-y-auto"></pre>
+        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">SMS Message Preview</div>
+        <pre id="sms-receipt-preview" class="text-[10.5px] text-slate-700 font-mono bg-white border border-slate-200 rounded-xl p-2.5 whitespace-pre-wrap break-all leading-relaxed max-h-36 overflow-y-auto shadow-inner"></pre>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <button onclick="UI.closeModal('modal-sms-receipt')" class="bg-slate-100 text-slate-700 text-xs font-bold py-3 rounded-2xl hover:bg-slate-200 active:scale-95">
-          Cancel
+        <button type="button" onclick="POS.sendSmsReceipt()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center gap-1.5 transition-all">
+          💬 <span>Send SMS</span>
         </button>
-        <button onclick="POS.sendSmsReceipt()" class="bg-emerald-600 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-emerald-600/30 hover:bg-emerald-500 active:scale-95 flex items-center justify-center gap-1.5">
-          📤 <span>Send SMS</span>
+        <button type="button" onclick="POS.sendWhatsAppReceipt()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black py-3 rounded-2xl shadow-lg shadow-emerald-500/30 active:scale-95 flex items-center justify-center gap-1.5 transition-all">
+          🟢 <span>WhatsApp</span>
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="POS.copySmsText()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 rounded-xl active:scale-95 flex items-center justify-center gap-1">
+          📋 <span>Copy Message</span>
+        </button>
+        <button type="button" onclick="UI.closeModal('modal-sms-receipt')" class="px-4 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-bold py-2 rounded-xl active:scale-95">
+          Close
         </button>
       </div>
     </div>
@@ -4554,13 +4569,12 @@ body.theme-dark #app-bottom-nav {
         </div>
       </div>
 
-      <!-- Good Damage: Destination shop (hidden by default) -->
-      <div id="return-good-damage-section" class="hidden bg-green-50 border border-green-200 rounded-2xl p-3 space-y-1.5">
-        <label class="text-[11px] font-black text-green-700 block">📦 Good Damage — ගමනාන්ත කඩය</label>
-        <select id="return-modal-dest-shop" class="w-full bg-white border border-green-300 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-green-400">
-          <option value="">-- ගමනාන්ත කඩය තෝරන්න --</option>
-        </select>
-        <p class="text-[10px] text-green-600">✅ Stock inventory එකට ආපසු. Cost write-off නොවේ.</p>
+      <!-- Good Damage: Company Stores Return (No destination shop needed) -->
+      <div id="return-good-damage-section" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3 space-y-1">
+        <div class="flex items-center gap-1.5 text-xs font-black text-emerald-800">
+          <span>🏬</span> <span>Company Central Stores වෙත ආපසු (Good Return)</span>
+        </div>
+        <p class="text-[10.5px] text-emerald-700 font-medium">මෙම භාණ්ඩ Company Central Stores වෙත ගෙනගොස් නැවත අලුත් කර Stores Keeper විසින් පරීක්ෂා කර Stock එකට එක් කරනු ලැබේ. වෙනත් කඩයක් තේරීම අවශ්‍ය නොවේ.</p>
       </div>
 
       <!-- Bad Damage warning (hidden by default) -->
@@ -19081,7 +19095,7 @@ const Auth = {
     rep_can_view_qr: true,
     rep_can_edit_orders: true,
     rep_can_add_items_on_order: true,
-    allowSmsReceipt: false,
+    allowSmsReceipt: true,
 
     // Delivery Driver Permissions
     delivery_can_edit_orders: true,
@@ -23409,36 +23423,32 @@ const POS = {
             ` : ''}
           </div>
 
-          <!-- Bottom: ADD button (when qty=0) OR Stepper (when qty>0) -->
+          <!-- Bottom: Stepper with Direct Typing Input -->
           <div class="relative z-10 px-1.5 pb-2">
-            ${qty === 0 ? `
-              <!-- BIG ADD BUTTON -->
-              <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
-                class="w-full h-10 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md bg-emerald-600 hover:bg-emerald-700 text-white">
-                <span class="text-base font-black">＋</span> <span>ADD TO ORDER</span>
+            <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1" onclick="event.stopPropagation()">
+              <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', -1)"
+                class="flex-shrink-0 w-9 h-9 rounded-xl bg-white shadow font-black text-slate-700 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 active:scale-90 text-lg">
+                −
               </button>
-            ` : `
-              <!-- STEPPER -->
-              <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1" onclick="event.stopPropagation()">
-                <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', -1)"
-                  class="flex-shrink-0 w-10 h-10 rounded-xl bg-white shadow font-black text-slate-700 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 active:scale-90 text-lg">
-                  −
-                </button>
-                <input inputmode="numeric" pattern="[0-9]*" type="number" min="0" value="${qty}"
-                  onchange="POS.setProductQty('${prod.id}', this.value)"
-                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();POS.setProductQty('${prod.id}',this.value);}"
-                  class="flex-1 min-w-0 text-center font-black text-sm text-emerald-700 bg-transparent border-0 focus:ring-0 p-0" />
-                <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
-                  class="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-600 shadow font-black text-white flex items-center justify-center hover:bg-emerald-700 active:scale-90 text-lg">
-                  ＋
-                </button>
+              <input inputmode="numeric" pattern="[0-9]*" type="number" min="0" value="${qty > 0 ? qty : ''}"
+                placeholder="0"
+                onclick="event.stopPropagation(); this.select();"
+                onfocus="event.stopPropagation(); this.select();"
+                oninput="POS.setProductQty('${prod.id}', this.value, true)"
+                onchange="POS.setProductQty('${prod.id}', this.value, true)"
+                onblur="POS.renderProductsList()"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+                class="flex-1 min-w-0 text-center font-black text-sm ${qty > 0 ? 'text-emerald-700 font-black' : 'text-slate-400 font-bold'} bg-transparent border-0 focus:ring-0 p-0" />
+              <button type="button" onclick="event.stopPropagation(); POS.updateProductQty('${prod.id}', 1)"
+                class="flex-shrink-0 w-9 h-9 rounded-xl bg-emerald-600 shadow font-black text-white flex items-center justify-center hover:bg-emerald-700 active:scale-90 text-lg">
+                ＋
+              </button>
+            </div>
+            ${freeQty > 0 ? `
+              <div class="text-center mt-0.5">
+                <span class="text-[9px] font-black text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">🎁 +${freeQty} Free</span>
               </div>
-              ${freeQty > 0 ? `
-                <div class="text-center mt-0.5">
-                  <span class="text-[9px] font-black text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">🎁 +${freeQty} Free</span>
-                </div>
-              ` : ''}
-            `}
+            ` : ''}
           </div>
         </div>
       `;
@@ -23534,12 +23544,14 @@ const POS = {
       });
     }
 
-    this.renderProductsList();
+    if (!isFromInput) {
+      this.renderProductsList();
+    }
     this.renderCartUI();
     this.renderPaymentSummary();
   },
 
-  setProductQty(productId, value) {
+  setProductQty(productId, value, isFromInput = false) {
     const val = parseInt(value) || 0;
     const prod = this.productsCache.find(p => String(p.id) === String(productId));
     if (!prod) return;
@@ -23587,7 +23599,9 @@ const POS = {
       }
     }
 
-    this.renderProductsList();
+    if (!isFromInput) {
+      this.renderProductsList();
+    }
     this.renderCartUI();
     this.renderPaymentSummary();
   },
@@ -23613,7 +23627,9 @@ const POS = {
       item.dealType = 'standard';
     }
 
-    this.renderProductsList();
+    if (!isFromInput) {
+      this.renderProductsList();
+    }
     this.renderCartUI();
     this.renderPaymentSummary();
   },
@@ -24009,16 +24025,8 @@ const POS = {
     const isGoodDamage = reason === 'Good Damage';
     const isBadDamage  = reason === 'Bad Damage';
 
-    // Good Damage requires a destination shop
-    let destinationShopId = null;
-    if (isGoodDamage) {
-      const destEl = document.getElementById('return-modal-dest-shop');
-      destinationShopId = destEl?.value ? Number(destEl.value) : null;
-      if (!destinationShopId) {
-        UI.showToast('Good Damage \u0dc3\u0d82\u0daf\u0dc4\u0dcf \u0d9c\u0db8\u0db1\u0dcf\u0db1\u0dca\u0dad \u0d9a\u0da9\u0dba \u0dad\u0ddd\u0dbb\u0db1\u0dca\u0db1.', 'warning');
-        return;
-      }
-    }
+    // Good Returns / Resellable returns go directly to Company Central Stores to be refreshed
+    const destinationShopId = null;
 
     let unitRefund = fullPrice;
     let unitCost   = costPrice;
@@ -24324,6 +24332,11 @@ const POS = {
           refundAmount: r.refundAmount,
           action: r.action,
           reason: r.reason,
+          shopName: shop ? shop.name : 'Shop',
+          isGoodDamage: Boolean(r.isGoodDamage),
+          isBadDamage: Boolean(r.isBadDamage),
+          returnCategory: r.isGoodDamage ? 'Good Return' : 'Bad Damage',
+          status: 'Pending Stores Review',
           date: date,
           updatedAt: date,
           isSynced: false
@@ -24354,14 +24367,14 @@ const POS = {
       // 5a. Build SMS data now (before cart is cleared), trigger AFTER print/save
       let _smsPending = null;
       try {
-        if (!isBooking && shop && shop.phone && Auth.can('allowSmsReceipt')) {
+        if (!isBooking && shop && Auth.can('allowSmsReceipt')) {
           const companyInfo = await db.company.get(1).catch(() => null);
           const companyName = (companyInfo && companyInfo.name) ? companyInfo.name : (localStorage.getItem('pos_company_name') || 'SPICE POS');
           const dateStr = new Date(date).toLocaleDateString('en-GB');
           const itemLines = State.cart.map(i => `${i.productName}: ${i.qty}x Rs.${i.sellingPrice}`).join('\n');
           const creditLine = creditAmount > 0 ? `\nCredit: Rs.${creditAmount.toFixed(2)}` : '';
           const smsMsg = `${companyName}\nDate: ${dateStr}\nInv: ${invoiceNo}\n${itemLines}\nTotal: Rs.${netTotal.toFixed(2)}${creditLine}\nThank you!`;
-          _smsPending = { phone: shop.phone, msg: smsMsg };
+          _smsPending = { shopId: shop.id, phone: shop.phone || '', msg: smsMsg };
         }
       } catch(smsErr) { console.warn('SMS build error:', smsErr); }
 
@@ -24408,8 +24421,10 @@ const POS = {
       if (_smsPending) {
         this._pendingSmsData = _smsPending;
         try {
-          document.getElementById('sms-receipt-phone').textContent = _smsPending.phone;
-          document.getElementById('sms-receipt-preview').textContent = _smsPending.msg;
+          const phoneInput = document.getElementById('sms-receipt-phone-input');
+          if (phoneInput) phoneInput.value = _smsPending.phone || '';
+          const previewEl = document.getElementById('sms-receipt-preview');
+          if (previewEl) previewEl.textContent = _smsPending.msg;
           setTimeout(() => UI.openModal('modal-sms-receipt'), 500);
         } catch(smsOpenErr) { console.warn('SMS modal open error:', smsOpenErr); }
       }
@@ -24472,13 +24487,69 @@ const POS = {
     UI.closeModal('modal-qr-scanner');
   },
 
-  sendSmsReceipt() {
+  async sendSmsReceipt() {
     const d = this._pendingSmsData;
-    if (!d || !d.phone || !d.msg) return;
-    const smsUrl = 'sms:' + d.phone.replace(/\s/g, '') + '?body=' + encodeURIComponent(d.msg);
-    window.open(smsUrl, '_blank');
+    if (!d || !d.msg) return;
+    const phoneInput = document.getElementById('sms-receipt-phone-input');
+    const enteredPhone = (phoneInput?.value || d.phone || '').trim();
+
+    if (!enteredPhone) {
+      UI.showToast('කරුණාකර දුරකථන අංකය ඇතුළත් කරන්න (Enter mobile phone number)', 'warning');
+      phoneInput?.focus();
+      return;
+    }
+
+    // Auto-update shop phone in database if it was missing
+    if (d.shopId && enteredPhone) {
+      try { await db.shops.update(d.shopId, { phone: enteredPhone }); } catch (e) {}
+    }
+
+    const cleanPhone = enteredPhone.replace(/[^\d+]/g, '');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const separator = isIOS ? '&' : '?';
+    const smsUrl = `sms:${cleanPhone}${separator}body=${encodeURIComponent(d.msg)}`;
+
+    // Use window.location.href so popup blockers do not block SMS app launch
+    window.location.href = smsUrl;
     UI.closeModal('modal-sms-receipt');
-    this._pendingSmsData = null;
+    UI.showToast('📱 SMS App එක විවෘත වේ...', 'success');
+  },
+
+  async sendWhatsAppReceipt() {
+    const d = this._pendingSmsData;
+    if (!d || !d.msg) return;
+    const phoneInput = document.getElementById('sms-receipt-phone-input');
+    const enteredPhone = (phoneInput?.value || d.phone || '').trim();
+
+    if (!enteredPhone) {
+      UI.showToast('කරුණාකර දුරකථන අංකය ඇතුළත් කරන්න (Enter mobile phone number)', 'warning');
+      phoneInput?.focus();
+      return;
+    }
+
+    if (d.shopId && enteredPhone) {
+      try { await db.shops.update(d.shopId, { phone: enteredPhone }); } catch (e) {}
+    }
+
+    let cleanPhone = enteredPhone.replace(/[^\d]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '94' + cleanPhone.slice(1);
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(d.msg)}`;
+    window.open(waUrl, '_blank');
+    UI.closeModal('modal-sms-receipt');
+    UI.showToast('🟢 WhatsApp විවෘත වේ...', 'success');
+  },
+
+  copySmsText() {
+    const d = this._pendingSmsData;
+    const msg = d?.msg || document.getElementById('sms-receipt-preview')?.textContent || '';
+    if (!msg) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(msg).then(() => {
+        UI.showToast('📋 SMS පණිවිඩය Copy විය!', 'success');
+      });
+    } else {
+      UI.showToast('📋 Message ready', 'info');
+    }
   },
 
   async selectShopByQR(shopId) {
@@ -28661,7 +28732,7 @@ window.Routes = Routes;
 </script>
   <script>
 /**
- * Shop / Customer Directory â€” QR Code, Open/Closed Status, Delete Cascade
+ * Shop / Customer Directory — QR Code, Open/Closed Status, Delete Cascade
  */
 
 const Shops = {
@@ -28698,7 +28769,7 @@ const Shops = {
       if (shops.length === 0) {
         container.innerHTML = `
           <div class="text-center py-10 bg-white rounded-2xl border border-gray-100 p-6 col-span-full shadow-sm">
-            <div class="text-5xl mb-3">ðŸª</div>
+            <div class="text-5xl mb-3">🏪</div>
             <h3 class="font-bold text-gray-700 text-sm">No Shops Found</h3>
             <p class="text-xs text-gray-400 mt-1">Add shops under your routes with location details and photos.</p>
             <button onclick="Shops.openShopModal()" class="mt-4 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-orange-400/30 active:scale-95">
@@ -28734,7 +28805,7 @@ const Shops = {
                 <div class="relative cursor-pointer flex-shrink-0" onclick="Shops.viewShopPhoto('${shop.photoBase64 || ''}', '${shop.name.replace(/'/g,"\\'")}')">
                   ${shop.photoBase64
                     ? `<img src="${shop.photoBase64}" class="w-14 h-14 rounded-xl object-cover border border-gray-200 shadow-sm" alt="Shop Photo"/>`
-                    : `<div class="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 border border-orange-200 flex items-center justify-center text-2xl shadow-inner">ðŸª</div>`
+                    : `<div class="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 border border-orange-200 flex items-center justify-center text-2xl shadow-inner">🏪</div>`
                   }
                   ${isOpen
                     ? `<span class="absolute -bottom-1 -right-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500 text-white shadow">OPEN</span>`
@@ -28746,15 +28817,15 @@ const Shops = {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="px-2 py-0.5 text-[10px] font-bold bg-indigo-100 text-indigo-700 rounded-md">
-                      ðŸ—ºï¸ ${route ? route.name : 'Unassigned'}
+                      🗺️ ${route ? route.name : 'Unassigned'}
                     </span>
                   </div>
                   <h3 class="font-bold text-gray-900 text-sm mt-1 truncate">${shop.name}</h3>
                   <p class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                    <span>ðŸ‘¤ ${shop.ownerName || 'Owner'}</span>
+                    <span>👤 ${shop.ownerName || 'Owner'}</span>
                   </p>
                   <p class="text-xs text-gray-400 truncate mt-0.5">
-                    ðŸ“ ${shop.address || 'No address note'}
+                    📍 ${shop.address || 'No address note'}
                   </p>
                 </div>
 
@@ -28762,17 +28833,17 @@ const Shops = {
                 <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                   ${canEdit ? `
                     <button onclick="Shops.editShop(${shop.id})" class="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Edit">
-                      âœï¸
+                      ✏️
                     </button>
                   ` : ''}
                   ${shop.phone ? `
                     <a href="tel:${shop.phone}" class="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg flex items-center justify-center" title="Call Shop">
-                      ðŸ“ž
+                      📞
                     </a>
                   ` : ''}
                   ${canDelete ? `
                     <button onclick="Shops.confirmDeleteShop(${shop.id})" class="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Delete Shop">
-                      ðŸ—‘ï¸
+                      🗑️
                     </button>
                   ` : ''}
                 </div>
@@ -28783,19 +28854,19 @@ const Shops = {
                 <div>
                   <span class="text-[10px] text-gray-400 block font-medium">Outstanding Credit</span>
                   <span class="font-bold text-xs ${hasCredit ? 'text-red-600' : 'text-emerald-600'}">
-                    ${hasCredit ? 'âš ï¸ ' + UI.formatCurrency(credit) : 'âœ“ Cleared (Rs. 0)'}
+                    ${hasCredit ? '⚠️ ' + UI.formatCurrency(credit) : '✓ Cleared (Rs. 0)'}
                   </span>
                 </div>
 
                 <div class="flex items-center gap-1.5">
                   ${hasCredit ? `
                     <button onclick="Shops.openDebtCollectionModal(${shop.id})" class="px-2.5 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-lg hover:bg-green-100 border border-green-200 active:scale-95">
-                      Collect ðŸ’µ
+                      Collect 💵
                     </button>
                   ` : ''}
                   ${canViewHistory ? `
                     <button onclick="Shops.viewShopHistory(${shop.id})" class="px-2.5 py-1.5 bg-gray-50 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-100 border border-gray-200 active:scale-95">
-                      History ðŸ“œ
+                      History 📜
                     </button>
                   ` : ''}
                 </div>
@@ -28806,25 +28877,25 @@ const Shops = {
                 <div class="flex items-center gap-1">
                   ${shop.lat && shop.lng ? `
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ðŸ“ GPS Tagged
+                      📍 GPS Tagged
                     </span>
                   ` : `
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
-                      âš ï¸ No GPS
+                      ⚠️ No GPS
                     </span>
                   `}
                 </div>
                 <div class="flex items-center gap-1">
                   ${shop.lat && shop.lng ? `
                     <button onclick="GPS.navigateToShop(${shop.id})" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-bold rounded-xl border border-sky-200 flex items-center gap-1 active:scale-95 transition-all" title="Turn-by-turn Navigation">
-                      ðŸ§­ Navigate (à¶´à·à¶»)
+                      🧭 Navigate (පාර)
                     </button>
                   ` : `
                     <button onclick="GPS.tagShopCurrentLocation(${shop.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs flex items-center gap-1 active:scale-95 transition-all" title="Tag phone's current GPS location">
-                      ðŸ“ Tag GPS
+                      📍 Tag GPS
                     </button>
                     <button onclick="MapView.openLocationPicker(${shop.id})" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-xl active:scale-95" title="Pin on interactive map">
-                      ðŸ—ºï¸ Map
+                      🗺️ Map
                     </button>
                   `}
                 </div>
@@ -28837,12 +28908,12 @@ const Shops = {
                     class="flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${isOpen
                       ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
                       : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'}">
-                    ${isOpen ? 'ðŸ”´ Mark Closed' : 'ðŸŸ¢ Mark Open'}
+                    ${isOpen ? '🔴 Mark Closed' : '🟢 Mark Open'}
                   </button>
                   ${canViewQR ? `
                     <button onclick="Shops.viewShopQR(${shop.id})"
                       class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all">
-                      ðŸ”² View QR
+                      🔲 View QR
                     </button>
                   ` : ''}
                 </div>
@@ -28895,7 +28966,7 @@ const Shops = {
       const activeTid = getActiveTenantId() || 1;
       await db.routes.add({
         tenantId: activeTid,
-        name: 'Main Route (à¶´à·Šâ€à¶»à¶°à·à¶± à¶¸à·à¶»à·Šà¶œà¶º)',
+        name: 'Main Route (ප්‍රධාන මාර්ගය)',
         description: 'Default Sales & Delivery Route'
       });
       routes = await db.routes.toArray();
@@ -29006,7 +29077,7 @@ const Shops = {
     const currentCredit = Number(document.getElementById('shop-modal-credit').value) || 0;
     const activeTid = getActiveTenantId() || 1;
 
-    if (!name) { UI.showToast('Please enter Shop Name (à¶šà¶©à·š à¶±à¶¸ à¶‡à¶­à·”à¶½à¶­à·Š à¶šà¶»à¶±à·Šà¶±)', 'warning'); return; }
+    if (!name) { UI.showToast('Please enter Shop Name (කඩේ නම ඇතුලත් කරන්න)', 'warning'); return; }
 
     // Fallback if routeId is missing or empty
     if (!routeId || isNaN(routeId)) {
@@ -29015,7 +29086,7 @@ const Shops = {
       if (routes.length === 0) {
         routeId = await db.routes.add({
           tenantId: activeTid,
-          name: 'Main Route (à¶´à·Šâ€à¶»à¶°à·à¶± à¶¸à·à¶»à·Šà¶œà¶º)',
+          name: 'Main Route (ප්‍රධාන මාර්ගය)',
           description: 'Default Sales & Delivery Route'
         });
       } else {
@@ -29079,7 +29150,7 @@ const Shops = {
           createdBy: existing?.createdBy || (currentUser ? currentUser.username : 'admin')
         };
         await db.shops.update(savedShopId, payload);
-        UI.showToast('Shop details updated! âœ…', 'success');
+        UI.showToast('Shop details updated! ✅', 'success');
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
       } else {
         // Add new shop
@@ -29121,12 +29192,12 @@ const Shops = {
               isOpeningCredit: true,
               repId: repId,
               repName: repName,
-              notes: 'à¶´à·à¶»à¶«à·’ à¶¶à·’à¶½à·Šà¶´à¶­à·Š à¶«à¶º à·à·šà·‚à¶º (Opening Credit Balance)'
+              notes: 'පැරණි බිල්පත් ණය ශේෂය (Opening Credit Balance)'
             });
           } catch (e) {}
         }
 
-        UI.showToast('New shop registered! ðŸªâœ“', 'success');
+        UI.showToast('New shop registered! 🏪✓', 'success');
         setTimeout(() => { this.viewShopQR(savedShopId); }, 350);
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
       }
@@ -29164,7 +29235,7 @@ const Shops = {
   async toggleShopStatus(shopId, currentIsOpen) {
     const newStatus = !currentIsOpen;
     await db.shops.update(shopId, { isOpen: newStatus });
-    UI.showToast(newStatus ? 'ðŸŸ¢ Shop marked as OPEN' : 'ðŸ”´ Shop marked as CLOSED', newStatus ? 'success' : 'warning');
+    UI.showToast(newStatus ? '🟢 Shop marked as OPEN' : '🔴 Shop marked as CLOSED', newStatus ? 'success' : 'warning');
     this.loadShops();
   },
 
@@ -29236,7 +29307,7 @@ const Shops = {
     link.click();
     document.body.removeChild(link);
 
-    UI.showToast('ðŸ“¥ QR image downloaded!', 'success');
+    UI.showToast('📥 QR image downloaded!', 'success');
   },
 
   // View QR Code modal
@@ -29272,7 +29343,7 @@ const Shops = {
     if (id) {
       this.viewShopQR(Number(id));
     } else {
-      UI.showToast('කඩය සුරකිා QR code ලබා ගන්න. (Save the shop first to generate QR Code.)', 'info');
+      UI.showToast('??? ?????? QR code ??? ????. (Save the shop first to generate QR Code.)', 'info');
     }
   },
 
@@ -29341,7 +29412,7 @@ const Shops = {
       await db.shops.delete(shopId);
 
       UI.closeModal('modal-delete-shop');
-      UI.showToast('Shop and all related data deleted! ðŸ—‘ï¸', 'success');
+      UI.showToast('Shop and all related data deleted! 🗑️', 'success');
       this.loadShops();
       Dashboard.loadDashboard();
     } catch (err) {
@@ -29398,7 +29469,7 @@ const Shops = {
 
   async viewShopHistory(shopId) {
     if (!shopId) {
-      UI.showToast('Please select a shop first to view history (à¶šà¶»à·”à¶«à·à¶šà¶» à¶´à·…à¶¸à·”à·€ à¶šà¶©à¶º à¶­à·à¶»à¶±à·Šà¶±)', 'warning');
+      UI.showToast('Please select a shop first to view history (කරුණාකර පළමුව කඩය තෝරන්න)', 'warning');
       return;
     }
     const numId = Number(shopId);
@@ -29425,7 +29496,7 @@ const Shops = {
     const nameEl = document.getElementById('hist-modal-shop-name');
     const subEl = document.getElementById('hist-modal-shop-sub');
     if (nameEl) nameEl.textContent = shop.name;
-    if (subEl) subEl.textContent = `${shop.ownerName || 'Owner'} â€¢ ${shop.phone || 'No phone'} â€¢ ðŸ—ºï¸ ${route ? route.name : 'Unassigned'}`;
+    if (subEl) subEl.textContent = `${shop.ownerName || 'Owner'} • ${shop.phone || 'No phone'} • 🗺️ ${route ? route.name : 'Unassigned'}`;
 
     const totalBills = sales.length;
     const totalSpent = sales.filter(s => s.status !== 'Cancelled').reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
@@ -29498,7 +29569,7 @@ const Shops = {
     if (!events || events.length === 0) {
       listContainer.innerHTML = `
         <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100 p-4">
-          <div class="text-3xl mb-1">ðŸ“œ</div>
+          <div class="text-3xl mb-1">📜</div>
           <p class="text-xs font-bold">No past orders or payments recorded yet.</p>
           <p class="text-[10px] text-slate-400 mt-0.5">Orders and bill history will appear here automatically.</p>
         </div>
@@ -29516,13 +29587,13 @@ const Shops = {
         if (ev.items && ev.items.length > 0) {
           itemsHtml = `
             <div class="mt-2 pt-2 border-t border-slate-100 space-y-1">
-              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">ðŸ“¦ Items Purchased (à¶œà¶±à·”à¶¯à·™à¶±à·” à¶šà¶½ à¶·à·à¶«à·Šà¶©):</span>
+              <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">📦 Items Purchased (ගනුදෙනු කල භාණ්ඩ):</span>
               <div class="bg-slate-50 rounded-xl p-2 space-y-1">
                 ${ev.items.map(it => `
                   <div class="flex items-center justify-between text-xs py-0.5">
                     <span class="font-bold text-slate-800">
-                      â€¢ ${it.productName} <span class="text-slate-500 font-semibold">(${it.qty} ${it.unit})</span>
-                      ${it.freeQty > 0 ? `<span class="ml-1 px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-800 text-[9px] font-black">ðŸŽ +${it.freeQty} FREE</span>` : ''}
+                      • ${it.productName} <span class="text-slate-500 font-semibold">(${it.qty} ${it.unit})</span>
+                      ${it.freeQty > 0 ? `<span class="ml-1 px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-800 text-[9px] font-black">🎁 +${it.freeQty} FREE</span>` : ''}
                     </span>
                     <span class="font-bold text-slate-700">
                       Rs. ${(Number(it.sellingPrice) * Number(it.qty)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -29538,11 +29609,11 @@ const Shops = {
         if (ev.returns && ev.returns.length > 0) {
           returnsHtml = `
             <div class="mt-1.5 bg-red-50/70 border border-red-200/60 rounded-xl p-2 space-y-1">
-              <span class="text-[10px] font-black text-red-700 uppercase tracking-wider block">ðŸ”„ Returns / Replacements (à¶†à¶´à·ƒà·”/à¶¸à·à¶»à·”):</span>
+              <span class="text-[10px] font-black text-red-700 uppercase tracking-wider block">🔄 Returns / Replacements (ආපසු/මාරු):</span>
               ${ev.returns.map(r => `
                 <div class="flex items-center justify-between text-[11px] text-red-800 font-bold">
-                  <span>${r.action === 'deduct' ? 'â€¢ [Deducted]' : 'â€¢ [Exchange]'} ${r.productName} (${r.qty} ${r.returnType === 'Unit' ? 'Loose Pkts' : 'Cards'})</span>
-                  <span>${r.action === 'deduct' ? '-' + UI.formatCurrency(r.refundAmount) : 'âœ“ Replaced'}</span>
+                  <span>${r.action === 'deduct' ? '• [Deducted]' : '• [Exchange]'} ${r.productName} (${r.qty} ${r.returnType === 'Unit' ? 'Loose Pkts' : 'Cards'})</span>
+                  <span>${r.action === 'deduct' ? '-' + UI.formatCurrency(r.refundAmount) : '✓ Replaced'}</span>
                 </div>
               `).join('')}
             </div>
@@ -29555,14 +29626,14 @@ const Shops = {
               <div>
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="px-2 py-0.5 rounded-lg text-[10px] font-black ${isBooking ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">
-                    ${isBooking ? 'ðŸ“¦ DELIVERY BOOKING' : 'âš¡ DIRECT SALE'}
+                    ${isBooking ? '📦 DELIVERY BOOKING' : '⚡ DIRECT SALE'}
                   </span>
                   <span class="text-xs font-black text-slate-900">#${ev.invoiceNo}</span>
                   <span class="text-[10px] font-semibold text-slate-500">by ${ev.repName}</span>
                 </div>
                 <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
-                  <span>ðŸ“… ${UI.formatDateTime(ev.date)}</span>
-                  ${ev.deliveryDate ? `<span>â€¢ Del: ${UI.formatDate(ev.deliveryDate)}</span>` : ''}
+                  <span>📅 ${UI.formatDateTime(ev.date)}</span>
+                  ${ev.deliveryDate ? `<span>• Del: ${UI.formatDate(ev.deliveryDate)}</span>` : ''}
                 </div>
               </div>
               <div class="text-right">
@@ -29585,13 +29656,13 @@ const Shops = {
               <span class="text-[10px] text-slate-400">Paid: ${UI.formatCurrency(ev.paidAmount || 0)} | Credit: ${UI.formatCurrency(ev.creditAmount || 0)}</span>
               <div class="flex items-center gap-1.5">
                 <button onclick="Print.previewInvoice(${ev.id})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-xs font-bold rounded-xl active:scale-95 flex items-center gap-1 border border-indigo-200" title="Preview Thermal Receipt">
-                  <span>ðŸ‘ï¸ Preview</span>
+                  <span>👁️ Preview</span>
                 </button>
                 <button onclick="Print.printExistingInvoice(${ev.id})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl active:scale-95 flex items-center gap-1 border border-slate-200" title="Print Receipt">
-                  <span>ðŸ–¨ï¸ Print</span>
+                  <span>🖨️ Print</span>
                 </button>
                 <button onclick="Shops.confirmDeleteSale(${ev.id}, ${targetShopId})" class="p-1 text-red-400 hover:text-red-600 rounded-lg" title="Delete Invoice">
-                  ðŸ—‘ï¸
+                  🗑️
                 </button>
               </div>
             </div>
@@ -29602,16 +29673,16 @@ const Shops = {
           <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center justify-between gap-2">
             <div>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-200 text-emerald-900">ðŸ’µ DEBT PAYMENT</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-emerald-200 text-emerald-900">💵 DEBT PAYMENT</span>
                 <span class="text-xs text-emerald-800 font-bold">${UI.formatDateTime(ev.date)}</span>
               </div>
               <p class="text-[11px] text-emerald-700 mt-1">${ev.note || 'Debt Collection'}</p>
-              <p class="text-[10px] text-slate-500 mt-0.5">Credit: ${UI.formatCurrency(ev.previousCredit)} âž” ${UI.formatCurrency(ev.newCredit)}</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Credit: ${UI.formatCurrency(ev.previousCredit)} ➔ ${UI.formatCurrency(ev.newCredit)}</p>
             </div>
             <div class="text-right flex flex-col items-end gap-1.5 flex-shrink-0">
               <div class="text-sm font-black text-emerald-800">+${UI.formatCurrency(ev.amountPaid)}</div>
               <button onclick="Print.printCollectionReceipt(${ev.id})" class="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all" title="Print Collection Receipt">
-                ðŸ–¨ï¸ Print
+                🖨️ Print
               </button>
             </div>
           </div>
@@ -29651,14 +29722,14 @@ const Shops = {
   async confirmDeleteSale(saleId, shopId) {
     if (!confirm('Delete this invoice? Credit will be reversed if applicable.')) return;
     await this._deleteSaleRecord(saleId);
-    UI.showToast('Invoice deleted! ðŸ—‘ï¸', 'success');
+    UI.showToast('Invoice deleted! 🗑️', 'success');
     await this.viewShopHistory(shopId || this._currentHistoryShopId);
     Dashboard.loadDashboard();
   },
 
   async grabCurrentGpsForModal() {
     try {
-      UI.showToast('ðŸ“¡ Satellite GPS fix à¶½à¶¶à· à¶œà¶±à·’à¶¸à·’à¶±à·Š... (Acquiring GPS)', 'info');
+      UI.showToast('📡 Satellite GPS fix ලබා ගනිමින්... (Acquiring GPS)', 'info');
       let pos = null;
       if (typeof GPS !== 'undefined' && GPS.requestImmediateFix) {
         pos = await GPS.requestImmediateFix();
@@ -29676,7 +29747,7 @@ const Shops = {
         // Discard Colombo ISP gateway fallback if accuracy is coarse (>300m)
         const isColombo = (pos.lat >= 6.8 && pos.lat <= 7.15 && pos.lng >= 79.75 && pos.lng <= 80.05 && (pos.accuracy || 0) > 300);
         if (isColombo) {
-          UI.showToast('âš ï¸ Desktop/ISP Location Detected (Colombo). Phone GPS à¶·à·à·€à·’à¶­à· à¶šà¶»à¶±à·Šà¶± à·„à· Map à¶‘à¶šà·™à¶±à·Š à¶½à¶šà·”à¶«à·” à¶šà¶»à¶±à·Šà¶±.', 'warning');
+          UI.showToast('⚠️ Desktop/ISP Location Detected (Colombo). Phone GPS භාවිතා කරන්න හෝ Map එකෙන් ලකුණු කරන්න.', 'warning');
           return;
         }
         const latEl = document.getElementById('shop-modal-lat');
@@ -29684,9 +29755,9 @@ const Shops = {
         if (latEl) latEl.value = Number(pos.lat).toFixed(7);
         if (lngEl) lngEl.value = Number(pos.lng).toFixed(7);
         if (typeof SoundFX !== 'undefined') SoundFX.play('shop');
-        UI.showToast(`ðŸ“ GPS Captured! [${Number(pos.lat).toFixed(5)}, ${Number(pos.lng).toFixed(5)}] Â±${Math.round(pos.accuracy || 5)}m`, 'success');
+        UI.showToast(`📍 GPS Captured! [${Number(pos.lat).toFixed(5)}, ${Number(pos.lng).toFixed(5)}] ±${Math.round(pos.accuracy || 5)}m`, 'success');
       } else {
-        UI.showToast('GPS coordinates not available â€” please turn on Phone Location', 'warning');
+        UI.showToast('GPS coordinates not available — please turn on Phone Location', 'warning');
       }
     } catch (e) {
       UI.showToast('Could not acquire GPS: ' + (e.message || 'Please enable Location'), 'error');
@@ -30176,11 +30247,13 @@ const Production = {
       if (totalCardsEl) totalCardsEl.textContent = totalCardUnits;
       if (totalPacketsEl) totalPacketsEl.textContent = totalPacketUnits;
 
-      // Render Packing Checklist or Dispatch Run
-      if (this.activeViewSubtab === 'packing' || isStores) {
-        this.renderPackingMatrix(Object.values(matrix), pendingOrders.length);
-      } else {
+      // Render Packing Checklist or Dispatch Run or Returns Audit
+      if (this.activeViewSubtab === 'returns') {
+        await this.renderReturnsMatrix();
+      } else if (this.activeViewSubtab === 'dispatch') {
         await this.renderDeliveryDispatchList(orders);
+      } else {
+        this.renderPackingMatrix(Object.values(matrix), pendingOrders.length);
       }
     } catch (err) {
       console.error('Error loading daily orders matrix:', err);
@@ -30188,28 +30261,180 @@ const Production = {
   },
 
   switchSubtab(subtab) {
-    const isStores = Auth.currentUser?.role === 'stores';
-    if (isStores) {
-      subtab = 'packing';
-    }
-
     this.activeViewSubtab = subtab;
     const btnPacking = document.getElementById('prod-subtab-packing');
     const btnDispatch = document.getElementById('prod-subtab-dispatch');
+    const btnReturns = document.getElementById('prod-subtab-returns');
 
-    if (subtab === 'packing') {
-      btnPacking?.classList.add('bg-emerald-600', 'text-white');
-      btnPacking?.classList.remove('bg-slate-100', 'text-slate-700');
-      btnDispatch?.classList.remove('bg-emerald-600', 'text-white');
-      btnDispatch?.classList.add('bg-slate-100', 'text-slate-700');
-    } else {
-      btnDispatch?.classList.add('bg-emerald-600', 'text-white');
-      btnDispatch?.classList.remove('bg-slate-100', 'text-slate-700');
-      btnPacking?.classList.remove('bg-emerald-600', 'text-white');
-      btnPacking?.classList.add('bg-slate-100', 'text-slate-700');
+    const allBtns = [btnPacking, btnDispatch, btnReturns];
+    for (const b of allBtns) {
+      if (b) {
+        b.classList.remove('bg-emerald-600', 'text-white', 'shadow-xs');
+        b.classList.add('bg-slate-100', 'text-slate-700');
+      }
+    }
+
+    let activeBtn = btnPacking;
+    if (subtab === 'returns') activeBtn = btnReturns;
+    else if (subtab === 'dispatch') activeBtn = btnDispatch;
+
+    if (activeBtn) {
+      activeBtn.classList.remove('bg-slate-100', 'text-slate-700');
+      activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-xs');
     }
 
     this.loadMatrix();
+  },
+
+  async renderReturnsMatrix() {
+    const container = document.getElementById('prod-matrix-items-container');
+    if (!container) return;
+
+    try {
+      const rawReturns = await db.salesReturns?.toArray() || [];
+      const returns = filterByTenant(rawReturns).reverse();
+
+      if (returns.length === 0) {
+        container.innerHTML = `
+          <div class="card-3d-white p-8 text-center rounded-3xl border border-slate-200 space-y-2">
+            <span class="text-4xl block">📦</span>
+            <h4 class="font-black text-sm text-slate-800">No Sales Returns Pending Review</h4>
+            <p class="text-xs text-slate-400">Reps විසින් ආපසු ගෙනෙන ලද සේල්ස් රිටන්ස් නොමැත.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const goodReturns = returns.filter(r => r.isGoodDamage || r.reason === 'Good Damage' || r.returnCategory === 'Good Return');
+      const badReturns = returns.filter(r => !goodReturns.includes(r));
+
+      let html = `
+        <div class="space-y-4">
+          <!-- GOOD RETURNS (හොඳ භාණ්ඩ - To Repack / Return to Inventory) -->
+          <div class="bg-emerald-50/70 border border-emerald-200 rounded-3xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🏬</span>
+                <div>
+                  <h4 class="font-black text-xs text-emerald-900 uppercase tracking-wider">Good Returns (නැවත භාවිතයට ගත හැකි භාණ්ඩ)</h4>
+                  <p class="text-[10px] text-emerald-700 font-semibold">Stores වෙත ලැබුණු හොඳ භාණ්ඩ නැවත Stock එකට එක් කරන්න</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-emerald-600 text-white rounded-xl text-xs font-black">${goodReturns.length} Items</span>
+            </div>
+
+            <div class="space-y-2">
+              ${goodReturns.length === 0 ? '<div class="text-xs text-emerald-600 italic p-2">Good Returns නොමැත.</div>' : goodReturns.map(r => `
+                <div class="bg-white rounded-2xl p-3 border border-emerald-100 shadow-xs flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <h5 class="font-black text-xs text-slate-900">${r.productName}</h5>
+                    <div class="text-[10.5px] text-slate-500 font-medium">
+                      <span>${r.qty} ${r.returnType || 'Cards'}</span> · 
+                      <span class="text-emerald-700 font-bold">Ref: ${r.invoiceNo || '-'}</span> · 
+                      <span>Shop: ${r.shopName || 'Shop'}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">
+                      Rep: ${r.repName || '-'} · ${r.date ? r.date.slice(0, 10) : ''} · 
+                      <b class="text-slate-700">Status: ${r.status || 'Pending Review'}</b>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    ${r.status === 'Accepted into Stock' ? `
+                      <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-black">✓ In Stock</span>
+                    ` : `
+                      <button onclick="Production.acceptReturnToStock(${r.id})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black active:scale-95 shadow-xs transition-all">
+                        ✓ Accept to Stock
+                      </button>
+                    `}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- BAD RETURNS (නරක් වූ / ඉවත් කළ යුතු භාණ්ඩ) -->
+          <div class="bg-rose-50/70 border border-rose-200 rounded-3xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🗑️</span>
+                <div>
+                  <h4 class="font-black text-xs text-rose-900 uppercase tracking-wider">Bad / Damage Returns (නරක් වූ / අබලන් භාණ්ඩ)</h4>
+                  <p class="text-[10px] text-rose-700 font-semibold">නැවත භාවිතයට ගත නොහැකි භාණ්ඩ ඉවත් කර ලියන්න (Write-off)</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-rose-600 text-white rounded-xl text-xs font-black">${badReturns.length} Items</span>
+            </div>
+
+            <div class="space-y-2">
+              ${badReturns.length === 0 ? '<div class="text-xs text-rose-600 italic p-2">Bad Returns නොමැත.</div>' : badReturns.map(r => `
+                <div class="bg-white rounded-2xl p-3 border border-rose-100 shadow-xs flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <h5 class="font-black text-xs text-slate-900">${r.productName}</h5>
+                    <div class="text-[10.5px] text-slate-500 font-medium">
+                      <span>${r.qty} ${r.returnType || 'Cards'}</span> · 
+                      <span class="text-rose-700 font-bold">Reason: ${r.reason || 'Bad Damage'}</span> · 
+                      <span>Shop: ${r.shopName || 'Shop'}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">
+                      Rep: ${r.repName || '-'} · ${r.date ? r.date.slice(0, 10) : ''} · 
+                      <b class="text-slate-700">Status: ${r.status || 'Pending Review'}</b>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    ${r.status === 'Written Off' ? `
+                      <span class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-xl text-xs font-black">🗑️ Written Off</span>
+                    ` : `
+                      <button onclick="Production.discardReturnItem(${r.id})" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black active:scale-95 shadow-xs transition-all">
+                        🗑️ Discard / Write Off
+                      </button>
+                    `}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    } catch (e) {
+      console.error('Error rendering returns matrix:', e);
+    }
+  },
+
+  async acceptReturnToStock(returnId) {
+    try {
+      const ret = await db.salesReturns.get(returnId);
+      if (!ret) return;
+      const prod = await db.products.get(Number(ret.productId));
+      if (prod) {
+        const curStock = Number(prod.currentStock || prod.stock || 0);
+        const addQty = Number(ret.qty) || 1;
+        await db.products.update(prod.id, {
+          currentStock: curStock + addQty,
+          stock: curStock + addQty
+        });
+      }
+      await db.salesReturns.update(returnId, { status: 'Accepted into Stock' });
+      UI.showToast(`✅ "${ret.productName}" (+${ret.qty}) නැවත Stores Stock එකට එක් කෙරිණි!`, 'success');
+      this.renderReturnsMatrix();
+    } catch (e) {
+      UI.showToast('Error accepting return: ' + e.message, 'error');
+    }
+  },
+
+  async discardReturnItem(returnId) {
+    try {
+      const ret = await db.salesReturns.get(returnId);
+      if (!ret) return;
+      await db.salesReturns.update(returnId, { status: 'Written Off' });
+      UI.showToast(`🗑️ "${ret.productName}" Written Off / Discarded ලෙස සටහන් විය.`, 'info');
+      this.renderReturnsMatrix();
+    } catch (e) {
+      UI.showToast('Error writing off return: ' + e.message, 'error');
+    }
   },
 
   renderPackingMatrix(matrixEntries, pendingCount) {
