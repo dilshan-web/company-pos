@@ -4099,6 +4099,71 @@ body.theme-dark #app-bottom-nav {
   <!-- =========================================================================
        MODERN USERNAME & PASSWORD LOGIN SCREEN
        ========================================================================= -->
+    <!-- =========================================================================
+       ROUTE LOCK OVERLAY (Rep MUST start route to use POS; Locks on End Route)
+       ========================================================================= -->
+  <div id="route-lock-overlay" class="hidden fixed inset-0 z-[45] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto select-none">
+    <div class="absolute w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- STATE 1: ROUTE NOT STARTED -->
+    <div id="route-lock-start-card" class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-center relative z-10 border border-slate-100">
+      <div class="w-20 h-20 rounded-3xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center text-4xl mx-auto shadow-inner">
+        🛵
+      </div>
+      <div>
+        <h2 class="text-lg font-black text-slate-900">Route Start කර නැත</h2>
+        <p class="text-xs text-emerald-700 font-bold mt-0.5">දවසේ ගමන අරඹා පද්ධතිය Unlock කරන්න</p>
+        <p class="text-[11px] text-slate-400 mt-1">ඔබගේ Route එක තෝරා, මීටර් අගය, මීටර් ඡායාරූපය සහ සෙල්ෆි ලබාදී Start Route කරන්න.</p>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-left flex items-start gap-2.5">
+        <span class="text-base flex-shrink-0">⚠️</span>
+        <div class="text-[11px] text-amber-900 leading-tight">
+          <p class="font-black">පද්ධතිය Lock කර ඇත</p>
+          <p class="text-amber-800 font-medium mt-0.5">Route එක start කරන තුරු භාණ්ඩ, කඩවල් බැලීමට හෝ බිල්පත් දැමීමට නොහැක.</p>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button type="button" onclick="RouteSession.openStartRoutePrompt()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl text-xs sm:text-sm shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center gap-2 transition-all">
+          <span>🚀 Start Route (ගමන අරඹන්න)</span>
+        </button>
+        <button type="button" onclick="Auth.logout()" class="w-full text-slate-400 hover:text-slate-600 text-xs font-bold py-2 transition-colors">
+          🚪 Logout (පිටවීම)
+        </button>
+      </div>
+    </div>
+
+    <!-- STATE 2: ROUTE ENDED (DAY COMPLETE) -->
+    <div id="route-lock-end-card" class="hidden w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-center relative z-10 border border-purple-100">
+      <div class="w-20 h-20 rounded-3xl bg-purple-50 border-2 border-purple-200 flex items-center justify-center text-4xl mx-auto shadow-inner">
+        🏁
+      </div>
+      <div>
+        <h2 class="text-lg font-black text-slate-900">දවසේ ගමන අවසන් (Day Complete)</h2>
+        <p class="text-xs text-purple-700 font-bold mt-0.5">ඔබ අද දින Route එක සාර්ථකව අවසන් කර ඇත</p>
+        <p class="text-[11px] text-slate-400 mt-1">දවසේ ගමන අවසන් වූ පසු පද්ධතිය ස්වයංක්‍රීයව Lock වේ.</p>
+      </div>
+
+      <!-- Dynamic Day Summary -->
+      <div id="route-lock-end-summary" class="bg-purple-50/70 border border-purple-200 rounded-2xl p-3.5 text-left text-xs space-y-1.5">
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-[11px] text-slate-500 font-medium">
+        ℹ️ නැවත බිල්පත් දැමීමට අවශ්‍ය නම් පහත Re-Open බොත්තම ඔබන්න. එය Admin සහ HR වෙත වාර්තා වේ.
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button type="button" onclick="RouteSession.promptReopenRoute()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-2xl text-xs shadow-md shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-1.5 transition-all">
+          <span>⚠️ Re-Open Route (නැවත අරඹන්න)</span>
+        </button>
+        <button type="button" onclick="Auth.logout()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 rounded-2xl text-xs active:scale-95 transition-all">
+          🚪 Logout (පිටවීම)
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="lock-screen-modal" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/60 flex items-center justify-center p-4 sm:p-6 text-white select-none overflow-y-auto">
     <!-- Ambient Background Glow Effects -->
     <div class="absolute w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl -top-20 -left-20 pointer-events-none"></div>
@@ -18700,6 +18765,8 @@ const Auth = {
     sessionStorage.removeItem('spice_pos_unlocked');
     sessionStorage.removeItem('spice_pos_user');
     this.currentUser = null;
+    const overlay = document.getElementById('route-lock-overlay');
+    if (overlay) overlay.classList.add('hidden');
     this.showLockScreen();
     UI.showToast('Logged out / App Locked', 'info');
     try {
@@ -19478,6 +19545,15 @@ const Auth = {
         `;
       }
     }
+
+    // Check Route Lock for Sales Reps
+    if (typeof RouteSession !== 'undefined' && RouteSession.checkAndShowRouteLock) {
+      RouteSession.checkAndShowRouteLock();
+    }
+  },
+
+  logout() {
+    this.lockApp();
   },
 
   // Update Header User Profile Badge
@@ -27568,6 +27644,7 @@ const RouteSession = {
     this.loadSession();
     this.renderBanners();
     this.initManagerListener();
+    this.checkAndShowRouteLock();
   },
 
   /** Helper to compress uploaded / captured image file to lightweight Base64 */
@@ -27628,6 +27705,94 @@ const RouteSession = {
   isRouteActive() {
     const sess = this.getActiveSession();
     return Boolean(sess && sess.status === 'active' && sess.routeId);
+  },
+
+  /** Check if today's session was ended */
+  isSessionEndedToday() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const repId = (Auth.currentUser && Auth.currentUser.id) ? Auth.currentUser.id : 1;
+    const endedKey = `mob_pos_route_ended_${repId}_${todayStr}`;
+    try {
+      const ended = localStorage.getItem(endedKey);
+      if (ended) return JSON.parse(ended);
+    } catch (e) {}
+    return null;
+  },
+
+  /** Check and toggle full-screen Route Lock for Reps */
+  checkAndShowRouteLock() {
+    const role = (typeof Auth !== 'undefined' && Auth.currentUser?.role) || '';
+    const overlay = document.getElementById('route-lock-overlay');
+    if (!overlay) return;
+
+    // Only apply lock to field roles: rep, sm, asm
+    if (role !== 'rep' && role !== 'sm' && role !== 'asm') {
+      overlay.classList.add('hidden');
+      return;
+    }
+
+    const isActive = this.isRouteActive();
+    const endedSession = this.isSessionEndedToday();
+
+    if (isActive) {
+      // Rep has an active route session — POS is unlocked!
+      overlay.classList.add('hidden');
+      return;
+    }
+
+    // Lock screen must be shown
+    overlay.classList.remove('hidden');
+
+    const startCard = document.getElementById('route-lock-start-card');
+    const endCard = document.getElementById('route-lock-end-card');
+
+    if (endedSession) {
+      // Day is completed
+      if (startCard) startCard.classList.add('hidden');
+      if (endCard) endCard.classList.remove('hidden');
+
+      const summaryEl = document.getElementById('route-lock-end-summary');
+      if (summaryEl) {
+        summaryEl.innerHTML = `
+          <div class="flex justify-between items-center text-slate-600 pb-1 border-b border-purple-200">
+            <span class="font-bold">🗺️ Route:</span>
+            <span class="font-black text-purple-900">${endedSession.routeName || '-'}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+            <div><span class="text-slate-400 block font-medium">Start:</span><b class="text-slate-800 font-black">${endedSession.startedTimeText || '--:--'} (${endedSession.startKm || 0} KM)</b></div>
+            <div><span class="text-slate-400 block font-medium">End:</span><b class="text-purple-900 font-black">${endedSession.endedTimeText || '--:--'} (${endedSession.endKm || 0} KM)</b></div>
+            <div><span class="text-slate-400 block font-medium">Distance:</span><b class="text-slate-800 font-black">${endedSession.totalKm || 0} KM</b></div>
+            <div><span class="text-slate-400 block font-medium">Bills:</span><b class="text-emerald-700 font-black">${endedSession.billCount !== undefined ? endedSession.billCount + ' bills' : '-'}</b></div>
+          </div>
+          ${endedSession.totalSales !== undefined ? `
+            <div class="flex justify-between items-center pt-1.5 border-t border-purple-200 text-xs">
+              <span class="font-bold text-slate-600">💰 Total Sales:</span>
+              <span class="font-black text-emerald-700">Rs. ${(Number(endedSession.totalSales) || 0).toLocaleString()}</span>
+            </div>
+          ` : ''}
+          ${endedSession.reopened ? `
+            <div class="mt-1 p-1.5 rounded-lg bg-amber-100 border border-amber-300 text-[10px] text-amber-900 font-black text-center">
+              ⚠️ Route Re-opened at ${endedSession.reopenedAt || ''}
+            </div>
+          ` : ''}
+        `;
+      }
+    } else {
+      // Not yet started today
+      if (startCard) startCard.classList.remove('hidden');
+      if (endCard) endCard.classList.add('hidden');
+    }
+  },
+
+  /** Prompt Re-open Route after closing (audited action) */
+  promptReopenRoute() {
+    const confirmed = confirm(
+      "⚠️ අවවාදයයි:\n\nඔබ අද දින Route එක දැනටමත් අවසන් කර ඇත.\nනැවත Route එක ආරම්භ කළහොත් මෙය Re-Opened Route එකක් ලෙස Admin සහ HR වෙත වාර්තා වන අතර ඔබ දමන අමතර බිල්පත් විශේෂයෙන් සටහන් වේ.\n\nනැවත Route එක ආරම්භ කිරීමට අවශ්‍යද?"
+    );
+    if (!confirmed) return;
+
+    this._isReopenedSession = true;
+    this.openStartRoutePrompt();
   },
 
   /** Prompt Rep to pick and start route with Attendance & Bike Meter */
@@ -27745,16 +27910,43 @@ const RouteSession = {
   /** Submit Start Route with Attendance, Meter & Selfie */
   async submitStartRouteAttendance() {
     const routeId = this._pendingRouteId;
-    if (!routeId) return;
+    if (!routeId) {
+      UI.showToast('කරුණාකර Route එකක් තෝරන්න (Please select a route)', 'warning');
+      return;
+    }
 
     const route = await db.routes.get(Number(routeId));
-    if (!route) return;
+    if (!route) {
+      UI.showToast('Route not found', 'error');
+      return;
+    }
 
     const meterKmVal = document.getElementById('start-route-meter-km')?.value?.trim();
-    const startKm = Number(meterKmVal) || 0;
+    if (!meterKmVal || Number(meterKmVal) <= 0) {
+      UI.showToast('කරුණාකර ආරම්භක මීටර් අගය (Starting KM) ඇතුළත් කරන්න.', 'warning');
+      document.getElementById('start-route-meter-km')?.focus();
+      return;
+    }
+    const startKm = Number(meterKmVal);
 
     const meterFile = document.getElementById('start-route-meter-photo')?.files?.[0];
     const selfieFile = document.getElementById('start-route-selfie-photo')?.files?.[0];
+
+    const previewMeter = document.getElementById('start-route-preview-meter');
+    const previewSelfie = document.getElementById('start-route-preview-selfie');
+
+    const hasMeterPhoto = Boolean(meterFile || (previewMeter && !previewMeter.classList.contains('hidden') && previewMeter.src && !previewMeter.src.endsWith('/')));
+    const hasSelfiePhoto = Boolean(selfieFile || (previewSelfie && !previewSelfie.classList.contains('hidden') && previewSelfie.src && !previewSelfie.src.endsWith('/')));
+
+    if (!hasMeterPhoto) {
+      UI.showToast('කරුණාකර Bike Meter Photo එක ලබාගන්න (මීටර් ඡායාරූපය අනිවාර්යයි).', 'warning');
+      return;
+    }
+
+    if (!hasSelfiePhoto) {
+      UI.showToast('කරුණාකර Morning Selfie ඡායාරූපය ලබාගන්න (සෙල්ෆි ඡායාරූපය අනිවාර්යයි).', 'warning');
+      return;
+    }
 
     // Compress photos
     let meterPhotoB64 = '';
@@ -27762,9 +27954,14 @@ const RouteSession = {
 
     if (meterFile) {
       try { meterPhotoB64 = await this.compressImage(meterFile); } catch (e) {}
+    } else if (previewMeter && previewMeter.src && previewMeter.src.startsWith('data:')) {
+      meterPhotoB64 = previewMeter.src;
     }
+
     if (selfieFile) {
       try { selfiePhotoB64 = await this.compressImage(selfieFile); } catch (e) {}
+    } else if (previewSelfie && previewSelfie.src && previewSelfie.src.startsWith('data:')) {
+      selfiePhotoB64 = previewSelfie.src;
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
@@ -27773,6 +27970,7 @@ const RouteSession = {
     const repId = user.id || 1;
     const repName = user.fullName || user.username || 'Sales Rep';
     const gpsPos = (typeof GPS !== 'undefined' && GPS.currentPos) ? GPS.currentPos : null;
+    const isReopen = Boolean(this._isReopenedSession || this.isSessionEndedToday());
 
     const session = {
       tenantId: getActiveTenantId() || 1,
@@ -27787,10 +27985,18 @@ const RouteSession = {
       selfiePhoto: selfiePhotoB64,
       status: 'active',
       date: todayStr,
+      reopened: isReopen,
+      reopenedAt: isReopen ? timeStr : null,
       timestamp: Date.now()
     };
 
     this._activeSession = session;
+    this._isReopenedSession = false;
+
+    // Clear ended key if reopened so active session takes over
+    const endedKey = `mob_pos_route_ended_${repId}_${todayStr}`;
+    localStorage.removeItem(endedKey);
+
     const key = `mob_pos_route_session_${repId}_${todayStr}`;
     localStorage.setItem(key, JSON.stringify(session));
 
@@ -27806,10 +28012,13 @@ const RouteSession = {
           checkIn: timeStr,
           status: 'Present',
           startMeterKm: startKm,
-          startMeterPhoto: meterPhotoB64,
-          selfiePhoto: selfiePhotoB64,
+          startMeterPhoto: meterPhotoB64 || existingAtt?.startMeterPhoto || '',
+          selfiePhoto: selfiePhotoB64 || existingAtt?.selfiePhoto || '',
           gpsLat: gpsPos?.lat || null,
           gpsLng: gpsPos?.lng || null,
+          routeName: route.name,
+          reopened: isReopen,
+          reopenedAt: isReopen ? timeStr : (existingAtt?.reopenedAt || null),
           tenantId: getActiveTenantId() || 1,
           updatedAt: new Date().toISOString()
         };
@@ -27821,7 +28030,27 @@ const RouteSession = {
         }
       }
 
-      // 2. Save Photos to db.fieldPhotos for HR/Supervisor inspection
+      // If re-opened, send broadcast alert to Admin and HR
+      if (isReopen) {
+        const reopenAlert = {
+          type: 'REP_ROUTE_REOPENED',
+          repId, repName,
+          routeName: route.name,
+          time: timeStr,
+          date: todayStr,
+          startKm,
+          message: `⚠️ Alert: Rep ${repName} has RE-OPENED route "${route.name}" at ${timeStr}. All additional bills will be audited.`,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(`mob_pos_reopen_alert_${repId}`, JSON.stringify(reopenAlert));
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('mob_pos_order_channel');
+          bc.postMessage(reopenAlert);
+          bc.close();
+        }
+      }
+
+      // 2. Save Photos to db.fieldPhotos
       if (db.fieldPhotos) {
         if (meterPhotoB64) {
           await db.fieldPhotos.add({
@@ -27885,6 +28114,7 @@ const RouteSession = {
     UI.showToast(`🚀 Route Started & Attendance Recorded! Meter: ${startKm} KM`, 'success');
 
     this.renderBanners();
+    this.checkAndShowRouteLock();
   },
 
   /** End Route Modal Prompt */
@@ -27947,27 +28177,71 @@ const RouteSession = {
     if (!session) return;
 
     const endKmVal = document.getElementById('end-route-meter-km')?.value?.trim();
-    const endKm = Number(endKmVal) || (Number(session.startKm) || 0);
+    if (!endKmVal || Number(endKmVal) <= 0) {
+      UI.showToast('කරුණාකර අවසන් මීටර් අගය (Closing KM) ඇතුළත් කරන්න.', 'warning');
+      document.getElementById('end-route-meter-km')?.focus();
+      return;
+    }
+    const endKm = Number(endKmVal);
     const startKm = Number(session.startKm) || 0;
+    if (endKm < startKm) {
+      UI.showToast(`අවසන් මීටර් අගය (${endKm} KM) ආරම්භක අගයට (${startKm} KM) වඩා වැඩි විය යුතුය.`, 'warning');
+      return;
+    }
     const totalKmTravelled = Math.max(0, endKm - startKm);
 
     const meterFile = document.getElementById('end-route-meter-photo')?.files?.[0];
     const selfieFile = document.getElementById('end-route-selfie-photo')?.files?.[0];
+
+    const previewEndMeter = document.getElementById('end-route-preview-meter');
+    const previewEndSelfie = document.getElementById('end-route-preview-selfie');
+
+    const hasMeterPhoto = Boolean(meterFile || (previewEndMeter && !previewEndMeter.classList.contains('hidden') && previewEndMeter.src && !previewEndMeter.src.endsWith('/')));
+    const hasSelfiePhoto = Boolean(selfieFile || (previewEndSelfie && !previewEndSelfie.classList.contains('hidden') && previewEndSelfie.src && !previewEndSelfie.src.endsWith('/')));
+
+    if (!hasMeterPhoto) {
+      UI.showToast('කරුණාකර අවසන් Bike Meter Photo එක ලබාගන්න (ඡායාරූපය අනිවාර්යයි).', 'warning');
+      return;
+    }
+
+    if (!hasSelfiePhoto) {
+      UI.showToast('කරුණාකර Closing Selfie ඡායාරූපය ලබාගන්න (සෙල්ෆි ඡායාරූපය අනිවාර්යයි).', 'warning');
+      return;
+    }
 
     let meterPhotoB64 = '';
     let selfiePhotoB64 = '';
 
     if (meterFile) {
       try { meterPhotoB64 = await this.compressImage(meterFile); } catch (e) {}
+    } else if (previewEndMeter && previewEndMeter.src && previewEndMeter.src.startsWith('data:')) {
+      meterPhotoB64 = previewEndMeter.src;
     }
+
     if (selfieFile) {
       try { selfiePhotoB64 = await this.compressImage(selfieFile); } catch (e) {}
+    } else if (previewEndSelfie && previewEndSelfie.src && previewEndSelfie.src.startsWith('data:')) {
+      selfiePhotoB64 = previewEndSelfie.src;
     }
 
     const todayStr = session.date || new Date().toISOString().split('T')[0];
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const repId = session.repId || 1;
     const repName = session.repName || 'Sales Rep';
+
+    // Count today's sales for this rep
+    let billCount = 0;
+    let totalSales = 0;
+    try {
+      const allSales = await db.sales.toArray();
+      const todaySales = allSales.filter(s =>
+        s.status !== 'Cancelled' &&
+        s.date && s.date.startsWith(todayStr) &&
+        String(s.repId) === String(repId)
+      );
+      billCount = todaySales.length;
+      totalSales = todaySales.reduce((sum, s) => sum + (Number(s.totalAmount) || 0), 0);
+    } catch (e) {}
 
     // 1. Update Attendance Check-out in db.attendance
     try {
@@ -27981,6 +28255,9 @@ const RouteSession = {
             endMeterPhoto: meterPhotoB64,
             closingSelfiePhoto: selfiePhotoB64,
             totalKm: totalKmTravelled,
+            billCount: billCount,
+            totalSales: totalSales,
+            routeName: session.routeName,
             updatedAt: new Date().toISOString()
           });
         }
@@ -28012,7 +28289,13 @@ const RouteSession = {
     session.endedTimeText = timeStr;
     session.endKm = endKm;
     session.totalKm = totalKmTravelled;
+    session.billCount = billCount;
+    session.totalSales = totalSales;
     localStorage.removeItem(key);
+
+    // Save ended record for lock screen detection
+    const endedKey = `mob_pos_route_ended_${repId}_${todayStr}`;
+    localStorage.setItem(endedKey, JSON.stringify(session));
 
     this._activeSession = null;
 
@@ -28027,9 +28310,10 @@ const RouteSession = {
     UI.showToast(`🏁 Route Completed! Total Bike Travel: ${totalKmTravelled} KM. Attendance Checked Out!`, 'success');
 
     this.renderBanners();
+    this.checkAndShowRouteLock();
   },
 
-  /** Open Shop Display / Promotion Photo Modal */
+    /** Open Shop Display / Promotion Photo Modal */
   async openShopPhotoModal(shopId = null) {
     let targetShopId = shopId;
     if (!targetShopId && typeof POS !== 'undefined' && POS.activeShopId) {
@@ -37025,6 +37309,34 @@ const HR = {
     if (container) this.renderAttendance(container);
   },
 
+    previewPhoto(url, caption = 'Photo Viewer') {
+    if (!url) return;
+    let modal = document.getElementById('modal-hr-photo-viewer');
+    if (!modal) {
+      const div = document.createElement('div');
+      div.id = 'modal-hr-photo-viewer';
+      div.className = 'modal-overlay hidden fixed inset-0 z-[100] bg-black/85 backdrop-blur-xs flex items-center justify-center p-4';
+      div.innerHTML = `
+        <div class="bg-white rounded-3xl p-4 max-w-sm w-full space-y-3 shadow-2xl">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h4 id="hr-photo-viewer-caption" class="text-xs font-black text-slate-800">Photo Viewer</h4>
+            <button onclick="document.getElementById('modal-hr-photo-viewer').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+          </div>
+          <div class="flex items-center justify-center bg-slate-50 rounded-2xl p-2 border border-slate-100">
+            <img id="hr-photo-viewer-img" src="" class="w-full max-h-80 object-contain rounded-xl shadow-xs" alt="Preview" />
+          </div>
+          <button onclick="document.getElementById('modal-hr-photo-viewer').classList.add('hidden')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl active:scale-95">
+            Close (වසන්න)
+          </button>
+        </div>
+      `;
+      document.body.appendChild(div);
+      modal = div;
+    }
+    document.getElementById('hr-photo-viewer-img').src = url;
+    document.getElementById('hr-photo-viewer-caption').textContent = caption;
+    modal.classList.remove('hidden');
+  },
   async renderAttendance(container) {
     if (!this.attendanceFilterDate) {
       this.attendanceFilterDate = new Date().toISOString().split('T')[0];
@@ -37098,15 +37410,17 @@ const HR = {
 
         <!-- Staff Attendance Roster Table -->
         <div class="overflow-x-auto rounded-2xl border border-slate-200">
-          <table class="w-full text-left text-xs border-collapse min-w-[700px]">
+          <table class="w-full text-left text-xs border-collapse min-w-[850px]">
             <thead>
               <tr class="bg-slate-100 text-slate-600 text-[10.5px] font-black uppercase tracking-wider border-b border-slate-200">
-                <th class="p-2.5">සේවකයා (Staff Member)</th>
+                <th class="p-2.5">සේවකයා & Route</th>
                 <th class="p-2.5 text-center">තත්ත්වය (Status)</th>
-                <th class="p-2.5 text-center">පැමිණි වේලාව (IN)</th>
-                <th class="p-2.5 text-center">පිටවූ වේලාව (OUT)</th>
+                <th class="p-2.5 text-center">IN (වේලාව)</th>
+                <th class="p-2.5 text-center">OUT (වේලාව)</th>
                 <th class="p-2.5 text-center">මීටර් KM (Reps)</th>
-                <th class="p-2.5 text-center">ක්ෂණික ක්‍රියාමාර්ග (Quick Action)</th>
+                <th class="p-2.5 text-center">බිල්පත් & මුදල (Sales)</th>
+                <th class="p-2.5 text-center">ඡායාරූප (Photos)</th>
+                <th class="p-2.5 text-center">ක්‍රියාමාර්ග (Action)</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 bg-white">
@@ -37122,6 +37436,22 @@ const HR = {
 
                 const inTime = att?.checkIn && att.checkIn !== '--' ? att.checkIn : null;
                 const outTime = att?.checkOut && att.checkOut !== '--' ? att.checkOut : null;
+                const routeName = att?.routeName || '';
+
+                // Photos buttons
+                let photoBadges = [];
+                if (att?.startMeterPhoto) {
+                  photoBadges.push(`<button onclick="HR.previewPhoto('${att.startMeterPhoto}', '${emp.fullName} - Start Meter')" class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded text-[9px] font-bold border border-emerald-200" title="Start Meter Photo">📷 Meter</button>`);
+                }
+                if (att?.selfiePhoto) {
+                  photoBadges.push(`<button onclick="HR.previewPhoto('${att.selfiePhoto}', '${emp.fullName} - Morning Selfie')" class="px-1.5 py-0.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-[9px] font-bold border border-blue-200" title="Morning Selfie">🤳 Selfie</button>`);
+                }
+                if (att?.endMeterPhoto) {
+                  photoBadges.push(`<button onclick="HR.previewPhoto('${att.endMeterPhoto}', '${emp.fullName} - Closing Meter')" class="px-1.5 py-0.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-[9px] font-bold border border-purple-200" title="Closing Meter Photo">🏁 End Meter</button>`);
+                }
+                if (att?.closingSelfiePhoto) {
+                  photoBadges.push(`<button onclick="HR.previewPhoto('${att.closingSelfiePhoto}', '${emp.fullName} - Closing Selfie')" class="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded text-[9px] font-bold border border-indigo-200" title="Closing Selfie">🤳 End Selfie</button>`);
+                }
 
                 return `
                   <tr class="hover:bg-slate-50 transition-colors">
@@ -37132,6 +37462,8 @@ const HR = {
                         <span>·</span>
                         <span class="text-slate-600 font-sans">${emp.department || emp.designation || 'Staff'}</span>
                       </div>
+                      ${routeName ? `<span class="inline-block mt-0.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded-md text-[10px] font-black border border-emerald-200">🗺️ ${routeName}</span>` : ''}
+                      ${att?.reopened ? `<span class="inline-block mt-0.5 ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-900 rounded-md text-[9px] font-black border border-amber-300">⚠️ Re-opened (${att.reopenedAt || ''})</span>` : ''}
                     </td>
                     <td class="p-2.5 text-center">
                       <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${badgeClass}">
@@ -37146,6 +37478,17 @@ const HR = {
                     </td>
                     <td class="p-2.5 text-center font-mono text-[10px] text-slate-600">
                       ${att?.startMeterKm ? `${att.startMeterKm} → ${att.endMeterKm || 'Active'} (${att.totalKm || 0} km)` : '<span class="text-slate-300">--</span>'}
+                    </td>
+                    <td class="p-2.5 text-center">
+                      ${att?.billCount !== undefined || att?.totalSales !== undefined ? `
+                        <div class="text-[11px] font-black text-emerald-800">🧾 ${att.billCount || 0} Bills</div>
+                        <div class="text-[10px] font-black text-slate-900">Rs. ${(Number(att.totalSales) || 0).toLocaleString()}</div>
+                      ` : '<span class="text-slate-300 text-[10px]">--</span>'}
+                    </td>
+                    <td class="p-2.5 text-center">
+                      <div class="flex items-center justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
+                        ${photoBadges.length > 0 ? photoBadges.join('') : '<span class="text-slate-300 text-[10px]">No photos</span>'}
+                      </div>
                     </td>
                     <td class="p-2.5 text-center">
                       <div class="flex items-center justify-center gap-1 flex-wrap">
